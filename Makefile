@@ -1,4 +1,4 @@
-server:	server.o fileio.o uws_socket.o
+uws:	uws.o uws_fileio.o uws_socket.o uws_mime.o uws_config.o
 
 clean:
-	-rm *.o
+	-rm *.o uws
