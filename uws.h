@@ -13,6 +13,13 @@
 
 void exit_err(const char* str);
 
+struct response {
+    char    *header;
+    int     header_len;
+    char    *content;
+    int     content_len;
+};
+
 struct nv_pair {
     char* name;
     char* value;

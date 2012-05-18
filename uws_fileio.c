@@ -6,6 +6,7 @@
 #include "uws_config.h"
 #include "uws_mime.h"
 extern struct nv_pair** uws_configs;
+extern struct response header_body;
 static char*
 get_time_string();
 int
@@ -14,7 +15,7 @@ comparestr(const void *p1, const void *p2)
     return strcmp(* (char * const *)p1, * (char * const *) p2);
 }
 void
-printdir(const char *fpath, FILE* stream) {//打印目录项排序
+printdir(const char *fpath) {//打印目录项排序
     DIR *dp = opendir(fpath);
     struct dirent *dir_entry;
     int dir_len = 0;
@@ -22,6 +23,10 @@ printdir(const char *fpath, FILE* stream) {//打印目录项排序
 
     while((dir_entry = readdir(dp)) != NULL)
         dir_len++;
+
+    header_body.content_len = dir_len * 64;//Max filename Length
+    header_body.content = (char*) calloc (sizeof(char), header_body.content_len);
+
     rewinddir(dp);
     entries = (char**) malloc ((dir_len + 1) * sizeof(char*));
     dir_len = 0;
@@ -30,92 +35,27 @@ printdir(const char *fpath, FILE* stream) {//打印目录项排序
     entries[dir_len] = NULL;
     qsort(entries, dir_len, sizeof(char*), comparestr);
 
-    while(*(entries)!= NULL) {
-        fprintf(stream, "%s", "<a href=\"./");
-        fprintf(stream, "%s", *entries);
-        fprintf(stream, "%s", "\">");
-        fprintf(stream, "%s", *(entries++));
-        fprintf(stream, "%s\n", "</a><br/>");
 
+    while(*(entries)!= NULL) {
+        strcat(header_body.content, "<a href=\"./");
+        strcat(header_body.content, *entries);
+        strcat(header_body.content, "\">");
+        strcat(header_body.content, *(entries++));
+        strcat(header_body.content, "</a><br/>\n");
     }
+    header_body.content_len = strlen(header_body.content);
 }
 void
-printfile(const char *path, FILE* stream)
+printfile(const char *path)
 {
     FILE* file = fopen(path, "r");
-    char buff[BUFF_LEN];
-    int nread;
-    while( (nread = fread(buff, sizeof(char), BUFF_LEN, file)) > 0)
-        fwrite(buff, sizeof(char), nread, stream);
+    fseek(file, 0, SEEK_END);
+    header_body.content_len = ftell(file);
+
+    rewind(file);
+
+    printf("%d\n", header_body.content_len);
+    header_body.content = (char*) calloc (sizeof(char), header_body.content_len);
+    fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
-}
-void
-pathrouter(const char* arg, FILE* stream)
-{
-    char path[PATH_LEN];
-    char path2[PATH_LEN];
-    struct stat stat_buff;
-
-    getcwd(path, PATH_LEN);
-    strcat(path, arg);
-    if(lstat(path, &stat_buff) != -1) {
-        fputs("HTTP/1.1 200 OK\n", stream);
-        fputs("Cache-Control: private\n", stream);
-        fputs("Connection: Keep-Alive\n", stream);
-        fputs("Server: UWS/0.001\n", stream);
-        fprintf(stream, "Date: %s\n", get_time_string());
-        if( S_ISDIR(stat_buff.st_mode) ) {
-            char *index;
-            if((index = get_opt("index")) != NULL)
-            {
-                strcpy(path2, path);
-                strcat(path2, "/");
-                strcat(path2, index);
-                if(lstat(path2, &stat_buff) != -1) {
-                    fprintf(stream, "Content-Type: %s; charset=UTF-8\n\n", get_mime(path2));
-                    printfile(path2, stream);
-                    return;
-                }
-            }
-            fprintf(stream, "Content-Type: %s; charset=UTF-8\n\n", "text/html");
-            printdir(path, stream);
-        }
-        else
-        {
-            fprintf(stream, "Content-Type: %s; charset=UTF-8\n\n", get_mime(path));
-            printfile(path, stream);
-        }
-    }
-    else {
-        fputs("HTTP/1.1 404 Not Found\n", stream);
-    }
-
-}
-static char*
-get_time_string() {
-    struct tm *cur_time;
-    char* buff = (char*) malloc(sizeof(char) * 40);
-    time_t tt;
-    time(&tt);
-    cur_time = localtime(&tt);
-    strftime(buff, 40, "%a, %e %b %Y %T %Z", cur_time);
-    return buff;
-}
-
-static char*
-get_mime(const char* path)
-{
-    int i = 0;
-    i = strlen(path);
-    i--;
-    while(*(path + i) != '.') {
-        if(i == 0) {
-            return "text/html";
-            break;
-        }
-        i--;
-    }
-    if(i != 0){
-         return mimebyext(path + i + 1);
-    }
 }
