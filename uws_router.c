@@ -7,11 +7,12 @@
 #include "uws_fileio.h"
 #include "uws_config.h"
 #include "uws_mime.h"
+#include "uws_fastcgi.h"
 static char*
 get_time_string();
 struct response header_body;
 void
-pathrouter(const char* arg)
+pathrouter(const char* arg, int fd)
 {
     char path[PATH_LEN];
     char path2[PATH_LEN];
@@ -30,8 +31,17 @@ pathrouter(const char* arg)
                 strcat(path2, index);
                 if(lstat(path2, &stat_buff) != -1) {
                     mime = get_mime(path2);
+                    if(mime == NULL) {
+                        PARAM_VALUE pv[] = {
+                        {"SCRIPT_FILENAME", path2},
+                        {"REQUEST_METHOD", "GET"},
+                        {NULL,NULL} };
+                        char* header = "HTTP/1.1 200 OK\nServer: UWS/0.001\n";
+                        write(fd, header, strlen(header));
+                        send_request("127.0.0.1", 9000, fd, pv);
+                        return;
+                    }
                     printfile(path2);
-                    return;
                 }
             }
             mime = "text/html";
@@ -40,6 +50,16 @@ pathrouter(const char* arg)
         else
         {
             mime = get_mime(path);
+            if(mime == NULL) {
+                PARAM_VALUE pv[] = {
+                {"SCRIPT_FILENAME", path},
+                {"REQUEST_METHOD", "GET"},
+                {NULL, NULL} };
+                char* header = "HTTP/1.1 200 OK\nServer: UWS/0.001\n";
+                write(fd, header, strlen(header));
+                send_request("127.0.0.1", 9000, fd, pv);
+                return;
+            }
             printfile(path);
         }
     }
@@ -63,6 +83,7 @@ get_mime(const char* path)
         i--;
     }
     if(i != 0){
+        if(strcmp(path + i +1, "php") == 0) return NULL;
         return mimebyext(path + i + 1);
     }
 }

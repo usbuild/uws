@@ -1,5 +1,3 @@
-#include <dirent.h>
-#include <sys/stat.h>
 #include <time.h>
 #include "uws.h"
 #include "uws_header.h"
@@ -14,28 +12,27 @@ set_header(const char* mime)
 {
     header_body.header = (char*) calloc(sizeof(char), HEADER_LEN);
 
-    if(mime != NULL) {
-        sprintf(header_body.header,    "HTTP/1.1 200 OK\n"
-            "Cache-Control: private\n"
-            "Connection: Keep-Alive\n"
-            "Server: UWS/0.001\n"
-            "Date: %s\n"
-            "Content-Length: %d\n"
-            "Content-Type: %s;charset=utf-8\n"
-            "\n"\
-            , get_time_string(), header_body.content_len, mime);
-    }
-    else {
-        sprintf(header_body.header,    "HTTP/1.1 404 Not Found\n"
-            "Cache-Control: private\n"
-            "Connection: Keep-Alive\n"
-            "Server: UWS/0.001\n"
-            "Date: %s\n"
-            "\n"\
-            , get_time_string());
-    }
+        if(mime != NULL) {
+            sprintf(header_body.header,    "HTTP/1.1 200 OK\n"
+                "Cache-Control: private\n"
+                "Connection: Keep-Alive\n"
+                "Server: UWS/0.001\n"
+                "Date: %s\n"
+                "Content-Length: %d\n"
+                "Content-Type: %s;charset=utf-8\n"
+                "\n"\
+                , get_time_string(), header_body.content_len, mime);
+        }
+        else {
+            sprintf(header_body.header,    "HTTP/1.1 404 Not Found\n"
+                "Cache-Control: private\n"
+                "Connection: Keep-Alive\n"
+                "Server: UWS/0.001\n"
+                "Date: %s\n"
+                "\n"\
+                , get_time_string());
+        }
     header_body.header_len = strlen(header_body.header);
-
 }
 static char*
 get_time_string() {

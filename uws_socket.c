@@ -67,7 +67,7 @@ int start_server()
             if(strlen(line) == 2) break;
         }
 
-        pathrouter(path);
+        pathrouter(path, client_sockfd);
         write(client_sockfd, header_body.header, header_body.header_len);
         write(client_sockfd, header_body.content, header_body.content_len);
 

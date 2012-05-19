@@ -3,7 +3,7 @@
 #define PATH_LEN    512
 #define BUFF_LEN    4096
 
-void pathrouter(const char* arg);
+void pathrouter(const char* arg, int fd);
 static char* get_mime(const char* path);
 
 #endif
