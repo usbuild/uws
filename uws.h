@@ -10,8 +10,15 @@
 #define LINE_LEN    256
 #define OPT_LEN     20
 #define VLU_LEN     50
+#define PATH_LEN    512
+
 
 void exit_err(const char* str);
+
+typedef struct nv_pair {
+    char* name;
+    char* value;
+}Http_Param, Param_Value;
 
 struct response {
     char    *header;
@@ -19,11 +26,13 @@ struct response {
     char    *content;
     int     content_len;
 };
-
-struct nv_pair {
-    char* name;
-    char* value;
+struct http_header{
+    char* method;
+    char* url;
+    char* http_ver;
+    Http_Param* params;
 };
+
 
 #endif
 

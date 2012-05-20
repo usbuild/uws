@@ -1,5 +1,6 @@
 #include "uws.h"
 #include "uws_config.h"
+#include "uws_router.h"
 #include "uws_mime.h"
 
 static struct nv_pair** uws_configs;
@@ -47,4 +48,5 @@ init_config()
 {
     read_conf_file();
     read_mime();
+    init_routers();
 }

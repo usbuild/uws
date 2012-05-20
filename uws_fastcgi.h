@@ -1,13 +1,9 @@
 #ifndef __UWS_FASTCGI_H__
 #define __UWS_FASTCGI_H__
-
-typedef struct{
-    char* param;
-    char* value;
-} PARAM_VALUE;
+#include "uws.h"
 
 void
-send_request(const char* host, int port, int fd, PARAM_VALUE pv[]);
+send_request(const char* host, int port, int fd, Param_Value pv[]);
 
 /*
  * Listening socket file number

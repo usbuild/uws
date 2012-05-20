@@ -1,4 +1,5 @@
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -84,14 +85,14 @@ add_param(int sockfd, int request_id, char* name, char* value) {
     }
 }
 void
-send_request(const char* host, int port, int fd, PARAM_VALUE init_pv[])
+send_request(const char* host, int port, int fd, Param_Value init_pv[])
 {
     int sockfd,
         result,
         count,
         i = 0,
         request_id = 1;
-    PARAM_VALUE* pv = init_pv;
+    Param_Value* pv = init_pv;
     struct sockaddr_in address;
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -113,8 +114,8 @@ send_request(const char* host, int port, int fd, PARAM_VALUE init_pv[])
         exit(1);
     }
 
-    while(pv->param != NULL){
-        add_param(sockfd, request_id, pv->param, pv->value);
+    while(pv->name != NULL){
+        add_param(sockfd, request_id, pv->name, pv->value);
         pv++;
     }
 
@@ -164,3 +165,41 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
     }
     close(sockfd);
 }
+
+int
+fastcgi_router(int sockfd, const struct http_header* header) 
+{
+    char path[PATH_LEN];
+
+    //struct stat stat_buff;
+
+    int i = 0;
+    getcwd(path, PATH_LEN);
+    strcat(path, header->url);
+
+    while(path[i] != 0) {
+        if(path[i] == '?' || path[i] == '#') {
+            path[i] = 0;
+            break;
+        }
+        i++;
+    }
+
+    /*
+    if(lstat(path, &stat_buff) != -1) 
+        if( S_ISDIR(stat_buff.st_mode) ) strcat(path, "index.php");
+        */
+
+    Param_Value pv[] = {
+        {"SCRIPT_FILENAME", path},
+        {"REQUEST_METHOD", "GET"},
+        {"REQUEST_URI", header->url},
+        {"QUERY_STRING", &path[i + 1]},
+        {"HTTP_HOST", "localhost:8080"},
+        {NULL,NULL} };
+    char* header_str = "HTTP/1.1 200 Found\nServer: UWS/0.001\n";
+    write(sockfd, header_str, strlen(header_str));
+    send_request("127.0.0.1", 9000, sockfd, pv);
+    return 0;
+}
+

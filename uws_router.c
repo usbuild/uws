@@ -3,87 +3,55 @@
 #include <time.h>
 #include "uws.h"
 #include "uws_router.h"
-#include "uws_header.h"
-#include "uws_fileio.h"
 #include "uws_config.h"
 #include "uws_mime.h"
 #include "uws_fastcgi.h"
+#define MAP_LEN 20
 static char*
 get_time_string();
-struct response header_body;
-void
-pathrouter(const char* arg, int fd)
-{
-    char path[PATH_LEN];
-    char path2[PATH_LEN];
-    struct stat stat_buff;
-    char* mime;
 
-    getcwd(path, PATH_LEN);
-    strcat(path, arg);
-    if(lstat(path, &stat_buff) != -1) {
-        if( S_ISDIR(stat_buff.st_mode) ) {
-            char *index;
-            if((index = get_opt("index")) != NULL)
-            {
-                strcpy(path2, path);
-                strcat(path2, "/");
-                strcat(path2, index);
-                if(lstat(path2, &stat_buff) != -1) {
-                    mime = get_mime(path2);
-                    if(mime == NULL) {
-                        PARAM_VALUE pv[] = {
-                        {"SCRIPT_FILENAME", path2},
-                        {"REQUEST_METHOD", "GET"},
-                        {NULL,NULL} };
-                        char* header = "HTTP/1.1 200 OK\nServer: UWS/0.001\n";
-                        write(fd, header, strlen(header));
-                        send_request("127.0.0.1", 9000, fd, pv);
-                        return;
-                    }
-                    printfile(path2);
-                }
-            }
-            mime = "text/html";
-            printdir(path);
-        }
-        else
-        {
-            mime = get_mime(path);
-            if(mime == NULL) {
-                PARAM_VALUE pv[] = {
-                {"SCRIPT_FILENAME", path},
-                {"REQUEST_METHOD", "GET"},
-                {NULL, NULL} };
-                char* header = "HTTP/1.1 200 OK\nServer: UWS/0.001\n";
-                write(fd, header, strlen(header));
-                send_request("127.0.0.1", 9000, fd, pv);
-                return;
-            }
-            printfile(path);
-        }
-    }
-    else {
-        mime = NULL;
-    }
-    set_header(mime);
+
+static Router
+map[MAP_LEN] = {{NULL, NULL}};
+//extern router handlers
+extern int http_router(int sockfd, const struct http_header* header);
+extern int fastcgi_router(int sockfd, const struct http_header* header);
+//end extern router handler
+void add_router(Router router) {
+    int i = 0;
+    while(map[i].preg != NULL) i++;
+    map[i] = router;
+}
+void init_routers(){
+    //---
+    Router httprt;
+    httprt.preg = ".*";
+    httprt.func = http_router;
+    add_router(httprt);
+    //---
+
+    Router fastcgirt;
+    fastcgirt.preg = "/([^/]+/)*[^/]+\\.php";
+    fastcgirt.func = fastcgi_router;
+    add_router(fastcgirt);
 }
 
-static char*
-get_mime(const char* path)
-{
+void pathrouter(int sockfd, struct http_header* header) {
+    char* path = header->url;
     int i = 0;
-    i = strlen(path);
+    while(map[i].preg != NULL) i++; //最先添加的最后执行
     i--;
-    while(*(path + i) != '.') {
-        if(i == 0) {
-            return "text/html";
-            break;
+    for(; i >= 0; i--) {
+        int res;
+        regex_t reg;
+
+        if((res = regcomp(&reg, map[i].preg, REG_EXTENDED | REG_ICASE)) != 0) {
+            puts("Compile regex error");
+            exit(1);
+        };
+        if(regexec(&reg, path, 0, NULL, 0) == 0) {
+            regfree(&reg);
+            if(!map[i].func(sockfd, header)) return;//返回值为0则停止冒泡
         }
-        i--;
-    }
-    if(i != 0){
-        if(strcmp(path + i +1, "php") == 0) return NULL;
-        return mimebyext(path + i + 1);
     }
 }

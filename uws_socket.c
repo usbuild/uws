@@ -7,8 +7,6 @@
 #include "uws_config.h"
 #include "uws_router.h"
 
-extern struct response header_body;
-
 int server_sockfd, client_sockfd;
 static void
 sig_int(int signo)
@@ -52,28 +50,40 @@ int start_server()
         char line[BUFF_LEN] = "",
              path[PATH_LEN],
              type[10],
+             i = 0,
              httpver[10];
-        header_body.header_len = 0;
-        header_body.content_len = 0;
         client_len = sizeof(client_address);
         client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);
+
+        struct http_header header;
 
         FILE *input_file = fdopen(client_sockfd, "r+"); 
         fgets(line, BUFF_LEN, input_file);
         sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, path, httpver);
+        header.method = type;
+        header.url = path;
+        header.http_ver = httpver;
+        header.params = (Http_Param *) calloc(sizeof(Http_Param), MAX_HEADER);
 
         while(fgets(line, BUFF_LEN, input_file) != NULL) {
-            printf("%s", line);
-            if(strlen(line) == 2) break;
+            Http_Param param;
+            if(strcmp(line, "\r\n") != 0) {
+                param.name = (char*) calloc(sizeof(char), HEADER_OPT);
+                param.value = (char*) calloc(sizeof(char), strlen(line));
+                sscanf(line, "%[^:]: %[^\r\n]", param.name, param.value);
+                header.params[i++] = param;
+            }
+            else {
+                param.name = NULL;
+                param.value = NULL;
+                header.params[i] = param;
+                break;
+            }
         }
 
-        pathrouter(path, client_sockfd);
-        write(client_sockfd, header_body.header, header_body.header_len);
-        write(client_sockfd, header_body.content, header_body.content_len);
+        pathrouter(client_sockfd, &header);
 
         close(client_sockfd);
-        if(header_body.header_len != 0) free(header_body.header);
-        if(header_body.content_len != 0) free(header_body.content);
     }
 
 }
