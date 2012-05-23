@@ -90,7 +90,6 @@ send_request(const char* host, int port, int fd, Param_Value init_pv[])
     int sockfd,
         result,
         count,
-        i = 0,
         request_id = 1;
     Param_Value* pv = init_pv;
     struct sockaddr_in address;
@@ -135,7 +134,7 @@ send_request(const char* host, int port, int fd, Param_Value init_pv[])
             content_len = (response_header.contentLengthB1 << 8) + (response_header.contentLengthB0);
             content = (char*) calloc(sizeof(char), content_len);
             count = read(sockfd, content, content_len);
-            write(fd, content, count);
+            write(fd, content, content_len);
             free(content);
             if(response_header.paddingLength > 0) {
                 count = read(sockfd, tmp, response_header.paddingLength);

@@ -1,6 +1,11 @@
 #include "uws.h"
 #include "uws_socket.h"
-extern int errno;
+extern int
+errno;
+extern void 
+init_config();
+extern void
+start_server();
 void
 exit_err(const char* str) 
 {

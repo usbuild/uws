@@ -92,6 +92,7 @@ get_mime(const char* path)
     if(i != 0){
         return mimebyext(path + i + 1);
     }
+    return "text/html";
 }
 static void
 set_header() {

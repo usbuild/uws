@@ -17,7 +17,7 @@ sig_int(int signo)
 }
 int start_server()
 {
-    int server_len, client_len;
+    socklen_t server_len, client_len;
     struct sockaddr_in server_address;
     struct sockaddr_in client_address;
     int res;
@@ -29,7 +29,7 @@ int start_server()
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
     server_address.sin_port = htons(PORT);
-    
+
     res = setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
     if(res < 0) {
         exit_err("Set Socket Option Fail");
@@ -50,40 +50,43 @@ int start_server()
         char line[BUFF_LEN] = "",
              path[PATH_LEN],
              type[10],
-             i = 0,
              httpver[10];
+        int i = 0;
         client_len = sizeof(client_address);
         client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);
 
-        struct http_header header;
+        pid_t pid = fork();
+        if(pid == 0) {
 
-        FILE *input_file = fdopen(client_sockfd, "r+"); 
-        fgets(line, BUFF_LEN, input_file);
-        sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, path, httpver);
-        header.method = type;
-        header.url = path;
-        header.http_ver = httpver;
-        header.params = (Http_Param *) calloc(sizeof(Http_Param), MAX_HEADER);
+            struct http_header header;
 
-        while(fgets(line, BUFF_LEN, input_file) != NULL) {
-            Http_Param param;
-            if(strcmp(line, "\r\n") != 0) {
-                param.name = (char*) calloc(sizeof(char), HEADER_OPT);
-                param.value = (char*) calloc(sizeof(char), strlen(line));
-                sscanf(line, "%[^:]: %[^\r\n]", param.name, param.value);
-                header.params[i++] = param;
+            FILE *input_file = fdopen(client_sockfd, "r+"); 
+            fgets(line, BUFF_LEN, input_file);
+            sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, path, httpver);
+            header.method = type;
+            header.url = path;
+            header.http_ver = httpver;
+            header.params = (Http_Param *) calloc(sizeof(Http_Param), MAX_HEADER);
+
+            while(fgets(line, BUFF_LEN, input_file) != NULL) {
+                Http_Param param;
+                if(strcmp(line, "\r\n") != 0) {
+                    param.name = (char*) calloc(sizeof(char), HEADER_OPT);
+                    param.value = (char*) calloc(sizeof(char), strlen(line));
+                    sscanf(line, "%[^:]: %[^\r\n]", param.name, param.value);
+                    header.params[i++] = param;
+                }
+                else {
+                    param.name = NULL;
+                    param.value = NULL;
+                    header.params[i] = param;
+                    break;
+                }
             }
-            else {
-                param.name = NULL;
-                param.value = NULL;
-                header.params[i] = param;
-                break;
-            }
+            pathrouter(client_sockfd, &header);
+            close(client_sockfd);
+            exit(0);
         }
-
-        pathrouter(client_sockfd, &header);
-
-        close(client_sockfd);
     }
 
 }

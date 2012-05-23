@@ -7,8 +7,6 @@
 #include "uws_mime.h"
 #include "uws_fastcgi.h"
 #define MAP_LEN 20
-static char*
-get_time_string();
 
 
 static Router
