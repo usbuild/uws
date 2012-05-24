@@ -29,7 +29,9 @@ struct response {
 struct http_header{
     char* method;
     char* url;
+    char* path;
     char* http_ver;
+    char* request_params;
     Http_Param* params;
 };
 

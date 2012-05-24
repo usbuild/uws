@@ -5,7 +5,6 @@
 #include "uws_http.h"
 #include "uws_config.h"
 #include "uws_mime.h"
-#include "uws_mime.h"
 
 extern struct nv_pair** uws_configs;
 
@@ -124,11 +123,9 @@ int
 http_router(int sockfd, const struct http_header* header) 
 {
     char path[PATH_LEN];
-    char path2[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
-    getcwd(path, PATH_LEN);
-    strcat(path, header->url);
+    strcpy(path, header->path);
     while(path[i] != 0) {
         if(path[i] == '?' || path[i] == '#') {
             path[i] = 0;
@@ -138,17 +135,6 @@ http_router(int sockfd, const struct http_header* header)
     }
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
-            char *index;
-            if((index = get_opt("index")) != NULL)
-            {
-                strcpy(path2, path);
-                strcat(path2, "/");
-                strcat(path2, index);
-                if(lstat(path2, &stat_buff) != -1) {
-                    mime = get_mime(path2);
-                    printfile(path2);
-                }
-            }
             mime = "text/html";
             printdir(path);
         }

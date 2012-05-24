@@ -8,7 +8,7 @@
 
 typedef struct {
     char* preg;
-    int (*func)(int, const struct http_header*);
+    int (*func)(int, struct http_header*);
 } Router;
 void
 pathrouter( int sockfd, struct http_header* header);

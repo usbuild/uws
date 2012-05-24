@@ -12,8 +12,9 @@
 static Router
 map[MAP_LEN] = {{NULL, NULL}};
 //extern router handlers
-extern int http_router(int sockfd, const struct http_header* header);
-extern int fastcgi_router(int sockfd, const struct http_header* header);
+extern int dir_router(int sockfd, struct http_header* header);
+extern int http_router(int sockfd, struct http_header* header);
+extern int fastcgi_router(int sockfd, struct http_header* header);
 //end extern router handler
 void add_router(Router router) {
     int i = 0;
@@ -32,6 +33,11 @@ void init_routers(){
     fastcgirt.preg = "/([^/]+/)*[^/]+\\.php";
     fastcgirt.func = fastcgi_router;
     add_router(fastcgirt);
+
+    Router dirrt;
+    dirrt.preg = ".*";
+    dirrt.func = dir_router;
+    add_router(dirrt);
 }
 
 void pathrouter(int sockfd, struct http_header* header) {

@@ -64,7 +64,9 @@ int start_server()
             fgets(line, BUFF_LEN, input_file);
             sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, path, httpver);
             header.method = type;
-            header.url = path;
+            header.url = (char*) calloc(sizeof(char), strlen(path) + 20); //max index filename length
+            strcpy(header.url, path);
+            header.path = path;
             header.http_ver = httpver;
             header.params = (Http_Param *) calloc(sizeof(Http_Param), MAX_HEADER);
 
@@ -87,6 +89,7 @@ int start_server()
             close(client_sockfd);
             exit(0);
         }
+    close(client_sockfd);
     }
 
 }
