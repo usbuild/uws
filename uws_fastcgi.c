@@ -10,6 +10,23 @@
 #include <stdlib.h>
 #include "uws_fastcgi.h"
 #define PARAMS_BUFF_LEN     1024
+
+char *mem_file = NULL;
+int file_len = 0;
+void
+write_mem_file(char *content, unsigned long length) 
+{
+    mem_file = (char*) realloc(mem_file, length + file_len);
+    memcpy(mem_file + file_len, content, length);
+    file_len += length;
+}
+Param_Value*
+read_header(char *mem, unsigned long length)
+{
+    return NULL;
+}
+
+
 static FCGI_Header
 make_header(int type, int request_id, int content_len, int padding_len)
 {
@@ -85,7 +102,7 @@ add_param(int sockfd, int request_id, char* name, char* value) {
     }
 }
 void
-send_request(const char* host, int port, int fd, Param_Value init_pv[])
+send_request(const char* host, int port, Param_Value init_pv[])
 {
     int sockfd,
         result,
@@ -133,8 +150,11 @@ send_request(const char* host, int port, int fd, Param_Value init_pv[])
         if(response_header.type == FCGI_STDOUT) {
             content_len = (response_header.contentLengthB1 << 8) + (response_header.contentLengthB0);
             content = (char*) calloc(sizeof(char), content_len);
+
             count = read(sockfd, content, content_len);
-            write(fd, content, content_len);
+
+            write_mem_file(content, content_len);
+
             free(content);
             if(response_header.paddingLength > 0) {
                 count = read(sockfd, tmp, response_header.paddingLength);
@@ -174,9 +194,18 @@ fastcgi_router(int sockfd, const struct http_header* header)
         {"QUERY_STRING", header->request_params},
         {"HTTP_HOST", "localhost:8080"},
         {NULL,NULL} };
+
+    send_request("127.0.0.1", 9000, pv);
+
     char* header_str = "HTTP/1.1 200 OK\nServer: UWS/0.001\n";
     write(sockfd, header_str, strlen(header_str));
-    send_request("127.0.0.1", 9000, sockfd, pv);
+
+    write(sockfd, mem_file, file_len);
+
+    free(mem_file);
+    mem_file = NULL;
+    file_len = 0;
+
     return 0;
 }
 

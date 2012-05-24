@@ -48,7 +48,6 @@ int start_server()
     printf("Server Listening On: %d\n", PORT);
     while(1) {
         char line[BUFF_LEN] = "",
-             path[PATH_LEN],
              type[10],
              httpver[10];
         int i = 0;
@@ -62,11 +61,11 @@ int start_server()
 
             FILE *input_file = fdopen(client_sockfd, "r+"); 
             fgets(line, BUFF_LEN, input_file);
-            sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, path, httpver);
+            header.path = (char*)calloc(sizeof(char), PATH_LEN);
+            sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, header.path, httpver);
             header.method = type;
-            header.url = (char*) calloc(sizeof(char), strlen(path) + 20); //max index filename length
-            strcpy(header.url, path);
-            header.path = path;
+            header.url = (char*) calloc(sizeof(char), strlen(header.path) + 1); //max index filename length
+            strcpy(header.url, header.path);
             header.http_ver = httpver;
             header.params = (Http_Param *) calloc(sizeof(Http_Param), MAX_HEADER);
 
@@ -87,6 +86,9 @@ int start_server()
             }
             pathrouter(client_sockfd, &header);
             close(client_sockfd);
+            free(header.url);
+            free(header.path);
+            free(header.request_params);
             exit(0);
         }
     close(client_sockfd);
