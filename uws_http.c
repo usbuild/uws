@@ -24,6 +24,7 @@ printdir(const char *fpath) {//打印目录项排序
     struct dirent *dir_entry;
     int dir_len = 0;
     char **entries;
+    struct stat stat_buff;
 
     while((dir_entry = readdir(dp)) != NULL)
         dir_len++;
@@ -32,16 +33,32 @@ printdir(const char *fpath) {//打印目录项排序
     header_body.content = (char*) calloc (sizeof(char), header_body.content_len);
 
     rewinddir(dp);
-    entries = (char**) malloc ((dir_len + 1) * sizeof(char*));
+    entries = (char**) malloc ((dir_len + 5) * sizeof(char*));
     dir_len = 0;
-    while((dir_entry = readdir(dp)) != NULL)
+    //
+    //判断是否是目录
+    //
+    
+    while((dir_entry = readdir(dp)) != NULL) {
+        char *newpath = (char*) calloc(sizeof(char), 128);//max filename length
+        strcpy(newpath, fpath);
+
         entries[dir_len++] = dir_entry->d_name;
+
+        //strcat(newpath, "/");
+        strcat(newpath, dir_entry->d_name);
+        lstat(newpath, &stat_buff);
+        if(S_ISDIR(stat_buff.st_mode)) {
+            strcat(entries[dir_len - 1], "/");
+        }
+        free(newpath);
+    }
     entries[dir_len] = NULL;
     qsort(entries, dir_len, sizeof(char*), comparestr);
 
 
     while(*(entries)!= NULL) {
-        strcat(header_body.content, "<a href=\"./");
+        strcat(header_body.content, "<a href=\"");
         strcat(header_body.content, *entries);
         strcat(header_body.content, "\">");
         strcat(header_body.content, *(entries++));
