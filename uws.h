@@ -11,6 +11,9 @@
 #define OPT_LEN     20
 #define VLU_LEN     50
 #define PATH_LEN    512
+#define bool        int
+#define true        1
+#define false       0
 
 
 void exit_err(const char* str);
