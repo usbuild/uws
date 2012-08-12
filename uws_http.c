@@ -6,8 +6,6 @@
 #include "uws_config.h"
 #include "uws_mime.h"
 
-extern struct nv_pair** uws_configs;
-
 static struct response header_body;
 
 static char* mime;

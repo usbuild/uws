@@ -10,7 +10,7 @@ read_mime()
     char* mimefile;
     FILE* conf_file;
     char buff[LINE_LEN];
-    if((mimefile = get_opt("mimefile")) == NULL) exit(1);
+    if((mimefile = uws_config.http.mimefile) == NULL) exit(1);
     conf_file = fopen(mimefile, "rb");
 
     while((fgets(buff, LINE_LEN, conf_file)) != NULL) i++;

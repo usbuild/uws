@@ -84,6 +84,9 @@ int start_server()
                     break;
                 }
             }
+            //SELECT A SERVER
+            running_server = uws_config.http.servers[0];
+            //
             pathrouter(client_sockfd, &header);
             close(client_sockfd);
             free(header.url);

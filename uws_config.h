@@ -1,5 +1,8 @@
 #ifndef __UWS_CONFIG_H__
 #define __UWS_CONFIG_H__
+#define bool    int
+#define true    1
+#define false   0
 #define CONFIG_FILE "uws.conf"
 
 //config struct defined here
@@ -14,6 +17,7 @@ struct events_cfg{
 };
 
 struct http_cfg{
+    char* mimefile;
     bool sendfile;
     bool tcp_nopush;
     bool tcp_nodelay;
@@ -30,6 +34,7 @@ struct http_cfg{
     int     gzip_comp_level;
     char*   gzip_http_version;
     char**  gzip_types;
+    server_cfg_t** servers;
 };
 
 typedef struct{
@@ -38,13 +43,10 @@ typedef struct{
     char* pid;
     struct events_cfg events;
     struct http_cfg http;
-    server_cfg_t* servers;
 } uws_config_t;
-
-//config end here
-
-char* get_opt(const char* option) ;
-
+//config definition end here
+uws_config_t uws_config;//Main Configuration
+server_cfg_t* running_server;//Current Server Profile Used
 void init_config();
 
 #endif

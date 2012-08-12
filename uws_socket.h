@@ -5,6 +5,6 @@
 #define MAX_HEADER  64
 #define HEADER_OPT  64
 
-void start_socket();
+int start_server();
 
 #endif
