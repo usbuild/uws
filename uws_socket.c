@@ -61,19 +61,20 @@ int start_server()
 
             FILE *input_file = fdopen(client_sockfd, "r+"); 
             fgets(line, BUFF_LEN, input_file);
-            header.path = (char*)calloc(sizeof(char), PATH_LEN);
+            header.path = (char*)calloc(PATH_LEN, sizeof(char));
+
             sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, header.path, httpver);
             header.method = type;
-            header.url = (char*) calloc(sizeof(char), strlen(header.path) + 1); //max index filename length
+            header.url = (char*) calloc(strlen(header.path) + 1, sizeof(char)); //max index filename length
             strcpy(header.url, header.path);
             header.http_ver = httpver;
-            header.params = (Http_Param *) calloc(sizeof(Http_Param), MAX_HEADER);
+            header.params = (Http_Param *) calloc(MAX_HEADER, sizeof(Http_Param));
 
             while(fgets(line, BUFF_LEN, input_file) != NULL) {
                 Http_Param param;
                 if(strcmp(line, "\r\n") != 0) {
-                    param.name = (char*) calloc(sizeof(char), HEADER_OPT);
-                    param.value = (char*) calloc(sizeof(char), strlen(line));
+                    param.name = (char*) calloc(HEADER_OPT, sizeof(char));
+                    param.value = (char*) calloc(strlen(line), sizeof(char));
                     sscanf(line, "%[^:]: %[^\r\n]", param.name, param.value);
                     header.params[i++] = param;
                 }

@@ -18,7 +18,6 @@ main(int argc, const char *argv[])
     init_config();
     read_mime();
     init_routers();
-
     start_server();
     return 0;
 }

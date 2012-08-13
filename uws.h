@@ -37,7 +37,7 @@ struct http_header{
     char* request_params;
     Http_Param* params;
 };
-
+char* find_value(char* key);
 
 #endif
 
