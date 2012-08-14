@@ -6,6 +6,7 @@
 #include "uws_mime.h"
 #include "uws_config.h"
 #include "uws_router.h"
+#include "uws_header.h"
 
 int server_sockfd, client_sockfd;
 static void
@@ -22,9 +23,7 @@ int start_server()
     struct sockaddr_in client_address;
     int res;
     int reuse = 1;
-    //---
     signal(SIGINT, sig_int);
-    //---
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
@@ -57,42 +56,34 @@ int start_server()
         pid_t pid = fork();
         if(pid == 0) {
 
-            struct http_header header;
-
             FILE *input_file = fdopen(client_sockfd, "r+"); 
             fgets(line, BUFF_LEN, input_file);
-            header.path = (char*)calloc(PATH_LEN, sizeof(char));
+            request_header.path = (char*)calloc(PATH_LEN, sizeof(char));
 
-            sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, header.path, httpver);
-            header.method = type;
-            header.url = (char*) calloc(strlen(header.path) + 1, sizeof(char)); //max index filename length
-            strcpy(header.url, header.path);
-            header.http_ver = httpver;
-            header.params = (Http_Param *) calloc(MAX_HEADER, sizeof(Http_Param));
+            sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, request_header.path, httpver);
+            request_header.method = type;
+            request_header.url = (char*) calloc(strlen(request_header.path) + 1, sizeof(char)); //max index filename length
+            strcpy(request_header.url, request_header.path);
+            request_header.http_ver = httpver;
 
             while(fgets(line, BUFF_LEN, input_file) != NULL) {
-                Http_Param param;
                 if(strcmp(line, "\r\n") != 0) {
-                    param.name = (char*) calloc(HEADER_OPT, sizeof(char));
-                    param.value = (char*) calloc(strlen(line), sizeof(char));
-                    sscanf(line, "%[^:]: %[^\r\n]", param.name, param.value);
-                    header.params[i++] = param;
+                    add_header_param(line);
                 }
                 else {
-                    param.name = NULL;
-                    param.value = NULL;
-                    header.params[i] = param;
                     break;
                 }
             }
+            //We have got hostname!
+            char* host = get_header_param("Host");
             //SELECT A SERVER
             running_server = uws_config.http.servers[0];
             //
-            pathrouter(client_sockfd, &header);
+            pathrouter(client_sockfd);
             close(client_sockfd);
-            free(header.url);
-            free(header.path);
-            free(header.request_params);
+            free(request_header.url);
+            free(request_header.path);
+            free(request_header.request_params);
             exit(0);
         }
     close(client_sockfd);

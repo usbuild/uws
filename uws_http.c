@@ -5,6 +5,7 @@
 #include "uws_http.h"
 #include "uws_config.h"
 #include "uws_mime.h"
+#include "uws_header.h"
 
 static struct response header_body;
 
@@ -135,12 +136,12 @@ set_header() {
     header_body.header_len = strlen(header_body.header);
 }
 int
-http_router(int sockfd, const struct http_header* header) 
+http_router(int sockfd) 
 {
     char path[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
-    strcpy(path, header->path);
+    strcpy(path, request_header.path);
     while(path[i] != 0) {
         if(path[i] == '?' || path[i] == '#') {
             path[i] = 0;

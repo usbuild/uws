@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "uws_fastcgi.h"
+#include "uws_header.h"
 #define PARAMS_BUFF_LEN     1024
 
 char *mem_file = NULL;
@@ -79,7 +80,7 @@ build_name_value_body(char *name, int name_len, char *value, int value_len, unsi
 }
 
 static void
-add_param(int sockfd, int request_id, char* name, char* value) {
+add_fcgi_param(int sockfd, int request_id, char* name, char* value) {
     int name_len, value_len, body_len, count;
     unsigned char body_buff[PARAMS_BUFF_LEN];
     bzero(body_buff, PARAMS_BUFF_LEN);
@@ -131,7 +132,7 @@ send_request(const char* host, int port, Param_Value init_pv[])
     }
 
     while(pv->name != NULL){
-        add_param(sockfd, request_id, pv->name, pv->value);
+        add_fcgi_param(sockfd, request_id, pv->name, pv->value);
         pv++;
     }
 
@@ -185,13 +186,13 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 }
 
 int
-fastcgi_router(int sockfd, const struct http_header* header) 
+fastcgi_router(int sockfd) 
 {
     Param_Value pv[] = {
-        {"SCRIPT_FILENAME", header->path},
+        {"SCRIPT_FILENAME", request_header.path},
         {"REQUEST_METHOD", "GET"},
-        {"REQUEST_URI", header->url},
-        {"QUERY_STRING", header->request_params},
+        {"REQUEST_URI", request_header.url},
+        {"QUERY_STRING",request_header.request_params},
         {"HTTP_HOST", "localhost:8080"},
         {NULL,NULL} };
 

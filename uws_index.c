@@ -2,9 +2,10 @@
 #include <sys/stat.h>
 #include "uws.h"
 #include "uws_config.h"
+#include "uws_header.h"
 
 int
-dir_router(int sockfd, struct http_header* header) 
+dir_router(int sockfd) 
 {
     char path[PATH_LEN];
     char path2[PATH_LEN];
@@ -12,20 +13,20 @@ dir_router(int sockfd, struct http_header* header)
     int i = 0; 
     getcwd(path, PATH_LEN);
 
-    while(header->url[i] != 0) {
-        if(header->url[i] == '?' || header->url[i] == '#') {
-            header->url[i] = 0;
+    while(request_header.url[i] != 0) {
+        if(request_header.url[i] == '?' || request_header.url[i] == '#') {
+            request_header.url[i] = 0;
             i++;
             break;
         }
         i++;
     }
 
-    header->request_params = (char*) calloc(sizeof(char), PATH_LEN);
-    strcpy(header->request_params, header->url + i);
+    request_header.request_params = (char*) calloc(sizeof(char), PATH_LEN);
+    strcpy(request_header.request_params, request_header.url + i);
 
-    strcat(path, header->url);
-    strcpy(header->path,  path);
+    strcat(path, request_header.url);
+    strcpy(request_header.path,  path);
 
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
@@ -36,19 +37,19 @@ dir_router(int sockfd, struct http_header* header)
                 strcat(path2, "/");
                 strcat(path2, index);
                 if(lstat(path2, &stat_buff) != -1) {
-                    strcpy(header->path,  path2);
-                    strcpy(path2, header->url);
+                    strcpy(request_header.path,  path2);
+                    strcpy(path2, request_header.url);
                     strcat(path2, "/");
                     strcat(path2, index);
-                    header->url = (char*) realloc(header->url, strlen(path2));
-                    strcpy(header->url, path2);
+                    request_header.url = (char*) realloc(request_header.url, strlen(path2));
+                    strcpy(request_header.url, path2);
                     break;
                 }
             }
         }
     }
-    puts(header->url);
-    puts(header->path);
-    puts(header->request_params);
+    puts(request_header.url);
+    puts(request_header.path);
+    puts(request_header.request_params);
     return 1;
 }
