@@ -7,6 +7,7 @@
 #include "uws_config.h"
 #include "uws_router.h"
 #include "uws_header.h"
+#include "uws_utils.h"
 
 int server_sockfd, client_sockfd;
 static void
@@ -79,7 +80,7 @@ int start_server()
 
             int i = 0;
             while(uws_config.http.servers[i] != NULL) {
-                if(strcmp(host, uws_config.http.servers[i]->server_name) == 0) {
+                if(wildcmp(uws_config.http.servers[i]->server_name, host) == 0) {
                     //We've got a file regiestered in the config file;
                     running_server = uws_config.http.servers[i];
                     break;
