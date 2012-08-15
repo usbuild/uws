@@ -74,11 +74,14 @@ int start_server()
                 }
             }
             char* host = get_header_param("Host");
+
+            if(host == NULL) exit(0);
+
             int i = 0;
             while(uws_config.http.servers[i] != NULL) {
                 if(strcmp(host, uws_config.http.servers[i]->server_name) == 0) {
                     //We've got a file regiestered in the config file;
-                    running_server = uws_config.http.servers[i];
+                    running_server = uws_config.http.servers[0];
                     break;
                 }
                 i++;
