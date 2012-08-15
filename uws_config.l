@@ -82,6 +82,7 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 <HTTP>gzip_types      {state = ARRAY_VAL; val_array = &uws_config.http.gzip_types;}
 
 <SERVER>root         {state = STRING_VAL; val_string= &server->root;}
+<SERVER>server_name  {state = STRING_VAL; val_string= &server->server_name;}
 <SERVER>index        {state = ARRAY_VAL; val_array= &server->index;}
 [^ \t\n\t;]+       {
                     switch(state){

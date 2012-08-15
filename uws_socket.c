@@ -45,8 +45,7 @@ int start_server()
         exit_err("Listen Error");
     }
     printf("Server Listening On: %d\n", PORT);
-    while(1) {
-        char line[BUFF_LEN] = "",
+    while(1) { char line[BUFF_LEN] = "",
              type[10],
              httpver[10];
         int i = 0;
@@ -74,10 +73,17 @@ int start_server()
                     break;
                 }
             }
-            //We have got hostname!
             char* host = get_header_param("Host");
-            //SELECT A SERVER
-            running_server = uws_config.http.servers[0];
+            int i = 0;
+            while(uws_config.http.servers[i] != NULL) {
+                if(strcmp(host, uws_config.http.servers[i]->server_name) == 0) {
+                    //We've got a file regiestered in the config file;
+                    running_server = uws_config.http.servers[i];
+                    break;
+                }
+                i++;
+            }
+            if(running_server == NULL) exit(0);
             //
             pathrouter(client_sockfd);
             close(client_sockfd);
