@@ -81,7 +81,7 @@ int start_server()
             while(uws_config.http.servers[i] != NULL) {
                 if(strcmp(host, uws_config.http.servers[i]->server_name) == 0) {
                     //We've got a file regiestered in the config file;
-                    running_server = uws_config.http.servers[0];
+                    running_server = uws_config.http.servers[i];
                     break;
                 }
                 i++;

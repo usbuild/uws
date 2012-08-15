@@ -11,7 +11,8 @@ dir_router(int sockfd)
     char path2[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
-    getcwd(path, PATH_LEN);
+    //getcwd(path, PATH_LEN);
+    strcpy(path, running_server->root);
 
     while(request_header.url[i] != 0) {
         if(request_header.url[i] == '?' || request_header.url[i] == '#') {
