@@ -62,8 +62,8 @@ int start_server()
         client_len = sizeof(client_address);
         client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);
 
-        pid_t pid = fork();
-        if(pid == 0) {
+        //pid_t pid = fork();
+        //if(pid == 0) {
 
             FILE *input_file = fdopen(client_sockfd, "r+"); 
             fgets(line, BUFF_LEN, input_file);
@@ -87,7 +87,7 @@ int start_server()
 
             if(host == NULL) exit(0);
 
-            int i = 0;
+            i = 0;
             while(uws_config.http.servers[i] != NULL) {
                 if(wildcmp(uws_config.http.servers[i]->server_name, host) == 0) {
                     //We've got a file regiestered in the config file;
@@ -103,9 +103,9 @@ int start_server()
             free(request_header.url);
             free(request_header.path);
             free(request_header.request_params);
-            exit(0);
-        }
-    close(client_sockfd);
+            //exit(0);
+        //}
+    //close(client_sockfd);
     }
 
 }
