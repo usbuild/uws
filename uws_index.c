@@ -49,8 +49,10 @@ dir_router(int sockfd)
             }
         }
     }
+    /*
     puts(request_header.url);
     puts(request_header.path);
     puts(request_header.request_params);
+    */
     return 1;
 }

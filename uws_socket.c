@@ -14,7 +14,6 @@ static void
 sig_int(int signo)
 {
     close(server_sockfd);
-    printf("\nUser terminated\n");
     exit(0);
 }
 int start_server()
@@ -24,6 +23,8 @@ int start_server()
     struct sockaddr_in client_address;
     int res;
     int reuse = 1;
+    int worker_processes = uws_config.worker_processes;
+    int worker_count = 0;
     signal(SIGINT, sig_int);
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server_address.sin_family = AF_INET;
@@ -46,6 +47,14 @@ int start_server()
         exit_err("Listen Error");
     }
     printf("Server Listening On: %d\n", PORT);
+    //prefork here
+    for(worker_count = 0; worker_count < worker_processes; worker_count++ ){
+        pid_t pid = fork();
+        if(pid < 0){
+            exit_err("Fork Worker Error");
+        }
+    }
+
     while(1) { char line[BUFF_LEN] = "",
              type[10],
              httpver[10];

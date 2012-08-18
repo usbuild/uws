@@ -1,10 +1,11 @@
 #ifndef __UWS_H__
 #define  __UWS_H__
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/time.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <errno.h>
 
 #define LINE_LEN    256
