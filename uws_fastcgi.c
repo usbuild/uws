@@ -186,13 +186,13 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 }
 
 int
-fastcgi_router(int sockfd) 
+fastcgi_router(int sockfd, struct http_header *request_header) 
 {
     Param_Value pv[] = {
-        {"SCRIPT_FILENAME", request_header.path},
+        {"SCRIPT_FILENAME", request_header->path},
         {"REQUEST_METHOD", "GET"},
-        {"REQUEST_URI", request_header.url},
-        {"QUERY_STRING",request_header.request_params},
+        {"REQUEST_URI", request_header->url},
+        {"QUERY_STRING",request_header->request_params},
         {"HTTP_HOST", "localhost:8080"},
         {NULL,NULL} };
 

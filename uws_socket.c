@@ -2,18 +2,14 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <signal.h>
-#include <fcntl.h>
 #include <sys/epoll.h>
 #include "uws_socket.h"
 #include "uws_mime.h"
 #include "uws_config.h"
-#include "uws_router.h"
-#include "uws_header.h"
 #include "uws_utils.h"
-#define MAX_EVENTS  10
+#include "uws_fdhandler.h"
+#define MAX_EVENTS  100
 
-void handle_client_fd(int client_sockfd);
-void setnonblocking(int sock);
 
 int server_sockfd, client_sockfd;
 static void
@@ -59,10 +55,10 @@ int start_server()
         if(pid < 0)
             exit_err("Fork Worker Error");
     }
-    //epoll here start
+    //epoll init here
     struct epoll_event ev,events[MAX_EVENTS];
     int nfds,epollfd;
-    epollfd = epoll_create(10);//create
+    epollfd = epoll_create(100);//create
     if(epollfd == -1){
         exit_err("Epoll create");
     }
@@ -99,60 +95,3 @@ int start_server()
     }
 }
 
-void handle_client_fd(int client_sockfd) {
-    char line[BUFF_LEN] = "",
-         type[10],
-         httpver[10];
-    int i = 0;
-
-    FILE *input_file = fdopen(client_sockfd, "r+"); 
-
-    fgets(line, BUFF_LEN, input_file);
-    request_header.path = (char*)calloc(PATH_LEN, sizeof(char));
-    sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, request_header.path, httpver);
-    request_header.method = type;
-    request_header.url = (char*) calloc(strlen(request_header.path) + 1, sizeof(char)); //max index filename length
-    strcpy(request_header.url, request_header.path);
-    request_header.http_ver = httpver;
-
-    while(fgets(line, BUFF_LEN, input_file) != NULL) {
-        if(strcmp(line, "\r\n") != 0) {
-            add_header_param(line);
-        }
-        else {
-            break;
-        }
-    }
-    char* host = get_header_param("Host");
-
-    if(host == NULL) exit(0);
-
-    i = 0;
-    while(uws_config.http.servers[i] != NULL) {
-        if(wildcmp(uws_config.http.servers[i]->server_name, host) == 0) {
-            //We've got a file regiestered in the config file;
-            running_server = uws_config.http.servers[i];
-            break;
-        }
-        i++;
-    }
-    if(running_server == NULL) exit(0);
-    //
-    pathrouter(client_sockfd);
-    close(client_sockfd);
-    free(request_header.url);
-    free(request_header.path);
-    free(request_header.request_params);
-}
-
-void setnonblocking(int sock)
-{
-    int opts;
-    opts = fcntl(sock, F_GETFL);
-    if (opts < 0) 
-        exit_err("fcntl(F_GETFL)");
-    opts = (opts | O_NONBLOCK);
-    if (fcntl(sock, F_SETFL, opts) < 0)
-        exit_err("fcntl(F_SETFL)");
-    return;
-}

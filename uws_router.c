@@ -13,9 +13,9 @@
 static Router
 map[MAP_LEN] = {{NULL, NULL}};
 //extern router handlers
-extern int dir_router(int sockfd);
-extern int http_router(int sockfd);
-extern int fastcgi_router(int sockfd);
+extern int dir_router(int sockfd, struct http_header *request_header);
+extern int http_router(int sockfd, struct http_header *request_header);
+extern int fastcgi_router(int sockfd, struct http_header *request_header);
 //end extern router handler
 void add_router(Router router) {
     int i = 0;
@@ -41,8 +41,8 @@ void init_routers(){
     add_router(dirrt);
 }
 
-void pathrouter(int sockfd) {
-    char* path = request_header.url;
+void pathrouter(int sockfd, struct http_header *request_header) {
+    char* path = request_header->url;
     int i = 0;
     while(map[i].preg != NULL) i++; //最先添加的最后执行
     i--;
@@ -56,7 +56,7 @@ void pathrouter(int sockfd) {
         };
         if(regexec(&reg, path, 0, NULL, 0) == 0) {
             regfree(&reg);
-            if(!map[i].func(sockfd)) return;//返回值为0则停止冒泡
+            if(!map[i].func(sockfd, request_header)) return;//返回值为0则停止冒泡
         }
     }
 }

@@ -28,6 +28,7 @@ read_mime()
         i++;
     }
     mime_maps[i] = NULL;
+    fclose(conf_file);
 }
 
 char* mimebyext(const char *ext)

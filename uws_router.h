@@ -4,14 +4,15 @@
 #define BUFF_LEN    4096
 #include <sys/types.h>
 #include <regex.h>
+#include "uws_header.h"
 
 
 typedef struct {
     char* preg;
-    int (*func)(int);
+    int (*func)(int, struct http_header*);
 } Router;
 void
-pathrouter( int sockfd);
+pathrouter(int sockfd, struct http_header*);
 void
 init_routers();
 

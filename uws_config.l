@@ -126,8 +126,8 @@ void init_config(){
     set_default_config();
     yyin = fopen(CONFIG_FILE, "r");
     yylex();
+    fclose(yyin);
 }
-
 
 
 char* strdup(const char *s){

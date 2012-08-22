@@ -13,10 +13,9 @@ struct http_header{
     int max_len;
     Http_Param* params;
 };
-struct http_header request_header;
 
-char* get_header_param(char*);
-void add_header_param(char*);
+char* get_header_param(char*, struct http_header *request_header);
+void add_header_param(char*, struct http_header *request_header);
 
 #endif
 

@@ -1,1 +1,4 @@
 UWS(Usbuild Web Server): A light weight http server written in C
+The default configuration file is uws.conf, it's nginx-like and easy to write;
+This program is written in pure C language, and use lex to generate grammer reader.
+It can ONLY work under Linux environment, So, don't try to compile it in windows;

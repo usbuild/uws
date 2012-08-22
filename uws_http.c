@@ -136,12 +136,12 @@ set_header() {
     header_body.header_len = strlen(header_body.header);
 }
 int
-http_router(int sockfd) 
+http_router(int sockfd, struct http_header *request_header) 
 {
     char path[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
-    strcpy(path, request_header.path);
+    strcpy(path, request_header->path);
     while(path[i] != 0) {
         if(path[i] == '?' || path[i] == '#') {
             path[i] = 0;
