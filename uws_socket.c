@@ -54,6 +54,7 @@ int start_server()
         pid_t pid = fork();
         if(pid < 0)
             exit_err("Fork Worker Error");
+        if(pid == 0) break;//Master continuing fork
     }
     //epoll init here
     struct epoll_event ev,events[MAX_EVENTS];

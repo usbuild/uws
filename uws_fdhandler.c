@@ -65,7 +65,7 @@ void handle_client_fd(int client_sockfd) {
     struct thread_info *info = (struct thread_info*)calloc(1, sizeof(struct thread_info));
     info->client_sockfd = client_sockfd;
     /*
-     * e, it is not a good idea to use multi-thread, benchmark down,
+     * e, it is not a good idea to use multi-thread, benchmark down, in my vmware 256M ubuntu
      */
     //err = pthread_create(&ntid, NULL, thread_unit, info);
     //if(err != 0) exit_err("Fdhandler Thread:");
