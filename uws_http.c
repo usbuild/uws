@@ -113,7 +113,7 @@ get_mime(const char* path)
 static void
 set_header() {
     header_body.header = (char*) calloc(sizeof(char), HEADER_LEN);
-
+    char *time_string = get_time_string();
     if(mime != NULL) {
         sprintf(header_body.header,    "HTTP/1.1 200 OK\n"
             "Cache-Control: private\n"
@@ -123,7 +123,7 @@ set_header() {
             "Content-Length: %d\n"
             "Content-Type: %s;charset=utf-8\n"
             "\n"\
-            , get_time_string(), header_body.content_len, mime);
+            , time_string, header_body.content_len, mime);
     }
     else {
         sprintf(header_body.header,    "HTTP/1.1 404 Not Found\n"
@@ -132,8 +132,9 @@ set_header() {
             "Server: UWS/0.001\n"
             "Date: %s\n"
             "\n"\
-            , get_time_string());
+            , time_string);
     }
+    free(time_string);
     header_body.header_len = strlen(header_body.header);
 }
 int
@@ -168,5 +169,7 @@ http_router(int sockfd, struct http_header *request_header)
     int res;
     res = write(sockfd, header_body.header, header_body.header_len);
     res = write(sockfd, header_body.content, header_body.content_len);
+    free(header_body.header);
+    free(header_body.content);
     return 0;
 }

@@ -12,8 +12,7 @@
 #define MAX_EVENTS  10
 
 
-int server_sockfd, client_sockfd;
-static void
+int server_sockfd, client_sockfd; static void
 sig_int(int signo)
 {
     close(server_sockfd);
@@ -82,7 +81,7 @@ int start_server()
     if(epollfd == -1){
         exit_err("Epoll create");
     }
-    ev.events = EPOLLIN | EPOLLOUT;
+    ev.events = EPOLLIN;
     ev.data.fd = server_sockfd;
     if(epoll_ctl(epollfd, EPOLL_CTL_ADD, server_sockfd, &ev) == -1)
     {
@@ -95,6 +94,7 @@ int start_server()
         nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 
         if(nfds == -1) exit_err("epoll_wait");
+        //printf("%d=>nfds:%d\n", getpid(), nfds);
 
         for(n = 0; n < nfds; n++) {
             if(events[n].data.fd == server_sockfd){
@@ -103,7 +103,7 @@ int start_server()
                 if(client_sockfd == -1)
                     exit_err("accept_error");
                 setnonblocking(client_sockfd);
-                ev.events = EPOLLIN | EPOLLET;
+                ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
                 ev.data.fd = client_sockfd;
                 if(epoll_ctl(epollfd, EPOLL_CTL_ADD, client_sockfd, &ev) == -1)
                     exit_err("epoll_ctl:conn_sock");

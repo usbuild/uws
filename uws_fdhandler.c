@@ -37,26 +37,27 @@ void *thread_unit(void *arg)
     }
     char* host = get_header_param("Host", &request_header);
 
-    if(host == NULL) exit(0);
-
-    i = 0;
-    while(uws_config.http.servers[i] != NULL) {
-        if(wildcmp(uws_config.http.servers[i]->server_name, host) == 1) {
-            //We've got a file regiestered in the config file;
-            running_server = uws_config.http.servers[i];
-            break;
+    if(host != NULL) 
+    {
+        i = 0;
+        while(uws_config.http.servers[i] != NULL) {
+            if(wildcmp(uws_config.http.servers[i]->server_name, host) == 1) {
+                //We've got a file regiestered in the config file;
+                running_server = uws_config.http.servers[i];
+                break;
+            }
+            i++;
         }
-        i++;
-    }
-    if(running_server != NULL) {
-        pathrouter(client_sockfd, &request_header);
+        if(running_server != NULL) {
+            pathrouter(client_sockfd, &request_header);
+        }
     }
     //
     close(client_sockfd);
     free(request_header.url);
     free(request_header.path);
-    free(request_header.request_params);
-    return ((void *)0);
+    free_header_params(&request_header);
+    return NULL;
 }
 void handle_client_fd(int client_sockfd) {
     int err;
@@ -64,12 +65,13 @@ void handle_client_fd(int client_sockfd) {
     struct thread_info *info = (struct thread_info*)calloc(1, sizeof(struct thread_info));
     info->client_sockfd = client_sockfd;
     /*
-     * e, it is not a good idea to use multi-thread, benchmark down, in my vmware 256M ubuntu
+     * e, it is not a good idea to use multi-thread, benchmark down, on my vmware 256M ubuntu
      */
     //err = pthread_create(&ntid, NULL, thread_unit, info);
     //if(err != 0) exit_err("Fdhandler Thread:");
     thread_unit(info);//single thread
     //printf("original client_fd:%d\n", client_sockfd);
+    free(info);
     return;
 }
 

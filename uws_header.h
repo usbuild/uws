@@ -1,7 +1,6 @@
 #ifndef __UWS_HEADER_H__
 #define __UWS_HEADER_H__
 #include "uws.h"
-#define INIT_PARAM_NUM
 
 struct http_header{
     char* method;
@@ -16,6 +15,7 @@ struct http_header{
 
 char* get_header_param(char*, struct http_header *request_header);
 void add_header_param(char*, struct http_header *request_header);
+void free_header_params(struct http_header *request_header);
 
 #endif
 

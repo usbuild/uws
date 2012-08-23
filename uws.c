@@ -1,4 +1,5 @@
 #include "uws.h"
+#include <mcheck.h>
 #include "uws_socket.h"
 #include "uws_config.h"
 #include "uws_router.h"
@@ -15,6 +16,8 @@ exit_err(const char* str)
 int
 main(int argc, const char *argv[])
 {
+    setenv("MALLOC_TRACE", "output", 1);
+    //mtrace();
     init_config();
     read_mime();
     init_routers();

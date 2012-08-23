@@ -11,7 +11,6 @@ dir_router(int sockfd, struct http_header *request_header)
     char path2[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
-    //getcwd(path, PATH_LEN);
     strcpy(path, running_server->root);
 
     while(request_header->url[i] != 0) {

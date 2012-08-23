@@ -38,3 +38,14 @@ void add_header_param(char* kvstring, struct http_header *request_header){
     new_param->value = value;
     request_header->used_len++;
 }
+void free_header_params(struct http_header *request_header)
+{
+    int i = 0;
+    for(i = 0; i < request_header->used_len; i++) {
+        free(request_header->params[i].name);
+        free(request_header->params[i].value);
+    }
+    free(request_header->params);
+    request_header->params = NULL;
+    request_header->used_len = 0;
+}
