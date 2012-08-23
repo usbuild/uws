@@ -32,7 +32,6 @@ int start_server()
     signal(SIGINT, sig_int);
     signal(SIGPIPE, SIG_IGN);
 
-
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
