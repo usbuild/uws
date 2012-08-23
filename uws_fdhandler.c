@@ -15,7 +15,6 @@ void *thread_unit(void *arg)
          type[10],
          httpver[10];
     int i = 0;
-    //printf("after client_sockfd:%d\n", client_sockfd);
 
     FILE *input_file = fdopen(client_sockfd, "r+"); 
 

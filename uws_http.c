@@ -64,6 +64,7 @@ printdir(const char *fpath) {//打印目录项排序
         strcat(header_body.content, "</a><br/>\n");
     }
     header_body.content_len = strlen(header_body.content);
+    closedir(dp);
 }
 void
 printfile(const char *path)

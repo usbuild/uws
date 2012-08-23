@@ -9,7 +9,7 @@
 #include "uws_config.h"
 #include "uws_utils.h"
 #include "uws_fdhandler.h"
-#define MAX_EVENTS  100
+#define MAX_EVENTS  10
 
 
 int server_sockfd, client_sockfd;
@@ -70,7 +70,7 @@ int start_server()
         pid_t child_pid;
         while((child_pid = wait(&statloc)) != -1)
         {
-            printf("Child Process %d exit with %d\n", child_pid, statloc);
+            printf("Child process %d exit with %d\n", child_pid, statloc);
         }
         return;
     }
@@ -78,11 +78,11 @@ int start_server()
     //epoll init here
     struct epoll_event ev,events[MAX_EVENTS];
     int nfds,epollfd;
-    epollfd = epoll_create(100);//create
+    epollfd = epoll_create(MAX_EVENTS);//create
     if(epollfd == -1){
         exit_err("Epoll create");
     }
-    ev.events = EPOLLIN;
+    ev.events = EPOLLIN | EPOLLOUT;
     ev.data.fd = server_sockfd;
     if(epoll_ctl(epollfd, EPOLL_CTL_ADD, server_sockfd, &ev) == -1)
     {
