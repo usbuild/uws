@@ -1,5 +1,6 @@
 #include "uws.h"
 #include <sys/socket.h>
+#include <sys/wait.h>
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/epoll.h>
@@ -27,7 +28,12 @@ int start_server()
     int reuse = 1;
     int worker_processes = uws_config.worker_processes;
     int worker_count = 0;
+    pid_t self_pid;
+
     signal(SIGINT, sig_int);
+    signal(SIGPIPE, SIG_IGN);
+
+
     server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
     server_address.sin_family = AF_INET;
     server_address.sin_addr.s_addr = INADDR_ANY;
@@ -50,12 +56,25 @@ int start_server()
     }
     printf("Server Listening On: %d\n", PORT);
     //prefork here
+    self_pid = getpid();
     for(worker_count = 0; worker_count < worker_processes; worker_count++ ){
         pid_t pid = fork();
         if(pid < 0)
             exit_err("Fork Worker Error");
         if(pid == 0) break;//Master continuing fork
     }
+    if(getpid() == self_pid)//this is master process
+    {
+        close(server_sockfd);
+        int statloc;
+        pid_t child_pid;
+        while((child_pid = wait(&statloc)) != -1)
+        {
+            printf("Child Process %d exit with %d\n", child_pid, statloc);
+        }
+        return;
+    }
+
     //epoll init here
     struct epoll_event ev,events[MAX_EVENTS];
     int nfds,epollfd;

@@ -164,7 +164,8 @@ http_router(int sockfd, struct http_header *request_header)
         mime = NULL;
     }
     set_header();
-    write(sockfd, header_body.header, header_body.header_len);
-    write(sockfd, header_body.content, header_body.content_len);
+    int res;
+    res = write(sockfd, header_body.header, header_body.header_len);
+    res = write(sockfd, header_body.content, header_body.content_len);
     return 0;
 }

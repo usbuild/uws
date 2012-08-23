@@ -23,7 +23,7 @@ void add_router(Router router) {
     map[i] = router;
 }
 void init_routers(){
-    //---
+    //--- FILO
     Router httprt;
     httprt.preg = ".*";
     httprt.func = http_router;
