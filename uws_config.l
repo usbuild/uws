@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "uws_config.h"
+#include "uws_utils.h"
 
 char** getArray(char* s);
 bool getBoolean(char* s);
@@ -130,14 +131,6 @@ void init_config(){
 }
 
 
-char* strdup(const char *s){
-    char *r;
-    if(s == 0 || *s == 0)
-        return NULL;
-    r = malloc(strlen(s) + 1);
-    strcpy(r, s);
-    return r;
-}
 bool getBoolean(char* s){
     if(!strcmp("on", yytext)){
         return true;

@@ -45,3 +45,11 @@ void setnonblocking(int sock)
     if (fcntl(sock, F_SETFL, opts) < 0) exit_err("fcntl(F_SETFL)");
     return;
 }
+char* strdup(const char *s){
+    char *r;
+    if(s == 0 || *s == 0)
+        return NULL;
+    r = malloc(strlen(s) + 1);
+    strcpy(r, s);
+    return r;
+}

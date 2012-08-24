@@ -3,6 +3,7 @@
 #include <time.h>
 #include "uws.h"
 #include "uws_http.h"
+#include "uws_utils.h"
 #include "uws_config.h"
 #include "uws_mime.h"
 #include "uws_header.h"
@@ -98,7 +99,7 @@ get_mime(const char* path)
     i--;
     while(*(path + i) != '.') {
         if(i == 0) {
-            return "text/html";
+            return strdup("text/html");
             break;
         }
         i--;
@@ -106,7 +107,7 @@ get_mime(const char* path)
     if(i != 0){
         return mimebyext(path + i + 1);
     }
-    return "text/html";
+    return strdup("text/html");
 }
 static void
 set_header() {
@@ -151,7 +152,7 @@ http_router(int sockfd, struct http_header *request_header)
     }
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
-            mime = "text/html";
+            mime = strdup("text/html");
             printdir(path);
         }
         else
@@ -169,5 +170,6 @@ http_router(int sockfd, struct http_header *request_header)
     res = write(sockfd, header_body.content, header_body.content_len);
     free(header_body.header);
     free(header_body.content);
+    if(mime != NULL) free(mime);
     return 0;
 }

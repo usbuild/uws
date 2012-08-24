@@ -22,7 +22,6 @@ dir_router(int sockfd, struct http_header *request_header)
         i++;
     }
 
-    request_header->request_params = (char*) calloc(sizeof(char), PATH_LEN);
     strcpy(request_header->request_params, request_header->url + i);
 
     strcat(path, request_header->url);

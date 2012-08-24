@@ -70,7 +70,7 @@ int start_server()
         {
             printf("Child process %d exit with %d\n", child_pid, statloc);
         }
-        return;
+        return 0;
     }
 
     //epoll init here

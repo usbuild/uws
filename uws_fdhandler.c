@@ -3,6 +3,7 @@
 #include "uws_router.h"
 #include "uws_header.h"
 #include "uws_fdhandler.h"
+#include "uws_utils.h"
 struct thread_info{
     int client_sockfd;
 };
@@ -21,6 +22,9 @@ void *thread_unit(void *arg)
     fgets(line, BUFF_LEN, input_file);
     struct http_header request_header;
     request_header.path = (char*)calloc(PATH_LEN, sizeof(char));
+    request_header.params = NULL;
+    request_header.request_params = (char*)calloc(PATH_LEN, sizeof(char));
+
     sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \n]", type, request_header.path, httpver);
     request_header.method = type;
     request_header.url = (char*) calloc(strlen(request_header.path) + 1, sizeof(char)); //max index filename length
@@ -56,6 +60,7 @@ void *thread_unit(void *arg)
     close(client_sockfd);
     free(request_header.url);
     free(request_header.path);
+    free(request_header.request_params);
     free_header_params(&request_header);
     return NULL;
 }

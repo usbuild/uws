@@ -57,6 +57,8 @@ void pathrouter(int sockfd, struct http_header *request_header) {
         if(regexec(&reg, path, 0, NULL, 0) == 0) {
             regfree(&reg);
             if(!map[i].func(sockfd, request_header)) return;//返回值为0则停止冒泡
+        } else {
+            regfree(&reg);
         }
     }
 }
