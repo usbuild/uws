@@ -8,7 +8,7 @@
 #include "uws_mime.h"
 #include "uws_header.h"
 
-static struct response header_body;
+struct response header_body;
 static char* mime;
 
 int
@@ -28,7 +28,7 @@ printdir(const char *fpath) {//打印目录项排序
         dir_len++;
 
     header_body.content_len = dir_len * 64;//Max filename Length
-    header_body.content = (char*) calloc (sizeof(char), header_body.content_len);
+    header_body.content = (char*) calloc (header_body.content_len, sizeof(char));
 
     rewinddir(dp);
     entries = (char**) malloc ((dir_len + 5) * sizeof(char*));
@@ -38,7 +38,7 @@ printdir(const char *fpath) {//打印目录项排序
     //
     
     while((dir_entry = readdir(dp)) != NULL) {
-        char *newpath = (char*) calloc(sizeof(char), 128);//max filename length
+        char *newpath = (char*) calloc(128, sizeof(char));//max filename length
         strcpy(newpath, fpath);
 
         entries[dir_len++] = dir_entry->d_name;
@@ -74,7 +74,7 @@ printfile(const char *path)
 
     rewind(file);
 
-    header_body.content = (char*) calloc (sizeof(char), header_body.content_len);
+    header_body.content = (char*) calloc (header_body.content_len, sizeof(char));
     fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
 }
@@ -111,7 +111,7 @@ get_mime(const char* path)
 }
 static void
 set_header() {
-    header_body.header = (char*) calloc(sizeof(char), HEADER_LEN);
+    header_body.header = (char*) calloc(HEADER_LEN, sizeof(char));
     char *time_string = get_time_string();
     if(mime != NULL) {
         sprintf(header_body.header,    "HTTP/1.1 200 OK\n"
@@ -125,13 +125,18 @@ set_header() {
             , time_string, header_body.content_len, mime);
     }
     else {
-        sprintf(header_body.header,    "HTTP/1.1 404 Not Found\n"
+        char *notfound = "<h1>404 Page Not Found</h1>";
+        header_body.content_len = strlen(notfound);
+        header_body.content = strdup(notfound);
+        sprintf(header_body.header,    "HTTP/1.1 404 OK\n"
             "Cache-Control: private\n"
             "Connection: Keep-Alive\n"
             "Server: UWS/0.001\n"
             "Date: %s\n"
+            "Content-Length: %d\n"
+            "Content-Type: %s;charset=utf-8\n"
             "\n"\
-            , time_string);
+            , time_string, header_body.content_len, mime);
     }
     free(time_string);
     header_body.header_len = strlen(header_body.header);

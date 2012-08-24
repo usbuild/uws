@@ -54,7 +54,8 @@ http{space}*\{                  {BEGIN HTTP;
                                         server_num *= 2;
                                         server_cfg_t** tmp = uws_config.http.servers;
                                         uws_config.http.servers = (server_cfg_t**) calloc(server_num, sizeof(server_cfg_t*));
-                                        memcpy(uws_config.http.servers, tmp, sizeof(tmp));//Any Questions?
+                                        int tmp_size = sizeof(tmp);
+                                        memcpy(uws_config.http.servers, tmp, tmp_size);//Any Questions?
                                         free(tmp);
                                     }
                                     uws_config.http.servers[current_server] = server;
