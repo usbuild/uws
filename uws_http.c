@@ -8,9 +8,7 @@
 #include "uws_header.h"
 
 static struct response header_body;
-
 static char* mime;
-
 
 int
 comparestr(const void *p1, const void *p2)
