@@ -57,6 +57,7 @@ void *thread_unit(void *arg)
         }
     }
     //
+    fclose(input_file);//if we don't close file, will cause memory leak
     close(client_sockfd);
     free(request_header.url);
     free(request_header.path);
