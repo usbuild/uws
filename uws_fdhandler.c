@@ -4,9 +4,11 @@
 #include "uws_header.h"
 #include "uws_fdhandler.h"
 #include "uws_utils.h"
+#include "uws_datatype.h"
 struct thread_info{
     int client_sockfd;
 };
+static int_queue_t* fd_queue = NULL;
 
 void *thread_unit(void *arg)
 {
@@ -69,6 +71,11 @@ void handle_client_fd(int client_sockfd) {
     int err;
     pthread_t ntid;
     struct thread_info *info = (struct thread_info*)calloc(1, sizeof(struct thread_info));
+    if(fd_queue == NULL) {
+        fd_queue = init_int_queue();
+    }
+    push_int_queue(fd_queue, client_sockfd);
+    printf("%d\n", fd_queue->length);
     info->client_sockfd = client_sockfd;
     /*
      * e, it is not a good idea to use multi-thread, benchmark down, on my vmware 256M ubuntu
