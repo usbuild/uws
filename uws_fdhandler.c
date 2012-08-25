@@ -1,19 +1,22 @@
 #include <pthread.h>
+#include <semaphore.h>
 #include "uws_config.h"
 #include "uws_router.h"
 #include "uws_header.h"
 #include "uws_fdhandler.h"
 #include "uws_utils.h"
 #include "uws_datatype.h"
+#define MAX_THREADS 1
 struct thread_info{
     int client_sockfd;
 };
-static int_queue_t* fd_queue = NULL;
+static int_queue_t* fd_queue;
+static sem_t sem_queue;
+static pthread_mutex_t lock;
+static bool is_first_run = true;
 
-void *thread_unit(void *arg)
+void deal_client_fd(client_sockfd)
 {
-    struct thread_info *info = (struct thread_info*)arg;
-    int client_sockfd = info->client_sockfd;
     char line[BUFF_LEN] = "",
          type[10],
          httpver[10];
@@ -65,26 +68,62 @@ void *thread_unit(void *arg)
     free(request_header.path);
     free(request_header.request_params);
     free_header_params(&request_header);
+}
+void* thread_unit() {
+    while(1) {
+        sem_wait(&sem_queue);//wait for new connections
+        pthread_mutex_lock(&lock);
+        int fd = pop_int_queue(fd_queue);
+        pthread_mutex_unlock(&lock);
+
+        pthread_t tid;
+        tid = pthread_self();
+
+        printf("%lu handle: %d\n", tid, fd);
+        deal_client_fd(fd);
+    }
     return NULL;
 }
-void handle_client_fd(int client_sockfd) {
-    int err;
-    pthread_t ntid;
-    struct thread_info *info = (struct thread_info*)calloc(1, sizeof(struct thread_info));
-    if(fd_queue == NULL) {
-        fd_queue = init_int_queue();
+void init_threadpool() {
+    int i = 0, err;
+    for(i = 0; i < MAX_THREADS; i++) {
+        pthread_t ntid;
+        err = pthread_create(&ntid, NULL, thread_unit, NULL);
+        if(err != 0) {
+            exit_err("Thread Pool");
+        }
     }
+}
+void handle_client_fd(int client_sockfd) {
+    //int err;
+    //pthread_t ntid;
+    //struct thread_info *info = (struct thread_info*)calloc(1, sizeof(struct thread_info));
+    /*
+    if(is_first_run) {
+        int res;
+        fd_queue = init_int_queue();
+        res = sem_init(&sem_queue, 0, 0);
+        if(res != 0) {
+            exit_err("Init Sem");
+        }
+        init_threadpool();
+        is_first_run = false;
+    }
+    pthread_mutex_lock(&lock);
     push_int_queue(fd_queue, client_sockfd);
-    printf("%d\n", fd_queue->length);
-    info->client_sockfd = client_sockfd;
+    pthread_mutex_unlock(&lock);
+    sem_post(&sem_queue); // post a semaphore to notify threads
+    */
+    deal_client_fd(client_sockfd);
+
     /*
      * e, it is not a good idea to use multi-thread, benchmark down, on my vmware 256M ubuntu
      */
     //err = pthread_create(&ntid, NULL, thread_unit, info);
     //if(err != 0) exit_err("Fdhandler Thread:");
-    thread_unit(info);//single thread
+    //thread_unit(info);//single thread
     //printf("original client_fd:%d\n", client_sockfd);
-    free(info);
+    //free(info);
     return;
 }
 

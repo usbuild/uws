@@ -6,14 +6,14 @@ int_queue_t* init_int_queue() {
     return new_queue;
 }
 void push_int_queue(int_queue_t *queue, int data) {
-    int_node_t* next = queue->head;
-    while(next != NULL) {
-        next = next->next;
+    int_node_t** next = &queue->head;
+    while(*next != NULL) {
+        next = &((*next)->next);
     }
     int_node_t* new_node = (int_node_t*) malloc(sizeof(int_node_t));
     new_node->element = data;
     new_node->next = NULL;
-    next = new_node;
+    *next = new_node;
     queue->length++;
 }
 int pop_int_queue(int_queue_t *queue) {
