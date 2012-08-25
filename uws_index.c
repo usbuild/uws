@@ -29,6 +29,9 @@ dir_router(int sockfd, struct http_header *request_header)
 
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
+            if(!running_server->autoindex) {
+                close(sockfd);// we should dealwith nonindex
+            }
             char *index;
             int i = 0;
             while((index = running_server->index[i++]) != NULL) {

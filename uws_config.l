@@ -45,6 +45,7 @@ http{space}*\{                  {BEGIN HTTP;
                                 }
 <HTTP>server{space}*\{          {BEGIN SERVER;
                                     server = (server_cfg_t*)malloc(sizeof(server_cfg_t));
+                                    server->autoindex = false;
                                 }
 <EVENTS>\}                      {BEGIN 0;}
 <HTTP>\}                        {BEGIN 0;}
@@ -84,6 +85,7 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 <HTTP>gzip_types      {state = ARRAY_VAL; val_array = &uws_config.http.gzip_types;}
 
 <SERVER>root         {state = STRING_VAL; val_string= &server->root;}
+<SERVER>autoindex    {state = BOOL_VAL; val_bool = &server->autoindex;}
 <SERVER>server_name  {state = STRING_VAL; val_string= &server->server_name;}
 <SERVER>index        {state = ARRAY_VAL; val_array= &server->index;}
 [^ \t\n\t;]+       {

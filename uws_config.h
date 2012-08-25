@@ -8,6 +8,7 @@
 //config struct defined here
 typedef struct{
     char* root;
+    bool autoindex;
     char** index;
     char* server_name;
 } server_cfg_t;
