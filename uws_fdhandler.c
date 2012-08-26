@@ -41,12 +41,20 @@ void deal_client_fd(client_sockfd)
         }
     }
     char* host = get_header_param("Host", request_header);
-
+    char *host_no_port = strdup(host);
+    for(i = 0; i < strlen(host); i++) {
+        if(host_no_port[i] == ':') {
+            host_no_port[i] = '\0';
+            break;
+           }
+        i++;
+    }
     if(host != NULL) 
     {
         i = 0;
         while(uws_config.http.servers[i] != NULL) {
-            if(wildcmp(uws_config.http.servers[i]->server_name, host) == 1) {
+
+            if(wildcmp(uws_config.http.servers[i]->server_name, host_no_port) == 1) {
                 //We've got a file regiestered in the config file;
                 running_server = uws_config.http.servers[i];
                 break;
