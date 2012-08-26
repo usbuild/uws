@@ -29,14 +29,19 @@ void deal_client_fd(client_sockfd)
     strcpy(request_header->url, request_header->path);
     request_header->http_ver = httpver;
 
+    char* key = (char*) calloc(BUFF_LEN, sizeof(char));
+    char* value = (char*) calloc(BUFF_LEN, sizeof(char));
     while(fgets(line, BUFF_LEN, input_file) != NULL) {
         if(strcmp(line, "\r\n") != 0) {
-            add_header_param(line, request_header);
+            sscanf(line, "%[^:]: %[^\r\n]", key, value);
+            add_header_param(key, value, request_header);
         }
         else {
             break;
         }
     }
+    free(key);
+    free(value);
     char* host = get_header_param("Host", request_header);
 
     if(host != NULL) 

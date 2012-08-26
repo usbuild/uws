@@ -1,5 +1,4 @@
 #include "uws_header.h"
-#define INIT_PARAMS_NUM  20
 char* get_header_param(char* key, struct http_header *http_header){
     int i = 0;
     if(http_header->params == NULL)
@@ -13,9 +12,8 @@ char* get_header_param(char* key, struct http_header *http_header){
     return NULL;
 }
 
-void add_header_param(char* kvstring, struct http_header *http_header){
+void add_header_param(char *key, char *value, struct http_header *http_header){
     int i = 0;
-    int str_len = strlen(kvstring);
     if(http_header->params == NULL) 
     {
         http_header->params = (Http_Param*) calloc(INIT_PARAMS_NUM, sizeof(Http_Param));
@@ -30,9 +28,6 @@ void add_header_param(char* kvstring, struct http_header *http_header){
         memcpy(http_header->params, tmp, http_header->used_len);
         free(tmp);
     }
-    char* key = (char*) calloc(str_len, sizeof(char));
-    char* value = (char*) calloc(str_len, sizeof(char));
-    sscanf(kvstring, "%[^:]: %[^\r\n]", key,value);
     Http_Param* new_param = &http_header->params[http_header->used_len];
     new_param->name = key;
     new_param->value = value;
@@ -48,4 +43,17 @@ void free_header_params(struct http_header *http_header)
     free(http_header->params);
     http_header->params = NULL;
     http_header->used_len = 0;
+}
+char* str_response_header(struct http_header *header) {
+    char *response_str = (char*)  calloc(HEADER_LEN, sizeof(char));   
+    int i;
+    sprintf(response_str, "%s %d %s", header->http_ver, header->status_code, header->status);
+    strcat(response_str, "\r\n");
+    for(i = 0; i < header->used_len; i++) {
+        strcat(response_str, header->params[i].name);
+        strcat(response_str, ": ");
+        strcat(response_str, header->params[i].value);
+        strcat(response_str, "\r\n");
+    }
+    return response_str;
 }
