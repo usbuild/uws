@@ -8,6 +8,7 @@ void send_error_response(int client_fd, const int status_code) {
     char *error_path = NULL;
     char *error_file_path;
     while(*error_pages != NULL) {
+
         for(i = 0; i < strlen(*error_pages); i++) {
             if((*error_pages)[i] == '=') {
                 (*error_pages)[i] = '\0';

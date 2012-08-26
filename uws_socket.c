@@ -28,6 +28,7 @@ int start_server()
     int reuse = 1;
     int worker_processes = uws_config.worker_processes;
     int worker_count = 0;
+    int servers_num = 0;
     pid_t self_pid;
 
     signal(SIGINT, sig_int);

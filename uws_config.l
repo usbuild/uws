@@ -46,6 +46,7 @@ http{space}*\{                  {BEGIN HTTP;
 <HTTP>server{space}*\{          {BEGIN SERVER;
                                     server = (server_cfg_t*)malloc(sizeof(server_cfg_t));
                                     server->autoindex = false;
+                                    server->listen = 80;
                                 }
 <EVENTS>\}                      {BEGIN 0;}
 <HTTP>\}                        {BEGIN 0;}
@@ -90,6 +91,7 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 <SERVER>index        {state = ARRAY_VAL; val_array = &server->index;}
 <SERVER>error_page   {state = ARRAY_VAL; val_array = &server->error_page;}
 <SERVER>fastcgi_pass {state = STRING_VAL; val_string = &server->fastcgi_pass;}
+<SERVER>listen       {state = INT_VAL; val_int = &server->listen;}
 [^ \t\n\t;]+       {
                     switch(state){
                         case STRING_VAL:

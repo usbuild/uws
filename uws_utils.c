@@ -76,3 +76,12 @@ char* get_time_string() {
     strftime(buff, 40, "%a, %e %b %Y %T %Z", cur_time);
     return buff;
 }
+bool in_int_array(int array[], int needle, int length) {
+    int i;
+    for(i = 0; i < length; i++) {
+        if(array[i] == needle) {
+            return true;
+        }
+    }
+    return false;
+}
