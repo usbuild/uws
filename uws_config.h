@@ -12,6 +12,7 @@ typedef struct{
     char** error_page;
     char** index;
     char* server_name;
+    char* fastcgi_pass;
 } server_cfg_t;
 
 struct events_cfg{

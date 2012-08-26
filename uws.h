@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <errno.h>
 
+#define UWS_SERVER "uws/0.02"
+
 #define LINE_LEN    256
 #define OPT_LEN     20
 #define VLU_LEN     50

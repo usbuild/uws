@@ -2,7 +2,7 @@
 #define __UWS_FASTCGI_H__
 #include "uws.h"
 
-void
+bool
 send_request(const char* host, int port,Param_Value pv[]);
 
 /*

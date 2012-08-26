@@ -105,7 +105,7 @@ set_header() {
     response_header->status = "OK";
     add_header_param("Cache-Control", "private", response_header);
     add_header_param("Connection", "Keep-Alive", response_header);
-    add_header_param("Server", "UWS/0.001", response_header);
+    add_header_param("Server", UWS_SERVER, response_header);
     add_header_param("Date", time_string, response_header);
     add_header_param("Content-Length", itoa(header_body.content_len), response_header);
     add_header_param("Content-Type", mime, response_header);

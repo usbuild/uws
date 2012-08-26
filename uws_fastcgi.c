@@ -2,14 +2,12 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <unistd.h>
-#include <string.h>
-#include <stdlib.h>
 #include "uws_fastcgi.h"
 #include "uws_header.h"
+#include "uws_config.h"
+#include "uws_error.h"
 #define PARAMS_BUFF_LEN     1024
 
 char *mem_file = NULL;
@@ -102,7 +100,7 @@ add_fcgi_param(int sockfd, int request_id, char* name, char* value) {
         exit(1);
     }
 }
-void
+bool
 send_request(const char* host, int port, Param_Value init_pv[])
 {
     int sockfd,
@@ -118,8 +116,7 @@ send_request(const char* host, int port, Param_Value init_pv[])
     address.sin_port = htons(port);
     result = connect(sockfd, (struct sockaddr*)&address, sizeof(address));
     if(result == -1) {
-        perror("connect error");
-        exit(1);
+        return false;
     }
     FCGI_BeginRequestRecord begin_record;
     begin_record.header = make_header(FCGI_BEGIN_REQUEST, request_id, sizeof(begin_record.body), 0);
@@ -183,6 +180,7 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 */
         }
     }
+    return true;
 }
 
 int
@@ -196,9 +194,17 @@ fastcgi_router(int sockfd)
         {"HTTP_HOST", "localhost:8080"},
         {NULL,NULL} };
 
-    send_request("127.0.0.1", 9000, pv);
+    int i;
+    char *fastcgi_pass = running_server->fastcgi_pass;
+    char fhost[20];
+    char fport[10];
+    sscanf(fastcgi_pass, "%[^:]:%s", fhost, fport);
+    if(!send_request(fhost, atoi(fport), pv)) {
+        send_error_response(sockfd, 502);
+    }
 
-    char* header_str = "HTTP/1.1 200 OK\nServer: UWS/0.001\n";
+    //TODO:More status
+    char* header_str = "HTTP/1.1 200 OK\r\nServer: "UWS_SERVER"\r\n";
     write(sockfd, header_str, strlen(header_str));
 
     write(sockfd, mem_file, file_len);

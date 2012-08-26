@@ -11,7 +11,7 @@
 #include "uws_fdhandler.h"
 #include "uws_header.h"
 #define MAX_EVENTS  10
-#define DEBUG
+//#define DEBUG
 
 
 int server_sockfd, client_sockfd; static void

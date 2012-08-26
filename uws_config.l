@@ -89,6 +89,7 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 <SERVER>server_name  {state = STRING_VAL; val_string = &server->server_name;}
 <SERVER>index        {state = ARRAY_VAL; val_array = &server->index;}
 <SERVER>error_page   {state = ARRAY_VAL; val_array = &server->error_page;}
+<SERVER>fastcgi_pass {state = STRING_VAL; val_string = &server->fastcgi_pass;}
 [^ \t\n\t;]+       {
                     switch(state){
                         case STRING_VAL:

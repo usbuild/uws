@@ -24,10 +24,13 @@ void send_error_response(int client_fd, const int status_code) {
     }
     error_file_path  = strdup("/etc/hostname"); //just for test
     if(error_path != NULL) {
-        if(access(error_file_path, F_OK)) {
+        char *tmp_path = strlcat(running_server->root, error_path);
+        if(access(tmp_path, F_OK) == 0) {
             free(error_file_path);
-            error_file_path = strlcat(running_server->root, error_path);
+            error_file_path = tmp_path;
             free(error_path);
+        } else {
+            free(tmp_path);
         }
     }
     FILE* file = fopen(error_file_path, "r");
@@ -45,7 +48,7 @@ void send_error_response(int client_fd, const int status_code) {
     response_header->status = "Error";
     add_header_param("Cache-Control", "private", response_header);
     add_header_param("Connection", "Keep-Alive", response_header);
-    add_header_param("Server", "UWS/0.001", response_header);
+    add_header_param("Server", UWS_SERVER, response_header);
     add_header_param("Date", time_string, response_header);
     add_header_param("Content-Length", itoa(content_len), response_header);
     add_header_param("Content-Type", "text/html", response_header);

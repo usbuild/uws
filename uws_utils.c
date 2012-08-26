@@ -1,5 +1,6 @@
 #include <fcntl.h>
 #include <math.h>
+#include <time.h>
 #include "uws_utils.h"
 int wildcmp(const char* wild, const char* string){
     const char* cp = NULL, *mp = NULL;
