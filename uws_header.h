@@ -3,6 +3,7 @@
 #include "uws.h"
 #define HEADER_LEN  10240
 #define INIT_PARAMS_NUM  20
+#define HEADER_SEP  "\r\n"
 
 struct http_header{
     char* method;

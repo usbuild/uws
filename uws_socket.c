@@ -11,7 +11,7 @@
 #include "uws_fdhandler.h"
 #include "uws_header.h"
 #define MAX_EVENTS  10
-//#define DEBUG
+#define DEBUG
 
 
 int server_sockfd, client_sockfd; static void
@@ -65,7 +65,6 @@ int start_server()
     }
     if(getpid() == self_pid)//this is master process
     {
-
         int statloc;
         pid_t child_pid;
         while((child_pid = wait(&statloc)) != -1)

@@ -29,8 +29,8 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
         free(tmp);
     }
     Http_Param* new_param = &http_header->params[http_header->used_len];
-    new_param->name = key;
-    new_param->value = value;
+    new_param->name = strdup(key);
+    new_param->value = strdup(value);
     http_header->used_len++;
 }
 void free_header_params(struct http_header *http_header)

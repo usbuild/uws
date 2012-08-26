@@ -79,18 +79,6 @@ printfile(const char *path)
     fclose(file);
 }
 
-
-static char*
-get_time_string() {
-    struct tm *cur_time;
-    char* buff = (char*) malloc(sizeof(char) * 40);
-    time_t tt;
-    time(&tt);
-    cur_time = localtime(&tt);
-    strftime(buff, 40, "%a, %e %b %Y %T %Z", cur_time);
-    return buff;
-}
-
 static char*
 get_mime(const char* path)
 {
@@ -111,35 +99,19 @@ get_mime(const char* path)
 }
 static void
 set_header() {
-    header_body.header = (char*) calloc(HEADER_LEN, sizeof(char));
     char *time_string = get_time_string();
-    if(mime != NULL) {
-        sprintf(header_body.header,    "HTTP/1.1 200 OK\n"
-            "Cache-Control: private\n"
-            "Connection: Keep-Alive\n"
-            "Server: UWS/0.001\n"
-            "Date: %s\n"
-            "Content-Length: %d\n"
-            "Content-Type: %s;charset=utf-8\n"
-            "\n"\
-            , time_string, header_body.content_len, mime);
-    }
-    else {
-        char *notfound = "<h1>404 Page Not Found</h1>";
-        header_body.content_len = strlen(notfound);
-        header_body.content = strdup(notfound);
-        sprintf(header_body.header,    "HTTP/1.1 404 OK\n"
-            "Cache-Control: private\n"
-            "Connection: Keep-Alive\n"
-            "Server: UWS/0.001\n"
-            "Date: %s\n"
-            "Content-Length: %d\n"
-            "Content-Type: %s;charset=utf-8\n"
-            "\n"\
-            , time_string, header_body.content_len, mime);
-    }
-    free(time_string);
+    response_header->http_ver = "HTTP/1.1";
+    response_header->status_code = 200;
+    response_header->status = "OK";
+    add_header_param("Cache-Control", "private", response_header);
+    add_header_param("Connection", "Keep-Alive", response_header);
+    add_header_param("Server", "UWS/0.001", response_header);
+    add_header_param("Date", time_string, response_header);
+    add_header_param("Content-Length", itoa(header_body.content_len), response_header);
+    add_header_param("Content-Type", mime, response_header);
+    header_body.header = str_response_header(response_header);
     header_body.header_len = strlen(header_body.header);
+    free(time_string);
 }
 int
 http_router(int sockfd) 
@@ -167,14 +139,16 @@ http_router(int sockfd)
         }
     }
     else {
-        mime = NULL;
+        send_error_response(sockfd, 404);
+        return 0;
     }
     set_header();
     int res;
     res = write(sockfd, header_body.header, header_body.header_len);
+    res = write(sockfd, HEADER_SEP, strlen(HEADER_SEP));
     res = write(sockfd, header_body.content, header_body.content_len);
     free(header_body.header);
     free(header_body.content);
-    if(mime != NULL) free(mime);
+    free_header_params(response_header);
     return 0;
 }

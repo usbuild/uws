@@ -1,5 +1,3 @@
-#include <pthread.h>
-#include <semaphore.h>
 #include "uws_config.h"
 #include "uws_router.h"
 #include "uws_header.h"
@@ -19,6 +17,8 @@ void deal_client_fd(client_sockfd)
 
     fgets(line, BUFF_LEN, input_file);
     request_header = (struct http_header*) calloc(1, sizeof(struct http_header));
+    response_header = (struct http_header*) calloc(1, sizeof(struct http_header));
+
     request_header->path = (char*)calloc(PATH_LEN, sizeof(char));
     request_header->params = NULL;
     request_header->request_params = (char*)calloc(PATH_LEN, sizeof(char));
@@ -29,8 +29,8 @@ void deal_client_fd(client_sockfd)
     strcpy(request_header->url, request_header->path);
     request_header->http_ver = httpver;
 
-    char* key = (char*) calloc(BUFF_LEN, sizeof(char));
-    char* value = (char*) calloc(BUFF_LEN, sizeof(char));
+    char key[BUFF_LEN];
+    char value[BUFF_LEN];
     while(fgets(line, BUFF_LEN, input_file) != NULL) {
         if(strcmp(line, "\r\n") != 0) {
             sscanf(line, "%[^:]: %[^\r\n]", key, value);
@@ -40,8 +40,6 @@ void deal_client_fd(client_sockfd)
             break;
         }
     }
-    free(key);
-    free(value);
     char* host = get_header_param("Host", request_header);
 
     if(host != NULL) 
