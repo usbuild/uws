@@ -10,6 +10,7 @@
 #include "uws_utils.h"
 #include "uws_fdhandler.h"
 #define MAX_EVENTS  10
+//#define DEBUG
 
 
 int server_sockfd, client_sockfd; static void
@@ -20,9 +21,8 @@ sig_int(int signo)
 }
 int start_server()
 {
-    socklen_t server_len/*, client_len*/;
+    socklen_t server_len;
     struct sockaddr_in server_address;
-    struct sockaddr_in client_address;
     int res;
     int reuse = 1;
     int worker_processes = uws_config.worker_processes;
@@ -54,6 +54,7 @@ int start_server()
     }
     printf("Server Listening On: %d\n", PORT);
     //prefork here
+#ifndef DEBUG
     self_pid = getpid();
     for(worker_count = 0; worker_count < worker_processes; worker_count++ ){
         pid_t pid = fork();
@@ -72,6 +73,7 @@ int start_server()
         }
         return 0;
     }
+#endif
 
     //epoll init here
     struct epoll_event ev,events[MAX_EVENTS];
@@ -93,11 +95,11 @@ int start_server()
         nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 
         if(nfds == -1) exit_err("epoll_wait");
-        //printf("%d=>nfds:%d\n", getpid(), nfds);
 
         for(n = 0; n < nfds; n++) {
             if(events[n].data.fd == server_sockfd){
-                socklen_t client_len;
+                struct sockaddr_in client_address;
+                socklen_t client_len = sizeof(client_address);
                 client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);
                 if(client_sockfd == -1)
                     exit_err("accept_error");

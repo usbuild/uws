@@ -5,7 +5,7 @@
 #include "uws_header.h"
 
 int
-dir_router(int sockfd, struct http_header *request_header) 
+dir_router(int sockfd) 
 {
     char path[PATH_LEN];
     char path2[PATH_LEN];
@@ -36,12 +36,10 @@ dir_router(int sockfd, struct http_header *request_header)
             int i = 0;
             while((index = running_server->index[i++]) != NULL) {
                 strcpy(path2, path);
-                strcat(path2, "/");
                 strcat(path2, index);
                 if(lstat(path2, &stat_buff) != -1) {
                     strcpy(request_header->path,  path2);
                     strcpy(path2, request_header->url);
-                    strcat(path2, "/");
                     strcat(path2, index);
                     request_header->url = (char*) realloc(request_header->url, strlen(path2));
                     strcpy(request_header->url, path2);

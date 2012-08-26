@@ -142,7 +142,7 @@ set_header() {
     header_body.header_len = strlen(header_body.header);
 }
 int
-http_router(int sockfd, struct http_header *request_header) 
+http_router(int sockfd) 
 {
     char path[PATH_LEN];
     struct stat stat_buff;

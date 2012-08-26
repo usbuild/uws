@@ -186,7 +186,7 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 }
 
 int
-fastcgi_router(int sockfd, struct http_header *request_header) 
+fastcgi_router(int sockfd) 
 {
     Param_Value pv[] = {
         {"SCRIPT_FILENAME", request_header->path},

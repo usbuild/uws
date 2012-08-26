@@ -53,3 +53,9 @@ char* strdup(const char *s){
     strcpy(r, s);
     return r;
 }
+char *strlcat(const char *s1, const char *s2) {
+    char *new_str = (char*) calloc(strlen(s1) + strlen(s2) + 1, sizeof(char));
+    strcpy(new_str, s1);
+    strcat(new_str, s2);
+    return new_str;
+}
