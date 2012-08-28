@@ -39,6 +39,7 @@ void send_error_response(int client_fd, const int status_code) {
     int content_len = ftell(file);
     rewind(file);
     char *content = (char*) calloc (content_len, sizeof(char));
+
     fread(content, sizeof(char), content_len, file);
     fclose(file);
 
@@ -51,16 +52,22 @@ void send_error_response(int client_fd, const int status_code) {
     add_header_param("Connection", "Keep-Alive", response_header);
     add_header_param("Server", UWS_SERVER, response_header);
     add_header_param("Date", time_string, response_header);
-    add_header_param("Content-Length", itoa(content_len), response_header);
+    char *content_len_str = itoa(content_len);
+    add_header_param("Content-Length", content_len_str, response_header);
+    free(content_len_str);
+
     add_header_param("Content-Type", "text/html", response_header);
-    char *header = str_response_header(response_header);
-    int header_len = strlen(header);
+    struct response header_body;
+
+    header_body.header = response_header;
+    header_body.content = content;
+    header_body.content_len = content_len;
+
     free(time_string);
     //
-    write(client_fd, header, header_len);
-    write(client_fd, HEADER_SEP, strlen(HEADER_SEP));
-    write(client_fd, content, content_len);
-    free(header);
-    free(content);
-    free_header_params(response_header);
+    write_response(client_fd, &header_body);
+
+    free_header_params(header_body.header);
+    free(header_body.header);
+    free(header_body.content);
 }
