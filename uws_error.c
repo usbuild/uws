@@ -47,7 +47,7 @@ void send_error_response(int client_fd, const int status_code) {
     char *time_string = get_time_string();
     response_header->http_ver = "HTTP/1.1";
     response_header->status_code = status_code;
-    response_header->status = "Error";
+    response_header->status = get_by_code(status_code);
     add_header_param("Cache-Control", "private", response_header);
     add_header_param("Connection", "Keep-Alive", response_header);
     add_header_param("Server", UWS_SERVER, response_header);
@@ -70,4 +70,12 @@ void send_error_response(int client_fd, const int status_code) {
     free_header_params(header_body.header);
     free(header_body.header);
     free(header_body.content);
+}
+char *get_by_code(int code) {
+    int i = 0;
+    while(http_status[i].code != -1) {
+        if(http_status[i].code == code) return http_status[i].message;
+        i++;
+    }
+    return http_status[i].message;
 }
