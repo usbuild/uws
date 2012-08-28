@@ -41,16 +41,16 @@ void deal_client_fd(client_sockfd)
         }
     }
     char* host = get_header_param("Host", request_header);
-    char *host_no_port = strdup(host);
-    for(i = 0; i < strlen(host); i++) {
-        if(host_no_port[i] == ':') {
-            host_no_port[i] = '\0';
-            break;
-           }
-        i++;
-    }
     if(host != NULL) 
     {
+        char *host_no_port = strdup(host);
+        for(i = 0; i < strlen(host); i++) {
+            if(host_no_port[i] == ':') {
+                host_no_port[i] = '\0';
+                break;
+               }
+            i++;
+        }
         i = 0;
         while(uws_config.http.servers[i] != NULL) {
 

@@ -4,8 +4,6 @@
 #include <netinet/in.h>
 #include <signal.h>
 #include <sys/epoll.h>
-#include <semaphore.h>
-#include <pthread.h>
 #include "uws_socket.h"
 #include "uws_mime.h"
 #include "uws_config.h"
@@ -13,17 +11,11 @@
 #include "uws_fdhandler.h"
 #include "uws_header.h"
 #define MAX_EVENTS  10
-#define DEBUG
+//#define DEBUG
 
 
-struct thread_info{
-    int id;
-    int fd;
-};
 struct epoll_event events[MAX_EVENTS];
 int epollfd, nfds;
-sem_t *sems;
-void *thread_unit(void *arg);
 int start_server()
 {
     int res;
@@ -38,6 +30,7 @@ int start_server()
 
     signal(SIGPIPE, SIG_IGN);
 
+    //here we got all servers count
     while(uws_config.http.servers[servers_num++] != NULL);
     servers_num--;
 
@@ -48,13 +41,8 @@ int start_server()
             servers_port[ports_num++] = listen_port;
         }
     }
+    //ports_num now stores the distinct port num
     int *listen_fds = (int*) malloc(sizeof(int) * ports_num);
-
-    sems = (sem_t*) calloc(ports_num, sizeof(sem_t));
-
-    for(i = 0; i < ports_num; i++) {
-        sem_init(&sems[i], 0, 0);
-    }
 
     for(i = 0; i < ports_num; i++) {
         socklen_t server_len;
@@ -72,13 +60,8 @@ int start_server()
         res = listen(server_sockfd, 500);
         if(res < 0) exit_err("Listen Error");
         listen_fds[i] = server_sockfd;
-        
-        pthread_t new_thread;
-        struct thread_info *info = (struct thread_info*)calloc(1, sizeof(struct thread_info));
-        info->fd = listen_fds[i];
-        info->id = i;
-        res = pthread_create(&new_thread, NULL, thread_unit, info);
     }
+    free(servers_port);
 
     //prefork here
 #ifndef DEBUG
@@ -122,31 +105,22 @@ int start_server()
         for(n = 0; n < nfds; n++) {
             if(in_int_array(listen_fds, events[n].data.fd, ports_num) != -1) {
                 int pos = in_int_array(listen_fds, events[n].data.fd, ports_num);
-                sem_post(&sems[pos]);
+                struct sockaddr_in client_address;
+                int server_sockfd, client_sockfd; 
+                server_sockfd = events[n].data.fd;
+                socklen_t client_len = sizeof(client_address);
+                client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);
+                if(client_sockfd == -1) exit_err("accept_error");
+                setnonblocking(client_sockfd);
+                struct epoll_event ev;
+                ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+                ev.data.fd = client_sockfd;
+                if(epoll_ctl(epollfd, EPOLL_CTL_ADD, client_sockfd, &ev) == -1)
+                    exit_err("epoll_ctl:conn_sock");
                 //fd here
             } else {
                 handle_client_fd(events[n].data.fd);
             }
         }
     }
-}
-void *thread_unit(void *arg) {
-    struct thread_info *info = (struct thread_info*) arg;
-    struct sockaddr_in client_address;
-    int server_sockfd, client_sockfd; 
-
-    while(1) {
-        sem_wait(&sems[info->id]);
-        server_sockfd = info->fd;
-        socklen_t client_len = sizeof(client_address);
-        client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);
-        if(client_sockfd == -1) exit_err("accept_error");
-        setnonblocking(client_sockfd);
-        struct epoll_event ev;
-        ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
-        ev.data.fd = client_sockfd;
-        if(epoll_ctl(epollfd, EPOLL_CTL_ADD, client_sockfd, &ev) == -1)
-            exit_err("epoll_ctl:conn_sock");
-    }
-    return NULL;
 }
