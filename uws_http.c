@@ -153,7 +153,7 @@ http_router(int sockfd)
 int write_response(int sockfd, struct response* header_body) {
     int res;
     //compress--start--
-    if(uws_config.http.gzip) {
+    if(uws_config.http.gzip && in_str_array(uws_config.http.gzip_types, get_header_param("Content-Type", header_body->header)) >= 0) {
         size_t src_len = header_body->content_len;
         size_t dst_len;
         char *dst_buff;

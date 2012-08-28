@@ -142,3 +142,13 @@ int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata) {
     }
     return -1;
 }
+int in_str_array(char **array, char *needle) {
+    int i = 0;
+    while(array[i] != NULL) {
+        if(strcmp(array[i], needle) == 0) {
+            return i;
+        }
+        i++;
+    }
+    return -1;
+}
