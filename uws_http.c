@@ -144,28 +144,28 @@ http_router(int sockfd)
     }
     set_header();
     write_response(sockfd, &header_body);
-    free(header_body.header);
-    free(header_body.content);
     free_header_params(response_header);
+    free(header_body.header);
+
+    free(header_body.content);
     return 0;
 }
 int write_response(int sockfd, struct response* header_body) {
     int res;
     //compress--start--
-    size_t src_len = header_body->content_len;
-    size_t dst_len = src_len;
-    char *dst_buff = (char*) calloc(dst_len, sizeof(char));
-
-    gzcompress(dst_buff, &dst_len, header_body->content, src_len);
-    add_header_param("Content-Length", itoa(dst_len), header_body->header);
-    add_header_param("Content-Encoding", "gzip", header_body->header);
-    free(header_body->content);
-
-    header_body->content = dst_buff;
-    header_body->content_len = dst_len;
-
-    //printf("Length: %d\n", dst_len);
-    //puts(dst_buff);
+    if(uws_config.http.gzip) {
+        size_t src_len = header_body->content_len;
+        size_t dst_len;
+        char *dst_buff;
+        gzcompress(&dst_buff, &dst_len, header_body->content, src_len);
+        char *content_len = itoa(dst_len);
+        add_header_param("Content-Length", content_len, header_body->header);
+        free(content_len);
+        add_header_param("Content-Encoding", "gzip", header_body->header);
+        free(header_body->content);
+        header_body->content = dst_buff;
+        header_body->content_len = dst_len;
+    }
 
     char* header_str = str_response_header(header_body->header);
     size_t header_len = strlen(header_str);

@@ -87,7 +87,7 @@ int in_int_array(int array[], int needle, int length) {
     return -1;
 }
 
-int gzcompress(char *zdata, size_t *nzdata, char *data, size_t ndata)
+int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)
 {
     z_stream c_stream;
     int err = 0;
@@ -96,24 +96,48 @@ int gzcompress(char *zdata, size_t *nzdata, char *data, size_t ndata)
         c_stream.zalloc = Z_NULL;
         c_stream.zfree = Z_NULL;
         c_stream.opaque = Z_NULL;
-        if(deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK) 
-            return -1;
         c_stream.next_in  = data;
         c_stream.avail_in  = ndata;
-        c_stream.next_out = zdata;
+        if(
+           deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 16 + MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY) != Z_OK
+
+            ) 
+            return -1;
+        *nzdata = deflateBound(&c_stream, ndata);
+        *zdata = (char*) calloc(*nzdata + 1, sizeof(char));
+
+        c_stream.next_out = *zdata;
         c_stream.avail_out  = *nzdata;
-        while (c_stream.avail_in != 0 && c_stream.total_out < *nzdata) 
-        {
-            if(deflate(&c_stream, Z_NO_FLUSH) != Z_OK) return -1;
-        }
-        if(c_stream.avail_in != 0) return c_stream.avail_in;
-        for (;;) 
-        {
-            if((err = deflate(&c_stream, Z_FINISH)) == Z_STREAM_END) break;
-            if(err != Z_OK) return -1;
-        }
+        if(Z_STREAM_END != deflate(&c_stream, Z_FINISH)) 
+            return -1;
         if(deflateEnd(&c_stream) != Z_OK) return -1;
-        *nzdata = c_stream.total_out;
+        return 0;
+    }
+    return -1;
+}
+int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata) {
+    z_stream c_stream;
+    int err = 0;
+    if(data && ndata > 0)
+    {
+        c_stream.zalloc = Z_NULL;
+        c_stream.zfree = Z_NULL;
+        c_stream.opaque = Z_NULL;
+        c_stream.next_in  = data;
+        c_stream.avail_in  = ndata;
+        if(
+           deflateInit(&c_stream, Z_DEFAULT_COMPRESSION) != Z_OK
+
+            ) 
+            return -1;
+        *nzdata = deflateBound(&c_stream, ndata);
+        *zdata = (char*) calloc(*nzdata + 1, sizeof(char));
+
+        c_stream.next_out = *zdata;
+        c_stream.avail_out  = *nzdata;
+        if(Z_STREAM_END != deflate(&c_stream, Z_FINISH)) 
+            return -1;
+        if(deflateEnd(&c_stream) != Z_OK) return -1;
         return 0;
     }
     return -1;

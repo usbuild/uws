@@ -128,6 +128,7 @@ void set_default_config() {
     uws_config.http.sendfile = true;
     uws_config.http.tcp_nopush = true;
     uws_config.http.tcp_nodelay = true;
+    uws_config.http.gzip = false;
     //lot of configs
 }
 void init_config(){
