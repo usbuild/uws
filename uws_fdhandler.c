@@ -65,8 +65,6 @@ void deal_client_fd(client_sockfd)
             pathrouter(client_sockfd);
         }
     }
-    //
-    //send_error_response(client_sockfd, 404);
 
     fclose(input_file);//if we don't close file, will cause memory leak
     close(client_sockfd);

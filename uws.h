@@ -18,7 +18,6 @@
 #define true        1
 #define false       0
 
-
 void exit_err(const char* str);
 
 typedef struct nv_pair {
@@ -27,10 +26,10 @@ typedef struct nv_pair {
 }Http_Param, Param_Value;
 
 struct response {
-    char    *header;
-    int     header_len;
+    struct http_header    *header;
+    size_t header_len;
     char    *content;
-    int     content_len;
+    size_t content_len;
 };
 char* find_value(char* key);
 

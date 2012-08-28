@@ -105,12 +105,12 @@ set_header() {
     response_header->status = "OK";
     add_header_param("Cache-Control", "private", response_header);
     add_header_param("Connection", "Keep-Alive", response_header);
+    add_header_param("Vary", "Accept-Encoding", response_header);
     add_header_param("Server", UWS_SERVER, response_header);
     add_header_param("Date", time_string, response_header);
     add_header_param("Content-Length", itoa(header_body.content_len), response_header);
     add_header_param("Content-Type", mime, response_header);
-    header_body.header = str_response_header(response_header);
-    header_body.header_len = strlen(header_body.header);
+    header_body.header = response_header;
     free(time_string);
 }
 int
@@ -143,12 +143,39 @@ http_router(int sockfd)
         return 0;
     }
     set_header();
-    int res;
-    res = write(sockfd, header_body.header, header_body.header_len);
-    res = write(sockfd, HEADER_SEP, strlen(HEADER_SEP));
-    res = write(sockfd, header_body.content, header_body.content_len);
+    write_response(sockfd, &header_body);
     free(header_body.header);
     free(header_body.content);
     free_header_params(response_header);
+    return 0;
+}
+int write_response(int sockfd, struct response* header_body) {
+    int res;
+    //compress--start--
+    size_t src_len = header_body->content_len;
+    size_t dst_len = src_len;
+    char *dst_buff = (char*) calloc(dst_len, sizeof(char));
+
+    gzcompress(dst_buff, &dst_len, header_body->content, src_len);
+    add_header_param("Content-Length", itoa(dst_len), header_body->header);
+    add_header_param("Content-Encoding", "gzip", header_body->header);
+    free(header_body->content);
+
+    header_body->content = dst_buff;
+    header_body->content_len = dst_len;
+
+    //printf("Length: %d\n", dst_len);
+    //puts(dst_buff);
+
+    char* header_str = str_response_header(header_body->header);
+    size_t header_len = strlen(header_str);
+
+    res = write(sockfd, header_str, header_len);
+    if(res == -1) return -1;
+    res = write(sockfd, HEADER_SEP, strlen(HEADER_SEP));
+    if(res == -1) return -1;
+    res = write(sockfd, header_body->content, header_body->content_len);
+    if(res == -1) return -1;
+    free(header_str);
     return 0;
 }

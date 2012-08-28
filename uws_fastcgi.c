@@ -206,7 +206,6 @@ fastcgi_router(int sockfd)
     //TODO:More status
     char* header_str = "HTTP/1.1 200 OK\r\nServer: "UWS_SERVER"\r\n";
     write(sockfd, header_str, strlen(header_str));
-
     write(sockfd, mem_file, file_len);
 
     free(mem_file);

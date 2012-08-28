@@ -1,6 +1,7 @@
 #include <fcntl.h>
 #include <math.h>
 #include <time.h>
+#include <zlib.h>
 #include "uws_utils.h"
 int wildcmp(const char* wild, const char* string){
     const char* cp = NULL, *mp = NULL;
@@ -61,10 +62,10 @@ char *strlcat(const char *s1, const char *s2) {
     strcat(new_str, s2);
     return new_str;
 }
-char *itoa(const int data) {
-    int length = (int) pow(data, 0.1) + 2;
+char *itoa(const size_t data) {
+    size_t length = (size_t) pow(data, 0.1) + 2;
     char *str = (char*) calloc(length, sizeof(char));
-    sprintf(str, "%d", data);
+    sprintf(str, "%u", data);
     return str;
 }
 char* get_time_string() {
@@ -82,6 +83,38 @@ int in_int_array(int array[], int needle, int length) {
         if(array[i] == needle) {
             return i;
         }
+    }
+    return -1;
+}
+
+int gzcompress(char *zdata, size_t *nzdata, char *data, size_t ndata)
+{
+    z_stream c_stream;
+    int err = 0;
+    if(data && ndata > 0)
+    {
+        c_stream.zalloc = Z_NULL;
+        c_stream.zfree = Z_NULL;
+        c_stream.opaque = Z_NULL;
+        if(deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, 8, Z_DEFAULT_STRATEGY) != Z_OK) 
+            return -1;
+        c_stream.next_in  = data;
+        c_stream.avail_in  = ndata;
+        c_stream.next_out = zdata;
+        c_stream.avail_out  = *nzdata;
+        while (c_stream.avail_in != 0 && c_stream.total_out < *nzdata) 
+        {
+            if(deflate(&c_stream, Z_NO_FLUSH) != Z_OK) return -1;
+        }
+        if(c_stream.avail_in != 0) return c_stream.avail_in;
+        for (;;) 
+        {
+            if((err = deflate(&c_stream, Z_FINISH)) == Z_STREAM_END) break;
+            if(err != Z_OK) return -1;
+        }
+        if(deflateEnd(&c_stream) != Z_OK) return -1;
+        *nzdata = c_stream.total_out;
+        return 0;
     }
     return -1;
 }

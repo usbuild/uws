@@ -20,6 +20,13 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
         http_header->used_len = 0;
         http_header->max_len = INIT_PARAMS_NUM;
     }
+    for(i = 0; i < http_header->used_len; i++) {
+        if(strcmp(key, http_header->params[i].name) == 0) {
+            free(http_header->params[i].value);
+            http_header->params[i].value = strdup(value);
+            return;
+        }
+    }
     if(http_header->used_len == http_header->max_len - 1)
     {
         http_header->max_len *= 2;
