@@ -71,6 +71,9 @@ printfile(const char *path)
     FILE* file = fopen(path, "r");
     fseek(file, 0, SEEK_END);
     header_body.content_len = ftell(file);
+    char *mod_time_string = get_file_time(path);
+    add_header_param("Last-Modified", mod_time_string, response_header);
+    free(mod_time_string);
 
     rewind(file);
 

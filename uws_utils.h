@@ -12,4 +12,6 @@ int in_int_array(int array[], int needle, int length);
 int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata);
 int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata);
 int in_str_array(char **array, char *needle);
+char *get_file_time(const char *path);
+bool is_expire(char *time1, char *time2);
 #endif

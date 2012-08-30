@@ -43,8 +43,20 @@ void send_error_response(int client_fd, const int status_code) {
     fread(content, sizeof(char), content_len, file);
     fclose(file);
 
-    //
+    char *mod_time_str ;
+    if((mod_time_str = get_header_param("If-Modified-Since", request_header))) {
+        puts(mod_time_str);
+        char *file_mod_time = get_file_time(error_file_path);
+        if(is_expire(mod_time_str, file_mod_time)) {
+            send_error_response(client_fd, 304);
+            return;
+        }
+    }
+
+    //go here
     char *time_string = get_time_string(NULL);
+    char *mod_time_string = get_file_time(error_file_path);
+
     response_header->http_ver = "HTTP/1.1";
     response_header->status_code = status_code;
     response_header->status = get_by_code(status_code);
@@ -52,6 +64,9 @@ void send_error_response(int client_fd, const int status_code) {
     add_header_param("Connection", "Keep-Alive", response_header);
     add_header_param("Server", UWS_SERVER, response_header);
     add_header_param("Date", time_string, response_header);
+    add_header_param("Last-Modified", mod_time_string, response_header);
+    free(mod_time_string);
+
     char *content_len_str = itoa(content_len);
     add_header_param("Content-Length", content_len_str, response_header);
     free(content_len_str);
@@ -66,7 +81,6 @@ void send_error_response(int client_fd, const int status_code) {
     free(time_string);
     //
     write_response(client_fd, &header_body);
-
     free_header_params(header_body.header);
     free(header_body.header);
     free(header_body.content);

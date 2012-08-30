@@ -160,3 +160,16 @@ int in_str_array(char **array, char *needle) {
     }
     return -1;
 }
+char *get_file_time(const char *path) {
+    struct stat buff;
+    lstat(path, &buff);
+    return get_time_string(&buff.st_mtime);
+}
+
+bool is_expire(char *time1, char *time2) {
+    // time1 after time2 return false
+    return true;
+    time_t t1 = parse_time_string(time1);
+    time_t t2 = parse_time_string(time2);
+    return t1 < t2;
+}
