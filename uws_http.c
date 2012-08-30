@@ -99,7 +99,7 @@ get_mime(const char* path)
 }
 static void
 set_header() {
-    char *time_string = get_time_string();
+    char *time_string = get_time_string(NULL);
     response_header->http_ver = "HTTP/1.1";
     response_header->status_code = 200;
     response_header->status = "OK";
@@ -152,8 +152,15 @@ http_router(int sockfd)
 }
 int write_response(int sockfd, struct response* header_body) {
     int res;
+    char *accept_encoding; 
     //compress--start--
-    if(uws_config.http.gzip && in_str_array(uws_config.http.gzip_types, get_header_param("Content-Type", header_body->header)) >= 0) {
+
+    if(uws_config.http.gzip && 
+        in_str_array(uws_config.http.gzip_types, get_header_param("Content-Type", header_body->header)) >= 0 &&
+        (accept_encoding = get_header_param("Accept-Encoding", header_body->header)) &&
+        strstr(accept_encoding, "gzip") != NULL
+        ) {
+
         size_t src_len = header_body->content_len;
         size_t dst_len;
         char *dst_buff;

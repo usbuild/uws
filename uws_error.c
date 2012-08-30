@@ -44,7 +44,7 @@ void send_error_response(int client_fd, const int status_code) {
     fclose(file);
 
     //
-    char *time_string = get_time_string();
+    char *time_string = get_time_string(NULL);
     response_header->http_ver = "HTTP/1.1";
     response_header->status_code = status_code;
     response_header->status = get_by_code(status_code);

@@ -68,14 +68,22 @@ char *itoa(const size_t data) {
     sprintf(str, "%u", data);
     return str;
 }
-char* get_time_string() {
+char* get_time_string(time_t *tt) {
     struct tm *cur_time;
+    time_t t;
     char* buff = (char*) malloc(sizeof(char) * 40);
-    time_t tt;
-    time(&tt);
-    cur_time = localtime(&tt);
+    if(tt == NULL) {
+        t = time(NULL);
+        tt = &t;
+    }
+    cur_time = localtime(tt);
     strftime(buff, 40, "%a, %e %b %Y %T %Z", cur_time);
     return buff;
+}
+time_t parse_time_string(char *time_str) {
+    struct tm cur_time;
+    strptime(time_str, "%a, %e %b %Y %T %Z", cur_time);
+    return mktime(&cur_time);
 }
 int in_int_array(int array[], int needle, int length) {
     int i;
