@@ -119,6 +119,19 @@ set_header() {
 int
 http_router(int sockfd) 
 {
+    /*
+
+    char *mod_time_str ;
+    if((mod_time_str = get_header_param("If-Modified-Since", request_header))) {
+        puts(mod_time_str);
+        char *file_mod_time = get_file_time(error_file_path);
+        if(is_expire(mod_time_str, file_mod_time)) {
+            send_error_response(client_fd, 304);
+            return;
+        }
+    }
+
+   */
     char path[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
