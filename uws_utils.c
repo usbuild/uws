@@ -71,18 +71,20 @@ char *itoa(const size_t data) {
 char* get_time_string(time_t *tt) {
     struct tm *cur_time;
     time_t t;
-    char* buff = (char*) malloc(sizeof(char) * 40);
+    char* buff = (char*) malloc(sizeof(char) * 60);
     if(tt == NULL) {
         t = time(NULL);
         tt = &t;
     }
-    cur_time = localtime(tt);
-    strftime(buff, 40, "%a, %e %b %Y %T %Z", cur_time);
+    cur_time = gmtime(tt);
+    strftime(buff, 60, "%a, %d %b %Y %H:%M:%S GMT", cur_time);
     return buff;
 }
 time_t parse_time_string(char *time_str) {
     struct tm cur_time;
-    strptime(time_str, "%a, %e %b %Y %T %Z", cur_time);
+    char buff[60];
+    strptime(time_str, "%a, %d %b %Y %H:%M:%S GMT", &cur_time);
+
     return mktime(&cur_time);
 }
 int in_int_array(int array[], int needle, int length) {
@@ -95,7 +97,7 @@ int in_int_array(int array[], int needle, int length) {
     return -1;
 }
 
-int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)
+int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)/*{{{*/
 {
     z_stream c_stream;
     int err = 0;
@@ -122,8 +124,8 @@ int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)
         return 0;
     }
     return -1;
-}
-int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata) {
+}/*}}}*/
+int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata) {/*{{{*/
     z_stream c_stream;
     int err = 0;
     if(data && ndata > 0)
@@ -149,7 +151,7 @@ int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata) {
         return 0;
     }
     return -1;
-}
+}/*}}}*/
 int in_str_array(char **array, char *needle) {
     int i = 0;
     while(array[i] != NULL) {
@@ -168,7 +170,6 @@ char *get_file_time(const char *path) {
 
 bool is_expire(char *time1, char *time2) {
     // time1 after time2 return false
-    return true;
     time_t t1 = parse_time_string(time1);
     time_t t2 = parse_time_string(time2);
     return t1 < t2;

@@ -200,7 +200,7 @@ fastcgi_router(int sockfd)
     char fport[10];
     sscanf(fastcgi_pass, "%[^:]:%s", fhost, fport);
     if(!send_request(fhost, atoi(fport), pv)) {
-        send_error_response(sockfd, 502);
+        send_error_response(sockfd, 502, true);
     }
 
     //TODO:More status

@@ -57,7 +57,7 @@ static const int_str_pair http_status[] = {//Copy from lighttpd
 
 	{ -1, "Error" }
 };
-void send_error_response(int client_fd, int status_code);
+void send_error_response(int client_fd, int status_code, bool with_page);
 char *get_by_code(int code);
 
 #endif

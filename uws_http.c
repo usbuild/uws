@@ -11,13 +11,48 @@
 struct response header_body;
 static char* mime;
 
+static char*
+get_mime(const char* path)
+{
+    int i = 0;
+    i = strlen(path);
+    i--;
+    while(*(path + i) != '.') {
+        if(i == 0) {
+            return strdup("text/html");
+            break;
+        }
+        i--;
+    }
+    if(i != 0){
+        return mimebyext(path + i + 1);
+    }
+    return strdup("text/html");
+}
+static void
+set_header() {
+    char *time_string = get_time_string(NULL);
+    response_header->http_ver = "HTTP/1.1";
+    response_header->status_code = 200;
+    response_header->status = "OK";
+    add_header_param("Cache-Control", "private", response_header);
+    add_header_param("Connection", "Keep-Alive", response_header);
+    add_header_param("Vary", "Accept-Encoding", response_header);
+    add_header_param("Server", UWS_SERVER, response_header);
+    add_header_param("Date", time_string, response_header);
+    add_header_param("Content-Length", itoa(header_body.content_len), response_header);
+    add_header_param("Content-Type", mime, response_header);
+    header_body.header = response_header;
+    free(time_string);
+}
+
 int
 comparestr(const void *p1, const void *p2)
 {
     return strcmp(* (char * const *)p1, * (char * const *) p2);
 }
-void
-printdir(const char *fpath) {//打印目录项排序
+static void
+printdir(const char *fpath, int client_fd) {//打印目录项排序
     DIR *dp = opendir(fpath);
     struct dirent *dir_entry;
     int dir_len = 0;
@@ -64,74 +99,46 @@ printdir(const char *fpath) {//打印目录项排序
     }
     header_body.content_len = strlen(header_body.content);
     closedir(dp);
+    set_header();
+    write_response(client_fd, &header_body);
+    free_header_params(response_header);
+    free(header_body.header);
+    free(header_body.content);
 }
-void
-printfile(const char *path)
+static void
+printfile(const char *path, int client_fd)
 {
+    char *mod_time_str ;
+    char *file_mod_time = get_file_time(path);
+    if((mod_time_str = get_header_param("If-Modified-Since", request_header))) {
+        if(!is_expire(mod_time_str, file_mod_time)) {
+            send_error_response(client_fd, 304, false);
+            return;
+        }
+    }
+
     FILE* file = fopen(path, "r");
     fseek(file, 0, SEEK_END);
     header_body.content_len = ftell(file);
-    char *mod_time_string = get_file_time(path);
-    add_header_param("Last-Modified", mod_time_string, response_header);
-    free(mod_time_string);
-
     rewind(file);
 
     header_body.content = (char*) calloc (header_body.content_len, sizeof(char));
     fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
+
+    add_header_param("Last-Modified", file_mod_time, response_header);
+    free(file_mod_time);
+
+    set_header();
+    write_response(client_fd, &header_body);
+    free_header_params(response_header);
+    free(header_body.header);
+    free(header_body.content);
 }
 
-static char*
-get_mime(const char* path)
-{
-    int i = 0;
-    i = strlen(path);
-    i--;
-    while(*(path + i) != '.') {
-        if(i == 0) {
-            return strdup("text/html");
-            break;
-        }
-        i--;
-    }
-    if(i != 0){
-        return mimebyext(path + i + 1);
-    }
-    return strdup("text/html");
-}
-static void
-set_header() {
-    char *time_string = get_time_string(NULL);
-    response_header->http_ver = "HTTP/1.1";
-    response_header->status_code = 200;
-    response_header->status = "OK";
-    add_header_param("Cache-Control", "private", response_header);
-    add_header_param("Connection", "Keep-Alive", response_header);
-    add_header_param("Vary", "Accept-Encoding", response_header);
-    add_header_param("Server", UWS_SERVER, response_header);
-    add_header_param("Date", time_string, response_header);
-    add_header_param("Content-Length", itoa(header_body.content_len), response_header);
-    add_header_param("Content-Type", mime, response_header);
-    header_body.header = response_header;
-    free(time_string);
-}
 int
 http_router(int sockfd) 
 {
-    /*
-
-    char *mod_time_str ;
-    if((mod_time_str = get_header_param("If-Modified-Since", request_header))) {
-        puts(mod_time_str);
-        char *file_mod_time = get_file_time(error_file_path);
-        if(is_expire(mod_time_str, file_mod_time)) {
-            send_error_response(client_fd, 304);
-            return;
-        }
-    }
-
-   */
     char path[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
@@ -146,24 +153,18 @@ http_router(int sockfd)
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
             mime = strdup("text/html");
-            printdir(path);
+            printdir(path, sockfd);
         }
         else
         {
             mime = get_mime(path);
-            printfile(path);
+            printfile(path, sockfd);
         }
     }
     else {
-        send_error_response(sockfd, 404);
+        send_error_response(sockfd, 404, true);
         return 0;
     }
-    set_header();
-    write_response(sockfd, &header_body);
-    free_header_params(response_header);
-    free(header_body.header);
-
-    free(header_body.content);
     return 0;
 }
 int write_response(int sockfd, struct response* header_body) {
@@ -171,12 +172,12 @@ int write_response(int sockfd, struct response* header_body) {
     char *accept_encoding; 
     //compress--start--
 
-    if(uws_config.http.gzip && 
+    if((header_body->content_len > 0) &&
+        uws_config.http.gzip && 
         in_str_array(uws_config.http.gzip_types, get_header_param("Content-Type", header_body->header)) >= 0 &&
         (accept_encoding = get_header_param("Accept-Encoding", header_body->header)) &&
         strstr(accept_encoding, "gzip") != NULL
         ) {
-
         size_t src_len = header_body->content_len;
         size_t dst_len;
         char *dst_buff;

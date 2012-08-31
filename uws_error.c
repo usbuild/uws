@@ -2,7 +2,7 @@
 #include "uws_utils.h"
 #include "uws_header.h"
 #include "uws_config.h"
-void send_error_response(int client_fd, const int status_code) {
+void send_error_response(int client_fd, const int status_code, const bool with_page) {
     char** error_pages = running_server->error_page;
     int i;
     char *error_path = NULL;
@@ -23,39 +23,35 @@ void send_error_response(int client_fd, const int status_code) {
         if(error_path != NULL) break;
         error_pages++;
     }
-    error_file_path  = strdup("/etc/hostname"); //just for test
-    if(error_path != NULL) {
-        char *tmp_path = strlcat(running_server->root, error_path);
-        if(access(tmp_path, F_OK) == 0) {
-            free(error_file_path);
-            error_file_path = tmp_path;
-            free(error_path);
-        } else {
-            free(tmp_path);
+    int content_len;
+    char *content;
+    if(with_page) {
+        error_file_path  = strdup("/etc/hostname"); //just for test
+        if(error_path != NULL) {
+            char *tmp_path = strlcat(running_server->root, error_path);
+            if(access(tmp_path, F_OK) == 0) {
+                free(error_file_path);
+                error_file_path = tmp_path;
+                free(error_path);
+            } else {
+                free(tmp_path);
+            }
         }
-    }
-    FILE* file = fopen(error_file_path, "r");
-    fseek(file, 0, SEEK_END);
-    int content_len = ftell(file);
-    rewind(file);
-    char *content = (char*) calloc (content_len, sizeof(char));
+        FILE* file = fopen(error_file_path, "r");
+        fseek(file, 0, SEEK_END);
+        content_len = ftell(file);
+        rewind(file);
+        content = (char*) calloc (content_len, sizeof(char));
 
-    fread(content, sizeof(char), content_len, file);
-    fclose(file);
-
-    char *mod_time_str ;
-    if((mod_time_str = get_header_param("If-Modified-Since", request_header))) {
-        puts(mod_time_str);
-        char *file_mod_time = get_file_time(error_file_path);
-        if(is_expire(mod_time_str, file_mod_time)) {
-            send_error_response(client_fd, 304);
-            return;
-        }
+        fread(content, sizeof(char), content_len, file);
+        fclose(file);
+    } else {
+        content_len = 0;
+        content = strdup("");
     }
 
     //go here
     char *time_string = get_time_string(NULL);
-    char *mod_time_string = get_file_time(error_file_path);
 
     response_header->http_ver = "HTTP/1.1";
     response_header->status_code = status_code;
@@ -64,14 +60,16 @@ void send_error_response(int client_fd, const int status_code) {
     add_header_param("Connection", "Keep-Alive", response_header);
     add_header_param("Server", UWS_SERVER, response_header);
     add_header_param("Date", time_string, response_header);
-    add_header_param("Last-Modified", mod_time_string, response_header);
-    free(mod_time_string);
-
-    char *content_len_str = itoa(content_len);
-    add_header_param("Content-Length", content_len_str, response_header);
-    free(content_len_str);
-
     add_header_param("Content-Type", "text/html", response_header);
+
+
+    if(with_page) {
+        char *content_len_str = itoa(content_len);
+        add_header_param("Content-Length", content_len_str, response_header);
+        free(content_len_str);
+    }
+
+
     struct response header_body;
 
     header_body.header = response_header;
