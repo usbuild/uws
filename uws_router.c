@@ -16,6 +16,7 @@ map[MAP_LEN] = {{NULL, NULL}};
 extern int dir_router(int sockfd);
 extern int http_router(int sockfd);
 extern int fastcgi_router(int sockfd);
+extern int rewrite_router(int sockfd);
 //end extern router handler
 void add_router(Router router) {
     int i = 0;
@@ -39,6 +40,11 @@ void init_routers(){
     dirrt.preg = ".*";
     dirrt.func = dir_router;
     add_router(dirrt);
+
+    Router rewritert;
+    rewritert.preg = ".*";
+    rewritert.func = rewrite_router;
+    add_router(rewritert);
 }
 
 void pathrouter(int sockfd) {
