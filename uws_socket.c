@@ -11,7 +11,7 @@
 #include "uws_fdhandler.h"
 #include "uws_header.h"
 #define MAX_EVENTS  10
-//#define DEBUG
+#define DEBUG
 
 
 struct epoll_event events[MAX_EVENTS];
@@ -96,7 +96,7 @@ int start_server()
     }
 
     //epoll here end
-    while(1) { 
+    for( ; ; ) { 
         int n;
         nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 

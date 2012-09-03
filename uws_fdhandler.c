@@ -62,7 +62,9 @@ void deal_client_fd(client_sockfd)
             i++;
         }
         if(running_server != NULL) {
-            pathrouter(client_sockfd);
+            if(setjmp(error_jmp_buf) == 0) {
+                pathrouter(client_sockfd);
+            }
         }
     }
 

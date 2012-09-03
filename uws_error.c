@@ -8,7 +8,6 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
     char *error_path = NULL;
     char *error_file_path;
     while(*error_pages != NULL) {
-
         for(i = 0; i < strlen(*error_pages); i++) {
             if((*error_pages)[i] == '=') {
                 (*error_pages)[i] = '\0';
@@ -26,7 +25,7 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
     int content_len;
     char *content;
     if(with_page) {
-        error_file_path  = strdup("/etc/hostname"); //just for test
+        error_file_path  = strdup("/dev/null"); //just for test
         if(error_path != NULL) {
             char *tmp_path = strlcat(running_server->root, error_path);
             if(access(tmp_path, F_OK) == 0) {
@@ -82,6 +81,7 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
     free_header_params(header_body.header);
     free(header_body.header);
     free(header_body.content);
+    longjmp(error_jmp_buf, 1);
 }
 char *get_by_code(int code) {
     int i = 0;

@@ -53,6 +53,10 @@ comparestr(const void *p1, const void *p2)
 }
 static void
 printdir(const char *fpath, int client_fd) {//打印目录项排序
+    if(!running_server->autoindex) {
+        send_error_response(client_fd, 403, true);
+        return;
+    }
     DIR *dp = opendir(fpath);
     struct dirent *dir_entry;
     int dir_len = 0;
@@ -89,7 +93,6 @@ printdir(const char *fpath, int client_fd) {//打印目录项排序
     entries[dir_len] = NULL;
     qsort(entries, dir_len, sizeof(char*), comparestr);
 
-
     while(*(entries)!= NULL) {
         strcat(header_body.content, "<a href=\"");
         strcat(header_body.content, *entries);
@@ -99,11 +102,6 @@ printdir(const char *fpath, int client_fd) {//打印目录项排序
     }
     header_body.content_len = strlen(header_body.content);
     closedir(dp);
-    set_header();
-    write_response(client_fd, &header_body);
-    free_header_params(response_header);
-    free(header_body.header);
-    free(header_body.content);
 }
 static void
 printfile(const char *path, int client_fd)
@@ -112,7 +110,7 @@ printfile(const char *path, int client_fd)
     char *file_mod_time = get_file_time(path);
     if((mod_time_str = get_header_param("If-Modified-Since", request_header))) {
         if(!is_expire(mod_time_str, file_mod_time)) {
-            send_error_response(client_fd, 304, false);
+            send_error_response(client_fd, 403, false);
             return;
         }
     }
@@ -128,12 +126,6 @@ printfile(const char *path, int client_fd)
 
     add_header_param("Last-Modified", file_mod_time, response_header);
     free(file_mod_time);
-
-    set_header();
-    write_response(client_fd, &header_body);
-    free_header_params(response_header);
-    free(header_body.header);
-    free(header_body.content);
 }
 
 int
@@ -163,8 +155,14 @@ http_router(int sockfd)
     }
     else {
         send_error_response(sockfd, 404, true);
-        return 0;
+        return;
     }
+
+    set_header();
+    write_response(sockfd, &header_body);
+    free_header_params(response_header);
+    free(header_body.header);
+    free(header_body.content);
     return 0;
 }
 int write_response(int sockfd, struct response* header_body) {

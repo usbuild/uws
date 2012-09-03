@@ -1,6 +1,7 @@
 #ifndef __UWS_HEADER_H__
 #define __UWS_HEADER_H__
 #include "uws.h"
+#include <setjmp.h>
 #define HEADER_LEN  10240
 #define INIT_PARAMS_NUM  20
 #define HEADER_SEP  "\r\n"
@@ -17,6 +18,8 @@ struct http_header{
     int max_len;
     Http_Param* params;
 };
+
+jmp_buf error_jmp_buf;
 
 struct http_header *request_header;
 struct http_header *response_header;
