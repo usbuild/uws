@@ -14,4 +14,6 @@ int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata);
 int in_str_array(char **array, char *needle);
 char *get_file_time(const char *path);
 bool is_expire(char *time1, char *time2);
+int writen(int fd, char *buff, size_t len);
+int readn(int fd, char *buff, size_t len);
 #endif

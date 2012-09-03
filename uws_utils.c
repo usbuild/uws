@@ -174,3 +174,23 @@ bool is_expire(char *time1, char *time2) {
     time_t t2 = parse_time_string(time2);
     return t1 < t2;
 }
+int writen(int fd, char *buff, size_t len) {
+    size_t already = 0;
+    long res = 0;
+    while(already < len) {
+        res = write(fd, buff + already, len - already);
+        if(res == -1) return -1;
+        already += res;
+    }
+    return already;
+}
+int readn(int fd, char *buff, size_t len) {
+    size_t already = 0;
+    long res = 0;
+    while(already < len) {
+        res = read(fd, buff + already, len - already);
+        if(res == -1) return -1;
+        already += res;
+    }
+    return already;
+}

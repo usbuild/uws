@@ -120,8 +120,9 @@ printfile(const char *path, int client_fd)
     header_body.content_len = ftell(file);
     rewind(file);
 
+
     header_body.content = (char*) calloc (header_body.content_len, sizeof(char));
-    fread(header_body.content, sizeof(char), header_body.content_len, file);
+    int res = fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
 
     add_header_param("Last-Modified", file_mod_time, response_header);
@@ -193,11 +194,12 @@ int write_response(int sockfd, struct response* header_body) {
     size_t header_len = strlen(header_str);
 
     res = write(sockfd, header_str, header_len);
+    free(header_str);
+
     if(res == -1) return -1;
     res = write(sockfd, HEADER_SEP, strlen(HEADER_SEP));
     if(res == -1) return -1;
-    res = write(sockfd, header_body->content, header_body->content_len);
-    if(res == -1) return -1;
-    free(header_str);
+    res = writen(sockfd, header_body->content, header_body->content_len);
+    if(res == -1) {return -1;}
     return 0;
 }

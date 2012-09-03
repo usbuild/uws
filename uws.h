@@ -10,10 +10,10 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define UWS_SERVER "uws/0.0.3"
+#define UWS_SERVER "uws/0.0.4"
 
 #define LINE_LEN    256
-#define OPT_LEN     20
+#define OPT_LEN     50
 #define VLU_LEN     50
 #define PATH_LEN    512
 #define bool        int
