@@ -42,6 +42,6 @@ char* mimebyext(const char *ext)
         }
         i++;
     }
-    strcpy(mime, "text/plain");
+    strcpy(mime, uws_config.http.default_type);
     return mime;
 }

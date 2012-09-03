@@ -77,6 +77,7 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 <HTTP>server_names_hash_bucket_size   {state = INT_VAL;val_int = &uws_config.http.server_names_hash_bucket_size; }
 <HTTP>access_log     {state = STRING_VAL; val_string = &uws_config.http.access_log;}
 <HTTP>error_log      {state = STRING_VAL; val_string = &uws_config.http.error_log;}
+<HTTP>default_type   {state = STRING_VAL; val_string = &uws_config.http.default_type;}
 <HTTP>gzip           {state = BOOL_VAL;val_bool = &uws_config.http.gzip; }
 <HTTP>gzip_disable   {state = STRING_VAL; val_string = &uws_config.http.gzip_disable;}
 <HTTP>gzip_vary      {state = BOOL_VAL;val_bool = &uws_config.http.gzip_vary; }

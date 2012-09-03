@@ -31,6 +31,7 @@ struct http_cfg{
     int server_names_hash_bucket_size;
     char* access_log;
     char* error_log;
+    char* default_type;
     bool gzip;
     char* gzip_disable;
     bool gzip_vary;
