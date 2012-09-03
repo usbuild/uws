@@ -110,7 +110,7 @@ printfile(const char *path, int client_fd)
     char *file_mod_time = get_file_time(path);
     if((mod_time_str = get_header_param("If-Modified-Since", request_header))) {
         if(!is_expire(mod_time_str, file_mod_time)) {
-            send_error_response(client_fd, 403, false);
+            send_error_response(client_fd, 304, false);
             return;
         }
     }
@@ -155,7 +155,7 @@ http_router(int sockfd)
     }
     else {
         send_error_response(sockfd, 404, true);
-        return;
+        return 0;
     }
 
     set_header();

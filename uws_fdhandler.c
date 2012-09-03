@@ -43,18 +43,15 @@ void deal_client_fd(client_sockfd)
     char* host = get_header_param("Host", request_header);
     if(host != NULL) 
     {
-        char *host_no_port = strdup(host);
-        for(i = 0; i < strlen(host); i++) {
-            if(host_no_port[i] == ':') {
-                host_no_port[i] = '\0';
-                break;
-               }
-            i++;
-        }
-        i = 0;
+        char host_with_port[LINE_LEN] = {0};
         while(uws_config.http.servers[i] != NULL) {
+            strcpy(host_with_port, uws_config.http.servers[i]->server_name);
+            strcat(host_with_port, ":");
+            char *port_no = itoa(uws_config.http.servers[i]->listen);
+            strcat(host_with_port, port_no);
+            free(port_no);
 
-            if(wildcmp(uws_config.http.servers[i]->server_name, host_no_port) == 1) {
+            if(wildcmp(host_with_port, host) == 1) {
                 //We've got a file regiestered in the config file;
                 running_server = uws_config.http.servers[i];
                 break;
