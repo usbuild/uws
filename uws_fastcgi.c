@@ -186,13 +186,27 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 int
 fastcgi_router(int sockfd) 
 {
+    char *host = get_header_param("Host", request_header);
+    char *p = strchr(host, ':');
+    char *port;
+    if(p == NULL) {
+        port = "80";
+    } else {
+        port = p + 1;
+    }
     Param_Value pv[] = {
-        {"SCRIPT_FILENAME", request_header->path},
-        {"REQUEST_METHOD", "GET"},
-        {"REQUEST_URI", request_header->url},
         {"QUERY_STRING",request_header->request_params},
-        {"HTTP_HOST", "localhost:8080"},
-        {NULL,NULL} };
+        {"REQUEST_METHOD", request_header->method},
+        {"REQUEST_METHOD", request_header->method},
+        //{"CONTENT_TYPE", get_header_param("Content-Type", request_header)},
+        //{"CONTENT_LENGTH", get_header_param("Content-Length", request_header)},
+        {"SCRIPT_FILENAME", request_header->path},
+        {"SERVER_ADDR", get_header_param("Client-IP", request_header)},
+        {"SERVER_PORT", port},
+        {"REQUEST_URI", request_header->url},
+        {"HTTP_HOST", get_header_param("Host", request_header)},
+        {NULL,NULL} 
+    };
 
     int i;
     char *fastcgi_pass = running_server->fastcgi_pass;
@@ -205,8 +219,8 @@ fastcgi_router(int sockfd)
 
     //TODO:More status
     char* header_str = "HTTP/1.1 200 OK\r\nServer: "UWS_SERVER"\r\n";
-    write(sockfd, header_str, strlen(header_str));
-    write(sockfd, mem_file, file_len);
+    writen(sockfd, header_str, strlen(header_str));
+    writen(sockfd, mem_file, file_len);
 
     free(mem_file);
     mem_file = NULL;

@@ -1,3 +1,6 @@
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include "uws_config.h"
 #include "uws_router.h"
 #include "uws_header.h"
@@ -60,6 +63,21 @@ void deal_client_fd(client_sockfd)
         }
         if(running_server != NULL) {
             if(setjmp(error_jmp_buf) == 0) {
+                    struct sockaddr_in peeraddr;
+                    socklen_t peerlen;
+                    getpeername(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
+                    char *client_ip = strdup(inet_ntoa(peeraddr.sin_addr));
+                if(running_server->facade) {
+                    add_header_param("X-Forwarded-For", client_ip, request_header);
+                    add_header_param("Client-IP", client_ip, request_header);
+                } else {
+                    char *old_ip = get_header_param("X-Forwarded-For", request_header);
+                    char *proxy_ip = (char*) calloc(strlen(old_ip) + strlen(client_ip) + 5, sizeof(char));
+                    strcpy(proxy_ip, old_ip);
+                    strcat(proxy_ip, client_ip);
+                    add_header_param("X-Forwarded-For", proxy_ip, request_header);
+                    free(proxy_ip);
+                }
                 pathrouter(client_sockfd);
             }
         }

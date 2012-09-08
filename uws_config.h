@@ -9,6 +9,7 @@
 typedef struct{
     char* root;
     bool autoindex;
+    bool facade;
     char** error_page;
     char** index;
     char* server_name;

@@ -46,6 +46,7 @@ http{space}*\{                  {BEGIN HTTP;
 <HTTP>server{space}*\{          {BEGIN SERVER;
                                     server = (server_cfg_t*)malloc(sizeof(server_cfg_t));
                                     server->autoindex = false;
+                                    server->facade = true;
                                     server->listen = 80;
                                 }
 <EVENTS>\}                      {BEGIN 0;}
@@ -88,6 +89,7 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 
 <SERVER>root         {state = STRING_VAL; val_string= &server->root;}
 <SERVER>autoindex    {state = BOOL_VAL; val_bool = &server->autoindex;}
+<SERVER>facade    {state = BOOL_VAL; val_bool = &server->facade;}
 <SERVER>server_name  {state = STRING_VAL; val_string = &server->server_name;}
 <SERVER>index        {state = ARRAY_VAL; val_array = &server->index;}
 <SERVER>error_page   {state = ARRAY_VAL; val_array = &server->error_page;}
