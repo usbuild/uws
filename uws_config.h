@@ -1,5 +1,6 @@
 #ifndef __UWS_CONFIG_H__
 #define __UWS_CONFIG_H__
+#include "uws.h"
 #define bool    int
 #define true    1
 #define false   0
@@ -53,6 +54,7 @@ typedef struct{
 //config definition end here
 uws_config_t uws_config;//Main Configuration
 server_cfg_t* running_server;//Current Server Profile Used
+char server_ip[LINE_LEN];
 void init_config();
 
 #endif

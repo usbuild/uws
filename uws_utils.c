@@ -194,3 +194,7 @@ int readn(int fd, char *buff, size_t len) {
     }
     return already;
 }
+char *nullstring(char *str) {
+    if(str == NULL) return "";
+    return str;
+}

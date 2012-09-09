@@ -8,6 +8,7 @@
 #include "uws_header.h"
 #include "uws_config.h"
 #include "uws_error.h"
+#include "uws_utils.h"
 #define PARAMS_BUFF_LEN     1024
 
 char *mem_file = NULL;
@@ -186,25 +187,36 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 int
 fastcgi_router(int sockfd) 
 {
-    char *host = get_header_param("Host", request_header);
-    char *p = strchr(host, ':');
-    char *port;
-    if(p == NULL) {
-        port = "80";
-    } else {
-        port = p + 1;
-    }
+    char *port = itoa(running_server->listen);
     Param_Value pv[] = {
         {"QUERY_STRING",request_header->request_params},
         {"REQUEST_METHOD", request_header->method},
         {"REQUEST_METHOD", request_header->method},
-        //{"CONTENT_TYPE", get_header_param("Content-Type", request_header)},
-        //{"CONTENT_LENGTH", get_header_param("Content-Length", request_header)},
+        {"CONTENT_TYPE", nullstring(get_header_param("Content-Type", request_header))},
+        {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", request_header))},
         {"SCRIPT_FILENAME", request_header->path},
-        {"SERVER_ADDR", get_header_param("Client-IP", request_header)},
-        {"SERVER_PORT", port},
+        {"SCRIPT_NAME", strrchr(request_header->path, '/')},
         {"REQUEST_URI", request_header->url},
+        {"DOCUMENT_URI", request_header->path + strlen(running_server->root)},
+        {"DOCUMENT_ROOT", running_server->root},
+        {"SERVER_PROTOCOL", request_header->http_ver},
+        {"GATEWAY_INTERFACE", "CGI/1.1"},
+        {"SERVER_SOFTWARE", UWS_SERVER},
+        {"REMOTE_ADDR", get_header_param("Client-IP", request_header)},
+        {"REMOTE_PORT", get_header_param("Client-PORT", request_header)},
+        {"SERVER_ADDR", server_ip},
+        {"SERVER_PORT", port},
+        {"SERVER_NAME", running_server->server_name},
+        {"HTTPS", ""},
+        {"REDIRECT_STATUS", "200"},
         {"HTTP_HOST", get_header_param("Host", request_header)},
+        {"HTTP_CONNECTION", nullstring(get_header_param("Connection",request_header))},
+        {"HTTP_CACHE_CONTROL", nullstring(get_header_param("Cache-Control",request_header))},
+        {"HTTP_USER_AGENT", nullstring(get_header_param("User-Agent",request_header))},
+        {"HTTP_ACCEPT", nullstring(get_header_param("Accept",request_header))},
+        {"HTTP_ACCEPT_ENCODING", nullstring(get_header_param("Accept-Encoding",request_header))},
+        {"HTTP_ACCEPT_LANGUAGE", nullstring(get_header_param("Accept-Language",request_header))},
+        {"HTTP_ACCEPT_CHARSET", nullstring(get_header_param("Accept-Charset",request_header))},
         {NULL,NULL} 
     };
 

@@ -16,4 +16,5 @@ char *get_file_time(const char *path);
 bool is_expire(char *time1, char *time2);
 int writen(int fd, char *buff, size_t len);
 int readn(int fd, char *buff, size_t len);
+char *nullstring(char *str);
 #endif
