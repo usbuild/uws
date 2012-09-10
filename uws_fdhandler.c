@@ -18,9 +18,12 @@ void deal_client_fd(client_sockfd)
 
     FILE *input_file = fdopen(client_sockfd, "r+"); 
 
-    fgets(line, BUFF_LEN, input_file);
     request_header = (struct http_header*) calloc(1, sizeof(struct http_header));
+    request_content = (memory_t *) calloc(1, sizeof(memory_t));
     response_header = (struct http_header*) calloc(1, sizeof(struct http_header));
+
+    fgets(line, BUFF_LEN, input_file);
+    //append_mem(request_content, line, strlen(line));
 
     request_header->path = (char*)calloc(PATH_LEN, sizeof(char));
     request_header->params = NULL;
@@ -35,6 +38,7 @@ void deal_client_fd(client_sockfd)
     char key[BUFF_LEN];
     char value[BUFF_LEN];
     while(fgets(line, BUFF_LEN, input_file) != NULL) {
+        //append_mem(request_content, line, strlen(line));//add to content
         if(strcmp(line, "\r\n") != 0) {
             sscanf(line, "%[^:]: %[^\r\n]", key, value);
             add_header_param(key, value, request_header);
@@ -43,6 +47,15 @@ void deal_client_fd(client_sockfd)
             break;
         }
     }
+    //get content body
+    for(; ;) {
+        if(feof(input_file) || ferror(input_file)) break;
+        size_t read_num = fread(line, sizeof(char), LINE_LEN, input_file);
+        //if(read_num == -1) break;
+        append_mem(request_content, line, read_num);//add to content
+    }
+    request_content->mem[request_content->len] = 0;
+
     char* host = get_header_param("Host", request_header);
     if(host != NULL) 
     {
@@ -91,6 +104,8 @@ void deal_client_fd(client_sockfd)
 
     fclose(input_file);//if we don't close file, will cause memory leak
     close(client_sockfd);
+    free(request_content->mem);
+    free(request_content);
     free(request_header->url);
     free(request_header->path);
     free(request_header->request_params);

@@ -2,8 +2,10 @@
 #define __UWS_FASTCGI_H__
 #include "uws.h"
 
+/*
 bool
-send_request(const char* host, int port,Param_Value pv[]);
+send_request(const char* host, int port,Param_Value pv[], memory_t *);
+*/
 
 /*
  * Listening socket file number

@@ -198,3 +198,19 @@ char *nullstring(char *str) {
     if(str == NULL) return "";
     return str;
 }
+
+void append_mem(memory_t *smem, char *start, size_t len) {
+    if(smem->len == 0) {
+        smem->mem = (char *)malloc(len * sizeof(char));
+        smem->total = len;
+        memcpy(smem->mem, start, smem->total);
+        smem->len = len;
+    } else {
+        while(smem->len + len > smem->total) {
+            smem->total *= 2;
+        }
+        smem->mem = (char*) realloc(smem->mem, smem->total);
+        memcpy(smem->mem + smem->len, start, len);
+        smem->len += len;
+    }
+}

@@ -102,7 +102,7 @@ add_fcgi_param(int sockfd, int request_id, char* name, char* value) {
     }
 }
 bool
-send_request(const char* host, int port, Param_Value init_pv[])
+send_request(const char* host, int port, Param_Value init_pv[], memory_t *stdin_data)
 {
     int sockfd,
         result,
@@ -133,6 +133,21 @@ send_request(const char* host, int port, Param_Value init_pv[])
         add_fcgi_param(sockfd, request_id, pv->name, pv->value);
         pv++;
     }
+
+    //------ body
+    puts(stdin_data->mem);
+    FCGI_Header content_body;
+    content_body = make_header(FCGI_STDIN, request_id, stdin_data->len, 0);
+    write(sockfd, (char *)&content_body, FCGI_HEADER_LEN);
+    count = writen(sockfd, stdin_data->mem, stdin_data->len);
+    printf("======start\n%d->%d\n=====end\n", stdin_data->len, count);
+    puts("");
+    //terminate stdin
+    FCGI_Header end_body;
+    end_body = make_header(FCGI_STDIN, request_id, 0, 0);
+    write(sockfd, (char *)&content_body, FCGI_HEADER_LEN);
+    //------ body
+
 
     FCGI_Header end_header;
     end_header = make_header(FCGI_PARAMS, request_id, 0, 0);
@@ -175,10 +190,12 @@ send_request(const char* host, int port, Param_Value init_pv[])
         else if(response_header.type == FCGI_END_REQUEST) {
             FCGI_EndRequestBody end_request;
             count = read(sockfd, &end_request, FCGI_HEADER_LEN);
+
             /*
             if(count != 8) perror("read");
 fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.appStatusB3<<24)+(end_request.appStatusB2<<16) +(end_request.appStatusB1<<8)+(end_request.appStatusB0),end_request.protocolStatus);
 */
+
         }
     }
     return true;
@@ -209,6 +226,7 @@ fastcgi_router(int sockfd)
         {"SERVER_NAME", running_server->server_name},
         {"HTTPS", ""},
         {"REDIRECT_STATUS", "200"},
+        /*
         {"HTTP_HOST", get_header_param("Host", request_header)},
         {"HTTP_CONNECTION", nullstring(get_header_param("Connection",request_header))},
         {"HTTP_CACHE_CONTROL", nullstring(get_header_param("Cache-Control",request_header))},
@@ -217,6 +235,8 @@ fastcgi_router(int sockfd)
         {"HTTP_ACCEPT_ENCODING", nullstring(get_header_param("Accept-Encoding",request_header))},
         {"HTTP_ACCEPT_LANGUAGE", nullstring(get_header_param("Accept-Language",request_header))},
         {"HTTP_ACCEPT_CHARSET", nullstring(get_header_param("Accept-Charset",request_header))},
+        {"COOKIE", nullstring(get_header_param("Cookie",request_header))},
+        */
         {NULL,NULL} 
     };
 
@@ -225,7 +245,7 @@ fastcgi_router(int sockfd)
     char fhost[20];
     char fport[10];
     sscanf(fastcgi_pass, "%[^:]:%s", fhost, fport);
-    if(!send_request(fhost, atoi(fport), pv)) {
+    if(!send_request(fhost, atoi(fport), pv, request_content)) {
         send_error_response(sockfd, 502, true);
     }
 

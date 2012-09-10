@@ -27,6 +27,12 @@ typedef struct nv_pair {
     char* value;
 }Http_Param, Param_Value;
 
+typedef struct {
+   size_t len;
+   size_t total;
+   char *mem;
+} memory_t;
+
 struct response {
     struct http_header    *header;
     size_t header_len;
