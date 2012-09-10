@@ -134,20 +134,20 @@ send_request(const char* host, int port, Param_Value init_pv[], memory_t *stdin_
         pv++;
     }
 
-    //------ body
-    puts(stdin_data->mem);
+    //terminate params
+    FCGI_Header end_params;
+    end_params = make_header(FCGI_PARAMS, request_id, 0, 0);
+    write(sockfd, (char *)&end_params, FCGI_HEADER_LEN);
+    //------ body TODO:content bigger than MAX_STDIN_SIZE
     FCGI_Header content_body;
     content_body = make_header(FCGI_STDIN, request_id, stdin_data->len, 0);
     write(sockfd, (char *)&content_body, FCGI_HEADER_LEN);
     count = writen(sockfd, stdin_data->mem, stdin_data->len);
-    printf("======start\n%d->%d\n=====end\n", stdin_data->len, count);
-    puts("");
     //terminate stdin
     FCGI_Header end_body;
     end_body = make_header(FCGI_STDIN, request_id, 0, 0);
-    write(sockfd, (char *)&content_body, FCGI_HEADER_LEN);
+    write(sockfd, (char *)&end_body, FCGI_HEADER_LEN);
     //------ body
-
 
     FCGI_Header end_header;
     end_header = make_header(FCGI_PARAMS, request_id, 0, 0);
@@ -156,6 +156,7 @@ send_request(const char* host, int port, Param_Value init_pv[], memory_t *stdin_
         perror("write end header error");
         exit(1);
     }
+
     FCGI_Header response_header;
     char* content;
     int content_len;
@@ -198,6 +199,7 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 
         }
     }
+    close(sockfd);
     return true;
 }
 
@@ -226,7 +228,6 @@ fastcgi_router(int sockfd)
         {"SERVER_NAME", running_server->server_name},
         {"HTTPS", ""},
         {"REDIRECT_STATUS", "200"},
-        /*
         {"HTTP_HOST", get_header_param("Host", request_header)},
         {"HTTP_CONNECTION", nullstring(get_header_param("Connection",request_header))},
         {"HTTP_CACHE_CONTROL", nullstring(get_header_param("Cache-Control",request_header))},
@@ -235,8 +236,8 @@ fastcgi_router(int sockfd)
         {"HTTP_ACCEPT_ENCODING", nullstring(get_header_param("Accept-Encoding",request_header))},
         {"HTTP_ACCEPT_LANGUAGE", nullstring(get_header_param("Accept-Language",request_header))},
         {"HTTP_ACCEPT_CHARSET", nullstring(get_header_param("Accept-Charset",request_header))},
-        {"COOKIE", nullstring(get_header_param("Cookie",request_header))},
-        */
+        {"HTTP_REFER", nullstring(get_header_param("Refer",request_header))},
+        {"HTTP_COOKIE", nullstring(get_header_param("Cookie",request_header))},
         {NULL,NULL} 
     };
 
