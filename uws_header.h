@@ -19,13 +19,14 @@ struct http_header{
     Http_Param* params;
 };
 
-jmp_buf error_jmp_buf;
+jmp_buf error_jmp_buf;//to quick jump out of error response
 
 struct http_header *request_header;
 memory_t *request_content;
 struct http_header *response_header;
 char* get_header_param(char*, struct http_header*);
 void add_header_param(char*, char*, struct http_header*);
+void push_header_param(char*, char*, struct http_header*);
 void free_header_params(struct http_header*);
 char* str_response_header(struct http_header *header);
 

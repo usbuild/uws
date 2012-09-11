@@ -48,7 +48,6 @@ void init_routers(){
 }
 
 void pathrouter(int sockfd) {
-    char* path = request_header->url;
     int i = 0;
     while(map[i].preg != NULL) i++; //最先添加的最后执行
     i--;
@@ -60,7 +59,7 @@ void pathrouter(int sockfd) {
             puts("Compile regex error");
             exit(1);
         };
-        if(regexec(&reg, path, 0, NULL, 0) == 0) {
+        if(regexec(&reg, request_header->url, 0, NULL, 0) == 0) {
             regfree(&reg);
             if(!map[i].func(sockfd)) return;//返回值为0则停止冒泡
         } else {

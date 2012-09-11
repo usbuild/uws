@@ -40,6 +40,27 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
     new_param->value = strdup(value);
     http_header->used_len++;
 }
+void push_header_param(char *key, char *value, struct http_header *http_header){
+    int i = 0;
+    if(http_header->params == NULL) 
+    {
+        http_header->params = (Http_Param*) calloc(INIT_PARAMS_NUM, sizeof(Http_Param));
+        http_header->used_len = 0;
+        http_header->max_len = INIT_PARAMS_NUM;
+    }
+    if(http_header->used_len == http_header->max_len - 1)
+    {
+        http_header->max_len *= 2;
+        Http_Param* tmp = http_header->params;
+        http_header->params = (Http_Param*)calloc(http_header->max_len, sizeof(Http_Param));
+        memcpy(http_header->params, tmp, http_header->used_len);
+        free(tmp);
+    }
+    Http_Param* new_param = &http_header->params[http_header->used_len];
+    new_param->name = strdup(key);
+    new_param->value = strdup(value);
+    http_header->used_len++;
+}
 void free_header_params(struct http_header *http_header)
 {
     int i = 0;

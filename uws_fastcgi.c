@@ -251,10 +251,45 @@ fastcgi_router(int sockfd)
     }
 
     //TODO:More status
-    char* header_str = "HTTP/1.1 200 OK\r\nServer: "UWS_SERVER"\r\n";
-    writen(sockfd, header_str, strlen(header_str));
-    writen(sockfd, mem_file, file_len);
+    char line[LINE_LEN] = {0};
+    char *oldpos = mem_file;
+    char *pos;
+    struct http_header fcgi_response_header;
+    bzero(&fcgi_response_header, sizeof(fcgi_response_header));
+    char key[LINE_LEN];
+    char value[LINE_LEN];
+    
+    char *time_string = get_time_string(NULL);
+    add_header_param("Server", UWS_SERVER, &fcgi_response_header);
+    add_header_param("Date", time_string, &fcgi_response_header);
+    free(time_string);
 
+    while(pos = strstr(oldpos, "\r\n")) {
+        if(oldpos == pos) break;
+        bzero(line, LINE_LEN);
+        strncpy(line, oldpos, pos - oldpos);
+        sscanf(line, "%[^:]: %s", key, value);
+        if(strcmp(key, "Status") == 0) {
+            fcgi_response_header.status_code = atoi(value);
+        } else {
+            push_header_param(key, value, &fcgi_response_header);
+        }
+        oldpos = pos + strlen("\r\n");
+    }
+    int content_len = file_len - (pos - mem_file) - strlen("\r\n");
+    char *str_len =  itoa(content_len);
+    add_header_param("Content-Length", str_len, &fcgi_response_header);
+    free(str_len);
+
+    fcgi_response_header.http_ver = "HTTP/1.1";
+    if(fcgi_response_header.status_code == 0) fcgi_response_header.status_code = 200;
+    fcgi_response_header.status = get_by_code(fcgi_response_header.status_code);
+
+    char *header_str = str_response_header(&fcgi_response_header);
+    writen(sockfd, header_str, strlen(header_str));
+    writen(sockfd, pos, content_len + strlen("\r\n"));
+
+    free_header_params(&fcgi_response_header);
     free(mem_file);
     mem_file = NULL;
     file_len = 0;
