@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define UWS_SERVER "uws/0.0.4"
+#define UWS_SERVER "uws/0.0.5"
 
 #define LINE_LEN    1024
 #define OPT_LEN     50
