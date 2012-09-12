@@ -12,6 +12,7 @@
 #define PARAMS_BUFF_LEN     1024
 
 char *mem_file = NULL;
+memory_t smem;
 int file_len = 0;
 void
 write_mem_file(char *content, unsigned long length) 
@@ -94,12 +95,8 @@ add_fcgi_param(int sockfd, int request_id, char* name, char* value) {
     char name_value_record[name_value_record_len];
     memcpy(name_value_record, (char*)&name_value_header, FCGI_HEADER_LEN);
     memcpy(name_value_record + FCGI_HEADER_LEN, body_buff, body_len);
-    count = write(sockfd, (char*)&name_value_record, name_value_record_len);
-    if(count != name_value_record_len)
-    {
-        perror("add params error");
-        exit(1);
-    }
+    append_mem(&smem, (char *)&name_value_record, name_value_record_len);
+    //count = write(sockfd, (char*)&name_value_record, name_value_record_len);
 }
 bool
 send_request(const char* host, int port, Param_Value init_pv[], memory_t *stdin_data)
@@ -122,12 +119,9 @@ send_request(const char* host, int port, Param_Value init_pv[], memory_t *stdin_
     FCGI_BeginRequestRecord begin_record;
     begin_record.header = make_header(FCGI_BEGIN_REQUEST, request_id, sizeof(begin_record.body), 0);
     begin_record.body = make_begin_request_body(FCGI_RESPONDER, 0);
-    count = write(sockfd, (char *)&begin_record, sizeof(begin_record));
-    if(count != sizeof(begin_record))
-    {
-        perror("write header error");
-        exit(1);
-    }
+
+    append_mem(&smem, (char *)&begin_record, sizeof(begin_record));
+    //count = write(sockfd, (char *)&begin_record, sizeof(begin_record));
 
     while(pv->name != NULL){
         add_fcgi_param(sockfd, request_id, pv->name, pv->value);
@@ -137,25 +131,27 @@ send_request(const char* host, int port, Param_Value init_pv[], memory_t *stdin_
     //terminate params
     FCGI_Header end_params;
     end_params = make_header(FCGI_PARAMS, request_id, 0, 0);
-    write(sockfd, (char *)&end_params, FCGI_HEADER_LEN);
+    append_mem(&smem, (char *)&end_params, FCGI_HEADER_LEN);
+    //write(sockfd, (char *)&end_params, FCGI_HEADER_LEN);
     //------ body TODO:content bigger than MAX_STDIN_SIZE
     FCGI_Header content_body;
     content_body = make_header(FCGI_STDIN, request_id, stdin_data->len, 0);
-    write(sockfd, (char *)&content_body, FCGI_HEADER_LEN);
-    count = writen(sockfd, stdin_data->mem, stdin_data->len);
+    append_mem(&smem, (char *)&content_body, FCGI_HEADER_LEN);
+    //write(sockfd, (char *)&content_body, FCGI_HEADER_LEN);
+    append_mem(&smem, stdin_data->mem, stdin_data->len);
+    //count = writen(sockfd, stdin_data->mem, stdin_data->len);
     //terminate stdin
     FCGI_Header end_body;
     end_body = make_header(FCGI_STDIN, request_id, 0, 0);
-    write(sockfd, (char *)&end_body, FCGI_HEADER_LEN);
+    append_mem(&smem, (char *)&end_body, FCGI_HEADER_LEN);
+    //write(sockfd, (char *)&end_body, FCGI_HEADER_LEN);
     //------ body
 
     FCGI_Header end_header;
     end_header = make_header(FCGI_PARAMS, request_id, 0, 0);
-    count = write(sockfd, (char*)&end_header, FCGI_HEADER_LEN);
-    if(count != FCGI_HEADER_LEN) {
-        perror("write end header error");
-        exit(1);
-    }
+    append_mem(&smem, (char*)&end_header, FCGI_HEADER_LEN);
+    //count = write(sockfd, (char*)&end_header, FCGI_HEADER_LEN);
+    writen(sockfd, smem.mem, smem.len);
 
     FCGI_Header response_header;
     char* content;
