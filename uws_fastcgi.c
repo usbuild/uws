@@ -11,16 +11,8 @@
 #include "uws_utils.h"
 #define PARAMS_BUFF_LEN     1024
 
-char *mem_file = NULL;
 memory_t smem;
-int file_len = 0;
-void
-write_mem_file(char *content, unsigned long length) 
-{
-    mem_file = (char*) realloc(mem_file, length + file_len);
-    memcpy(mem_file + file_len, content, length);
-    file_len += length;
-}
+memory_t mem_file;
 Param_Value*
 read_header(char *mem, unsigned long length)
 {
@@ -164,7 +156,7 @@ send_request(const char* host, int port, Param_Value init_pv[], memory_t *stdin_
 
             count = read(sockfd, content, content_len);
 
-            write_mem_file(content, content_len);
+            append_mem_t(&mem_file, content, content_len);
 
             free(content);
             if(response_header.paddingLength > 0) {
@@ -246,9 +238,8 @@ fastcgi_router(int sockfd)
         send_error_response(sockfd, 502, true);
     }
 
-    //TODO:More status
     char line[LINE_LEN] = {0};
-    char *oldpos = mem_file;
+    char *oldpos = mem_file.mem;
     char *pos;
     struct http_header fcgi_response_header;
     bzero(&fcgi_response_header, sizeof(fcgi_response_header));
@@ -272,7 +263,8 @@ fastcgi_router(int sockfd)
         }
         oldpos = pos + strlen("\r\n");
     }
-    int content_len = file_len - (pos - mem_file) - strlen("\r\n");
+    int content_len = mem_file.len - (pos - mem_file.mem) - strlen("\r\n");
+
     char *str_len =  itoa(content_len);
     add_header_param("Content-Length", str_len, &fcgi_response_header);
     free(str_len);
@@ -287,9 +279,7 @@ fastcgi_router(int sockfd)
 
     free_header_params(&fcgi_response_header);
     free_mem_t(&smem);
-    free(mem_file);
-    mem_file = NULL;
-    file_len = 0;
+    free_mem_t(&mem_file);
 
     return 0;
 }

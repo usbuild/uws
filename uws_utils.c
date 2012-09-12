@@ -218,5 +218,7 @@ void append_mem_t(memory_t *smem, char *start, size_t len) {
 inline void
 free_mem_t(memory_t *smem) {
     free(smem->mem);
+    smem->mem = NULL;
     smem->len = 0;
+    smem->total = 0;
 }
