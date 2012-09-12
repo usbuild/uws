@@ -194,12 +194,13 @@ int readn(int fd, char *buff, size_t len) {
     }
     return already;
 }
-char *nullstring(char *str) {
+inline char *
+nullstring(char *str) {
     if(str == NULL) return "";
     return str;
 }
 
-void append_mem(memory_t *smem, char *start, size_t len) {
+void append_mem_t(memory_t *smem, char *start, size_t len) {
     if(smem->len == 0) {
         smem->mem = (char *)malloc(len * sizeof(char));
         smem->total = len;
@@ -213,4 +214,9 @@ void append_mem(memory_t *smem, char *start, size_t len) {
         memcpy(smem->mem + smem->len, start, len);
         smem->len += len;
     }
+}
+inline void
+free_mem_t(memory_t *smem) {
+    free(smem->mem);
+    smem->len = 0;
 }

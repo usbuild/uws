@@ -23,7 +23,6 @@ void deal_client_fd(client_sockfd)
     response_header = (struct http_header*) calloc(1, sizeof(struct http_header));
 
     fgets(line, BUFF_LEN, input_file);
-    //append_mem(request_content, line, strlen(line));
 
     request_header->path = (char*)calloc(PATH_LEN, sizeof(char));
     request_header->params = NULL;
@@ -38,7 +37,6 @@ void deal_client_fd(client_sockfd)
     char key[BUFF_LEN];
     char value[BUFF_LEN];
     while(fgets(line, BUFF_LEN, input_file) != NULL) {
-        //append_mem(request_content, line, strlen(line));//add to content
         if(strcmp(line, "\r\n") != 0) {
             sscanf(line, "%[^:]: %[^\r\n]", key, value);
             add_header_param(key, value, request_header);
@@ -52,7 +50,7 @@ void deal_client_fd(client_sockfd)
         if(feof(input_file) || ferror(input_file)) break;
         size_t read_num = fread(line, sizeof(char), LINE_LEN, input_file);
         //if(read_num == -1) break;
-        append_mem(request_content, line, read_num);//add to content
+        append_mem_t(request_content, line, read_num);//add to content
     }
     request_content->mem[request_content->len] = 0;
 
