@@ -1,4 +1,37 @@
-UWS(Usbuild Web Server): A light weight http server written in C
-The default configuration file is uws.conf, it's nginx-like and easy to write;
-This program is written in pure C language, and use lex to generate grammer reader.
-It can ONLY work under Linux environment, So, don't try to compile it in windows;
+UWS(Usbuild Web Server)
+
+Introduction
+=================================================
+UWS is a light weight http server written in C, It can ONLY work under Linux(3.2.0 or upper).It's a practise while reading <Advanced Programming in Unix Environment> and <Unix Net Programming>, just for fun, so DON'T use it in production environment.
+
+Features
+=================================================
+* Work under HTTP/1.1
+* ONLY Support GET and POST Method
+* Support 304 status and If-Modified-Since header
+* Gzip and deflate support
+* Basic Fast-CGI support
+* Index module can determine what to show when access a directory
+* Vhost, at different port
+
+TODO
+================================================
+* HTTPS Support
+* Rewrite Engine
+* Wsgi Support
+* Reverse Proxy and Load Distribution
+* ...
+
+How to Use
+===============================================
+Clone this respository, Make show you have zlib1g-dev installed and run `make` command in the project directory. `uws.conf` is the configuration file, you can change it to follow your needs.
+
+Copying
+==============================================
+This software distributes under BSD License, See COPYING file.
+
+Contact
+==============================================
+* GitHub [http://github.com/usbuild](http://github.com)
+* Sina-Weibo [http://weibo.com/usbuild](http://weibo.com/usbuild)
+* Email [njuzhangqichao@gmail.com](mailto:njuzhangqichao@gmail.com)
