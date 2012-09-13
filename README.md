@@ -1,4 +1,4 @@
-UWS(Usbuild Web Server)
+#UWS(Usbuild Web Server)
 
 Introduction
 =================================================
@@ -28,7 +28,7 @@ Clone this respository, Make show you have zlib1g-dev installed and run `make` c
 
 Copying
 ==============================================
-This software distributes under BSD License, See COPYING file.
+The software distributes under BSD license, See COPYING file.
 
 Contact
 ==============================================
