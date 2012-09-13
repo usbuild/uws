@@ -19,6 +19,24 @@ read_header(char *mem, unsigned long length)
     return NULL;
 }
 
+static char *
+header_to_fcgi(const char *str) 
+{
+    int prefix_len = strlen("HTTP_");
+    int len = strlen(str) + prefix_len + 2;
+    char *newstr = (char*) calloc(len, sizeof(char));
+    int i = 0;
+    strcpy(newstr, "HTTP_");
+    while(str[i]) {
+        if(str[i] == '-') {
+            newstr[i + prefix_len] = '_';
+        } else {
+            newstr[i + prefix_len] = toupper(str[i]);
+        }
+        i++;
+    }
+    return newstr;
+}
 
 static FCGI_Header
 make_header(int type, int request_id, int content_len, int padding_len)
@@ -186,16 +204,6 @@ fastcgi_router(int sockfd)
         {"SERVER_NAME", running_server->server_name},
         {"HTTPS", ""},
         {"REDIRECT_STATUS", "200"},
-        {"HTTP_HOST", get_header_param("Host", request_header)},
-        {"HTTP_CONNECTION", nullstring(get_header_param("Connection",request_header))},
-        {"HTTP_CACHE_CONTROL", nullstring(get_header_param("Cache-Control",request_header))},
-        {"HTTP_USER_AGENT", nullstring(get_header_param("User-Agent",request_header))},
-        {"HTTP_ACCEPT", nullstring(get_header_param("Accept",request_header))},
-        {"HTTP_ACCEPT_ENCODING", nullstring(get_header_param("Accept-Encoding",request_header))},
-        {"HTTP_ACCEPT_LANGUAGE", nullstring(get_header_param("Accept-Language",request_header))},
-        {"HTTP_ACCEPT_CHARSET", nullstring(get_header_param("Accept-Charset",request_header))},
-        {"HTTP_REFER", nullstring(get_header_param("Refer",request_header))},
-        {"HTTP_COOKIE", nullstring(get_header_param("Cookie",request_header))},
         {NULL,NULL} 
     };
 
@@ -212,6 +220,17 @@ fastcgi_router(int sockfd)
         add_fcgi_param(request_id, tmp->name, tmp->value);
         tmp++;
     }
+
+    Http_Param *params = request_header->params;
+    char *new_header;
+    while(params->name != NULL) {
+        new_header = header_to_fcgi(params->name);
+        add_fcgi_param(request_id, new_header, params->value);
+        free(new_header);
+        params++;
+    }
+
+
     //add more http headers
 
     //terminate params
