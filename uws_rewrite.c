@@ -1,4 +1,5 @@
 #include "uws_rewrite.h"
+#include <sys/stat.h>
 #include "uws_utils.h"
 #include "uws_config.h"
 #include "uws_header.h"
@@ -21,6 +22,15 @@ int rewrite_router(int sockfd) {
     while(*rules != NULL) {
         //apply a rule, when 
         split_string(*rules, &type, &regexp, &patch);
+        if(running_server->rewrite.exist) {
+            char *path = strlcat(running_server->root, request_header->url);
+
+            struct stat stat_buff;
+            if(lstat(path, &stat_buff) != -1) {
+                apply_rewrite = true;
+            }
+            free(path);
+        }
         if(!apply_access) {
             if(strcmp(type, "allow") == 0) {
                 if(preg_match(url, regexp)) { //then apply allow rule
@@ -44,7 +54,26 @@ int rewrite_router(int sockfd) {
                     request_header->url = new_url;
                     apply_rewrite = true;
                 }
-            }
+            } else if(strcmp(type, "redirect-t") == 0) {
+                if(preg_match(url, regexp)) { //then apply allow rule
+                    char *new_url = preg_replace(url, regexp, patch);
+                    add_header_param("Location", new_url, response_header);
+                    free(new_url);
+                    apply_rewrite = true;
+                    apply_access = true;
+                    send_error_response(sockfd, 302, false);
+                }
+            } else if(strcmp(type, "redirect-p") == 0){
+                if(preg_match(url, regexp)) { //then apply allow rule
+                    char *new_url = preg_replace(url, regexp, patch);
+                    add_header_param("Location", new_url, response_header);
+                    free(new_url);
+                    apply_rewrite = true;
+                    apply_access = true;
+                    send_error_response(sockfd, 301, false);
+
+                }
+            } else{}
         }
         free(type); free(regexp); free(patch);
         rules++;
