@@ -12,6 +12,7 @@ void split_string(char *src, char **type, char **regexp, char **patch) {
     sscanf(src, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ ]", *type, *regexp, *patch);
 }
 int rewrite_router(int sockfd) {
+    if(!running_server->rewrite.engine || running_server->rewrite.rules.total == 0) return 1;
     char **rules = running_server->rewrite.rules.array;
 
     bool apply_access = false;
@@ -39,7 +40,7 @@ int rewrite_router(int sockfd) {
                     }
                 }
             } else if(strcmp(type, "deny") == 0) {
-                if(preg_match(url, regexp)) { //then apply allow rule
+                if(preg_match(url, regexp)) { //then apply deny rule
                     if(wildcmp(patch, client_ip)) {
                         send_error_response(sockfd, 403, true);
                     }
@@ -48,14 +49,14 @@ int rewrite_router(int sockfd) {
         }
         if(!apply_rewrite) {
             if(strcmp(type, "dispatch") == 0) {
-                if(preg_match(url, regexp)) { //then apply allow rule
+                if(preg_match(url, regexp)) { //then apply dispatch rule
                     char *new_url = preg_replace(url, regexp, patch);
                     free(request_header->url);
                     request_header->url = new_url;
                     apply_rewrite = true;
                 }
             } else if(strcmp(type, "redirect-t") == 0) {
-                if(preg_match(url, regexp)) { //then apply allow rule
+                if(preg_match(url, regexp)) { //then apply redirect-t rule
                     char *new_url = preg_replace(url, regexp, patch);
                     add_header_param("Location", new_url, response_header);
                     free(new_url);
@@ -64,7 +65,7 @@ int rewrite_router(int sockfd) {
                     send_error_response(sockfd, 302, false);
                 }
             } else if(strcmp(type, "redirect-p") == 0){
-                if(preg_match(url, regexp)) { //then apply allow rule
+                if(preg_match(url, regexp)) { //then apply redirect-p rule
                     char *new_url = preg_replace(url, regexp, patch);
                     add_header_param("Location", new_url, response_header);
                     free(new_url);

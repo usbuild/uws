@@ -13,11 +13,11 @@ Features
 * Basic Fast-CGI support
 * Index module can determine what to show when access a directory
 * Vhost, at different port
+* Rewrite Engine
 
 TODO
 ================================================
 * HTTPS Support
-* Rewrite Engine
 * Wsgi Support
 * Reverse Proxy and Load Distribution
 * ...
