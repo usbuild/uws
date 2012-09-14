@@ -2,7 +2,9 @@
 #include <math.h>
 #include <time.h>
 #include <zlib.h>
+#include <pcre.h>
 #include "uws_utils.h"
+#define OVECCOUNT   30
 int wildcmp(const char* wild, const char* string){
     const char* cp = NULL, *mp = NULL;
     while((*string) && (*wild != '*'))
@@ -47,14 +49,6 @@ void setnonblocking(int sock)
     opts = (opts | O_NONBLOCK);
     if (fcntl(sock, F_SETFL, opts) < 0) exit_err("fcntl(F_SETFL)");
     return;
-}
-char* strdup(const char *s){
-    char *r;
-    if(s == 0 || *s == 0)
-        return NULL;
-    r = malloc(strlen(s) + 1);
-    strcpy(r, s);
-    return r;
 }
 char *strlcat(const char *s1, const char *s2) {
     char *new_str = (char*) calloc(strlen(s1) + strlen(s2) + 1, sizeof(char));
@@ -221,4 +215,70 @@ free_mem_t(memory_t *smem) {
     smem->mem = NULL;
     smem->len = 0;
     smem->total = 0;
+}
+inline int 
+str_count(char *haystack, char *needle) {
+    char *found = haystack;
+    int needle_len = strlen(needle);
+    int count = 0;
+    while(found = strstr(found, needle)) {
+        count++;
+        found += needle_len;
+    }
+    return count;
+}
+char* str_replace(char *haystack, char *search, char *replace) {
+    char *pos = strstr(haystack, search);
+    int count = str_count(haystack, search);
+    if(pos = NULL) {
+        return strdup(haystack);
+    }
+    int search_len = strlen(search);
+    int replace_len = strlen(replace);
+    char *new_str = (char*) calloc(strlen(haystack) + count * (replace_len - search_len) + 2, sizeof(char));
+    char *found = haystack;
+
+    pos = haystack;
+    while(found = strstr(found, search)) {
+        strncat(new_str, pos, found - pos);
+        strcat(new_str, replace);
+        found += search_len;
+        pos = found;
+    }
+    strcat(new_str, pos);
+    return new_str;
+}
+
+char* preg_replace( char *src, const char *pattern, const char *replace) {
+    pcre *re;
+    const char *error;
+    int erroffset;
+    int ovector[OVECCOUNT];
+    int rc, i;
+    re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
+    if(re == NULL) {
+        return NULL;
+    }
+    rc = pcre_exec(re, NULL, src, strlen(src), 0, 0, ovector, OVECCOUNT);
+    if(rc < 0) {
+        pcre_free(re);
+        return NULL;
+    }
+
+    char *str = strdup(replace);
+    char flag[] = {'$', 0, 0};
+    for(i = 0; i < rc; i++) {
+        char *substring_start = src + ovector[2 * i];  
+        int substring_length = ovector[2 * i + 1] - ovector[ 2 * i ];  
+        char *new_str = (char*) malloc(substring_length + 1*sizeof(char));
+        strncpy(new_str, substring_start, substring_length);
+        new_str[substring_length] = 0;
+        flag[1] = i + '0';
+        char *tmp = str_replace(str, flag, new_str);
+        free(str);
+        str = tmp;
+        free(new_str);
+    }
+    pcre_free(re);
+    return str;
 }
