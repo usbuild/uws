@@ -4,6 +4,7 @@
 #include "uws.h"
 #include "uws_router.h"
 #include "uws_config.h"
+#include "uws_utils.h"
 #include "uws_mime.h"
 #include "uws_fastcgi.h"
 #include "uws_header.h"
@@ -52,18 +53,8 @@ void pathrouter(int sockfd) {
     while(map[i].preg != NULL) i++; //最先添加的最后执行
     i--;
     for(; i >= 0; i--) {
-        int res;
-        regex_t reg;
-
-        if((res = regcomp(&reg, map[i].preg, REG_EXTENDED | REG_ICASE)) != 0) {
-            puts("Compile regex error");
-            exit(1);
-        };
-        if(regexec(&reg, request_header->url, 0, NULL, 0) == 0) {
-            regfree(&reg);
+        if(preg_match(request_header->url, map[i].preg)) {
             if(!map[i].func(sockfd)) return;//返回值为0则停止冒泡
-        } else {
-            regfree(&reg);
         }
     }
 }

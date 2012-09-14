@@ -183,7 +183,7 @@ int readn(int fd, char *buff, size_t len) {
     long res = 0;
     while(already < len) {
         res = read(fd, buff + already, len - already);
-        if(res == -1) return -1;/*{{{*/
+        if(res == -1) return -1;
         already += res;
     }
     return already;
@@ -315,5 +315,6 @@ bool preg_match(char *src, const char *pattern) {
         pcre_free(re);
         return false;
     }
+    pcre_free(re);
     return true;
 }

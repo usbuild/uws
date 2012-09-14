@@ -2,7 +2,6 @@
 #define __UWS_ROUTER_H__
 #define BUFF_LEN    4096
 #include <sys/types.h>
-#include <regex.h>
 #include "uws_header.h"
 
 

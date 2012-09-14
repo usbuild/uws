@@ -13,16 +13,6 @@ dir_router(int sockfd)
     int i = 0; 
     strcpy(path, running_server->root);
 
-    while(request_header->url[i] != 0) {
-        if(request_header->url[i] == '?' || request_header->url[i] == '#') {
-            request_header->url[i] = 0;
-            i++;
-            break;
-        }
-        i++;
-    }
-
-    strcpy(request_header->request_params, request_header->url + i);
 
     strcat(path, request_header->url);
     free(request_header->path);

@@ -30,10 +30,19 @@ void deal_client_fd(client_sockfd)
     request_header->request_params = (char*)calloc(PATH_LEN, sizeof(char));
 
     sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \r]", type, request_header->url, httpver);
+
+    while(request_header->url[i] != 0) {
+        if(request_header->url[i] == '?' || request_header->url[i] == '#') {
+            request_header->url[i] = 0;
+            i++;
+            break;
+        }
+        i++;
+    }
+    strcpy(request_header->request_params, request_header->url + i);
     request_header->method = type;
-    //request_header->url = (char*) calloc(strlen(request_header->path) + 1, sizeof(char)); //max index filename length
-    //strcpy(request_header->url, request_header->path);
     request_header->http_ver = httpver;
+    i = 0;
 
     char key[BUFF_LEN];
     char value[BUFF_LEN];
