@@ -183,7 +183,7 @@ int readn(int fd, char *buff, size_t len) {
     long res = 0;
     while(already < len) {
         res = read(fd, buff + already, len - already);
-        if(res == -1) return -1;
+        if(res == -1) return -1;/*{{{*/
         already += res;
     }
     return already;
@@ -299,4 +299,21 @@ char* append_str_array(str_array_t *array_t, char *string){
     }
     *tmp = strdup(string);
     array_t->len++;
+}
+bool preg_match(char *src, const char *pattern) {
+    pcre *re;
+    const char *error;
+    int erroffset;
+    int ovector[OVECCOUNT];
+    int rc, i;
+    re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
+    if(re == NULL) {
+        return false;
+    }
+    rc = pcre_exec(re, NULL, src, strlen(src), 0, 0, ovector, OVECCOUNT);
+    if(rc < 0) {
+        pcre_free(re);
+        return false;
+    }
+    return true;
 }

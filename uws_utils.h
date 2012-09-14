@@ -22,4 +22,5 @@ inline void  free_mem_t(memory_t *smem);
 char* str_replace(char *haystack, char *search, char *replace);
 char* preg_replace(char *src, const char *pattern, const char *replace);
 char* append_str_array(str_array_t *array_t, char *string);
+bool preg_match(char *src, const char *pattern);
 #endif
