@@ -17,7 +17,6 @@ exit_err(const char* str)
 int
 main(int argc, const char *argv[])
 {
-    puts(preg_replace("Hello", "(\\w{3})$", "$0what"));
     setenv("MALLOC_TRACE", "output", 1);
     //mtrace();
     init_config();

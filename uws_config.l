@@ -6,7 +6,6 @@
 #include "uws_config.h"
 #include "uws_utils.h"
 
-char** getArray(char* s);
 bool getBoolean(char* s);
 char** getArray(char* s);
 
@@ -35,6 +34,7 @@ space   [ \t\n]
 %s      HTTP
 %s      EVENTS
 %s      SERVER
+%s      REWRITE
 
 %%
 #.*\n               ;
@@ -49,8 +49,11 @@ http{space}*\{                  {BEGIN HTTP;
                                     server->facade = true;
                                     server->listen = 80;
                                 }
+<SERVER>rewrite{space}*\{       {BEGIN REWRITE;
+                                }
 <EVENTS>\}                      {BEGIN 0;}
 <HTTP>\}                        {BEGIN 0;}
+<REWRITE>\}                     {BEGIN SERVER;}
 <SERVER>\}                      {BEGIN HTTP;
                                     if(current_server >= server_num)
                                     {
