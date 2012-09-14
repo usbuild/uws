@@ -22,9 +22,14 @@ TODO
 * Reverse Proxy and Load Distribution
 * ...
 
+Depends
+===============================================
+* zlib1g-dev
+* libpcre3-dev
+
 How to Use
 ===============================================
-Clone this respository, Make show you have zlib1g-dev installed and run `make` command in the project directory. `uws.conf` is the configuration file, you can change it to follow your needs.
+Clone this respository, Run `make` command in the project directory. `uws.conf` is the configuration file, you can change it to follow your needs.
 
 Copying
 ==============================================

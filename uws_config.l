@@ -48,9 +48,10 @@ http{space}*\{                  {BEGIN HTTP;
                                     server->autoindex = false;
                                     server->facade = true;
                                     server->listen = 80;
+                                    server->rewrite.engine = true;
+                                    server->rewrite.exist = false;
                                 }
-<SERVER>rewrite{space}*\{       {BEGIN REWRITE;
-                                }
+<SERVER>rewrite{space}*\{       {BEGIN REWRITE;}
 <EVENTS>\}                      {BEGIN 0;}
 <HTTP>\}                        {BEGIN 0;}
 <REWRITE>\}                     {BEGIN SERVER;}
@@ -92,14 +93,21 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 
 <SERVER>root         {state = STRING_VAL; val_string= &server->root;}
 <SERVER>autoindex    {state = BOOL_VAL; val_bool = &server->autoindex;}
-<SERVER>facade    {state = BOOL_VAL; val_bool = &server->facade;}
+<SERVER>facade       {state = BOOL_VAL; val_bool = &server->facade;}
 <SERVER>server_name  {state = STRING_VAL; val_string = &server->server_name;}
 <SERVER>index        {state = ARRAY_VAL; val_array = &server->index;}
 <SERVER>error_page   {state = ARRAY_VAL; val_array = &server->error_page;}
 <SERVER>fastcgi_pass {state = STRING_VAL; val_string = &server->fastcgi_pass;}
 <SERVER>listen       {state = INT_VAL; val_int = &server->listen;}
-[^ \t\n\t;]+       {
-                    switch(state){
+
+<REWRITE>engine      {state = BOOL_VAL; val_bool = &server->rewrite.engine;}
+<REWRITE>exist       {state = BOOL_VAL; val_bool = &server->rewrite.exist;}
+<REWRITE>(allow|deny|dispatch|redirect-t|redirect-p)[^;]+ {
+                        puts(yytext); 
+                     }
+
+[^ \t\n\t;]+         {
+                     switch(state){
                         case STRING_VAL:
                                 *val_string = strdup(yytext);
                                 break;
@@ -114,11 +122,11 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
                         default:
                                 break;
                             }
-                    } 
+                      } 
 
 
-;                               {state = LOOK_VAL;}
-.|\n                            ;
+;                     {state = LOOK_VAL;}
+.|\n                  ;
 %%
 
 int yywrap(){

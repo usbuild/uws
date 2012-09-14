@@ -8,6 +8,12 @@
 
 //config struct defined here
 typedef struct{
+    bool engine;
+    bool exist;
+    char **rules;
+} rewrite_cfg_t;
+
+typedef struct{
     char* root;
     bool autoindex;
     bool facade;
@@ -16,6 +22,7 @@ typedef struct{
     char* server_name;
     char* fastcgi_pass;
     int listen;
+    rewrite_cfg_t rewrite;
 } server_cfg_t;
 
 struct events_cfg{
