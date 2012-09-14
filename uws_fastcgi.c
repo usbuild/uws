@@ -186,7 +186,6 @@ fastcgi_router(int sockfd)
     Param_Value pv[] = {
         {"QUERY_STRING",request_header->request_params},
         {"REQUEST_METHOD", request_header->method},
-        {"REQUEST_METHOD", request_header->method},
         {"CONTENT_TYPE", nullstring(get_header_param("Content-Type", request_header))},
         {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", request_header))},
         {"SCRIPT_FILENAME", request_header->path},

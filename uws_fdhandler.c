@@ -24,14 +24,15 @@ void deal_client_fd(client_sockfd)
 
     fgets(line, BUFF_LEN, input_file);
 
+    request_header->url = (char*)calloc(PATH_LEN, sizeof(char));
     request_header->path = (char*)calloc(PATH_LEN, sizeof(char));
     request_header->params = NULL;
     request_header->request_params = (char*)calloc(PATH_LEN, sizeof(char));
 
-    sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \r]", type, request_header->path, httpver);
+    sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \r]", type, request_header->url, httpver);
     request_header->method = type;
-    request_header->url = (char*) calloc(strlen(request_header->path) + 1, sizeof(char)); //max index filename length
-    strcpy(request_header->url, request_header->path);
+    //request_header->url = (char*) calloc(strlen(request_header->path) + 1, sizeof(char)); //max index filename length
+    //strcpy(request_header->url, request_header->path);
     request_header->http_ver = httpver;
 
     char key[BUFF_LEN];

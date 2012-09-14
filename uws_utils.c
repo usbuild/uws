@@ -283,7 +283,7 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
     return str;
 }
 
-char* append_str_array(str_array_t *array_t, char *string){
+char* append_str_array(str_array_t *array_t, char *string){/*{{{*/
     if(array_t->total == 0) {
         array_t->total = INIT_ARR_LEN;
         array_t->array = (char **)calloc(array_t->total, sizeof(char*));
@@ -299,7 +299,7 @@ char* append_str_array(str_array_t *array_t, char *string){
     }
     *tmp = strdup(string);
     array_t->len++;
-}
+}/*}}}*/
 bool preg_match(char *src, const char *pattern) {
     pcre *re;
     const char *error;
