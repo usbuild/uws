@@ -50,6 +50,8 @@ http{space}*\{                  {BEGIN HTTP;
                                     server->listen = 80;
                                     server->rewrite.engine = true;
                                     server->rewrite.exist = false;
+                                    server->rewrite.rules.len = 0;
+                                    server->rewrite.rules.total = 0;
                                 }
 <SERVER>rewrite{space}*\{       {BEGIN REWRITE;}
 <EVENTS>\}                      {BEGIN 0;}
@@ -103,7 +105,7 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 <REWRITE>engine      {state = BOOL_VAL; val_bool = &server->rewrite.engine;}
 <REWRITE>exist       {state = BOOL_VAL; val_bool = &server->rewrite.exist;}
 <REWRITE>(allow|deny|dispatch|redirect-t|redirect-p)[^;]+ {
-                        puts(yytext); 
+                        append_str_array(&server->rewrite.rules, yytext);
                      }
 
 [^ \t\n\t;]+         {

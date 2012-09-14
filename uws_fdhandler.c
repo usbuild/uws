@@ -49,7 +49,6 @@ void deal_client_fd(client_sockfd)
     for(; ;) {
         if(feof(input_file) || ferror(input_file)) break;
         size_t read_num = fread(line, sizeof(char), LINE_LEN, input_file);
-        //if(read_num == -1) break;
         append_mem_t(request_content, line, read_num);//add to content
     }
     request_content->mem[request_content->len] = 0;
@@ -74,6 +73,7 @@ void deal_client_fd(client_sockfd)
         }
         if(running_server != NULL) {
             if(setjmp(error_jmp_buf) == 0) {
+                //deal with client and server ip thing
                 struct sockaddr_in peeraddr;
                 socklen_t peerlen;
                 getpeername(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);

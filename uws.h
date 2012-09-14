@@ -33,6 +33,12 @@ typedef struct {
    char *mem;
 } memory_t;
 
+typedef struct {
+    char **array;
+    int total;
+    int len;
+} str_array_t;
+
 struct response {
     struct http_header    *header;
     size_t header_len;

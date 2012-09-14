@@ -10,7 +10,7 @@
 typedef struct{
     bool engine;
     bool exist;
-    char **rules;
+    str_array_t rules;
 } rewrite_cfg_t;
 
 typedef struct{

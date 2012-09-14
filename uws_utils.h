@@ -1,6 +1,7 @@
 #ifndef __UWS_UTILS_H__
 #define __UWS_UTILS_H__
 #include "uws.h"
+#define INIT_ARR_LEN    8
 int wildcmp(const char*, const char*);
 void setnonblocking(int sock);
 char* strlcat(const char *s1, const char *s2);
@@ -20,4 +21,5 @@ void append_mem_t(memory_t *smem, char *start, size_t len);
 inline void  free_mem_t(memory_t *smem);
 char* str_replace(char *haystack, char *search, char *replace);
 char* preg_replace(char *src, const char *pattern, const char *replace);
+char* append_str_array(str_array_t *array_t, char *string);
 #endif
