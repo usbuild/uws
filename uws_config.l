@@ -51,6 +51,7 @@ http{space}*\{                  {BEGIN HTTP;
                                     server->rewrite.engine = true;
                                     server->rewrite.exist = false;
                                     server->rewrite.rules.len = 0;
+                                    server->auth_basic = NULL;
                                     server->rewrite.rules.total = 0;
                                 }
 <SERVER>rewrite{space}*\{       {BEGIN REWRITE;}
@@ -101,6 +102,9 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 <SERVER>error_page   {state = ARRAY_VAL; val_array = &server->error_page;}
 <SERVER>fastcgi_pass {state = STRING_VAL; val_string = &server->fastcgi_pass;}
 <SERVER>listen       {state = INT_VAL; val_int = &server->listen;}
+<SERVER>auth_basic   {state = STRING_VAL; val_string = &server->auth_basic;}
+<SERVER>auth_basic_user_file   {state = STRING_VAL; 
+                     val_string = &server->auth_basic_user_file;}
 
 <REWRITE>engine      {state = BOOL_VAL; val_bool = &server->rewrite.engine;}
 <REWRITE>exist       {state = BOOL_VAL; val_bool = &server->rewrite.exist;}

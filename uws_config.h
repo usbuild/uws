@@ -22,6 +22,8 @@ typedef struct{
     char* server_name;
     char* fastcgi_pass;
     int listen;
+    char* auth_basic;
+    char* auth_basic_user_file;
     rewrite_cfg_t rewrite;
 } server_cfg_t;
 
