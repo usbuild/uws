@@ -13,10 +13,9 @@ dir_router(int sockfd)
     int i = 0; 
     strcpy(path, running_server->root);
 
-
     strcat(path, request_header->url);
-    free(request_header->path);
-    request_header->path = (char *)calloc(strlen(path) + 2, sizeof(char));
+    //free(request_header->path);
+    //request_header->path = (char *)calloc(strlen(path) + PATH_LEN, sizeof(char));
     strcpy(request_header->path,  path);
 
     if(lstat(path, &stat_buff) != -1) {

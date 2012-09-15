@@ -37,15 +37,15 @@ void init_routers(){
     fastcgirt.func = fastcgi_router;
     add_router(fastcgirt);
 
-    Router dirrt;
-    dirrt.preg = ".*";
-    dirrt.func = dir_router;
-    add_router(dirrt);
-
     Router rewritert;
     rewritert.preg = ".*";
     rewritert.func = rewrite_router;
     add_router(rewritert);
+
+    Router dirrt;
+    dirrt.preg = ".*";
+    dirrt.func = dir_router;
+    add_router(dirrt);
 }
 
 void pathrouter(int sockfd) {
