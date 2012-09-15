@@ -14,6 +14,7 @@ Features
 * Index module can determine what to show when access a directory
 * Vhost, at different port
 * Rewrite Engine
+* HTTP Basic Authorize
 
 TODO
 ================================================
@@ -26,6 +27,7 @@ Depends
 ===============================================
 * zlib1g-dev
 * libpcre3-dev
+* libssl-dev
 
 How to Use
 ===============================================

@@ -3,6 +3,9 @@
 #include <time.h>
 #include <zlib.h>
 #include <pcre.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+
 #include "uws_utils.h"
 #define OVECCOUNT   30
 int wildcmp(const char* wild, const char* string){
@@ -317,4 +320,23 @@ bool preg_match(char *src, const char *pattern) {
     }
     pcre_free(re);
     return true;
+}
+
+char* base64(char *input) {
+    int length = strlen(input);
+    BIO *b64 = NULL;
+    BIO * bmem = NULL;
+    BUF_MEM *bptr = NULL;
+    char * output = NULL;
+    b64 = BIO_new((BIO_METHOD *)BIO_f_base64());
+    BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+    bmem = BIO_new(BIO_s_mem());
+    b64 = BIO_push(b64, bmem);
+    BIO_write(b64, input, length);
+    BIO_flush(b64);
+    BIO_get_mem_ptr(b64, &bptr);
+    output = (char *) calloc (bptr->length + 1, sizeof(char));
+    memcpy(output, bptr->data, bptr->length);
+    BIO_free_all(b64);
+    return output;
 }
