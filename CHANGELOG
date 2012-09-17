@@ -1,0 +1,12 @@
+=========
+CHANGE LOG
+=========
+-- 0.0.9 --
+* Use global pcre array to store compiled regexp for better performance
+
+-- 0.0.8 --
+* Add http basic authorization support
+* Solve previous rewrite engine caused segment fault
+
+-- 0.0.7 --
+* Add rewrite engine support
