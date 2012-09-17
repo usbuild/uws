@@ -253,8 +253,6 @@ char* str_replace(char *haystack, char *search, char *replace) {
 
 char* preg_replace( char *src, const char *pattern, const char *replace) {
     pcre *re;
-    const char *error;
-    int erroffset;
     int ovector[OVECCOUNT];
     int rc, i;
     //re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
@@ -264,7 +262,6 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
     }
     rc = pcre_exec(re, NULL, src, strlen(src), 0, 0, ovector, OVECCOUNT);
     if(rc < 0) {
-        pcre_free(re);
         return NULL;
     }
 
@@ -282,7 +279,6 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
         str = tmp;
         free(new_str);
     }
-    pcre_free(re);
     return str;
 }
 
@@ -305,8 +301,6 @@ char* append_str_array(str_array_t *array_t, char *string){/*{{{*/
 }/*}}}*/
 bool preg_match(char *src, const char *pattern) {
     pcre *re;
-    const char *error;
-    int erroffset;
     int ovector[OVECCOUNT];
     int rc, i;
     //re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
@@ -316,10 +310,8 @@ bool preg_match(char *src, const char *pattern) {
     }
     rc = pcre_exec(re, NULL, src, strlen(src), 0, 0, ovector, OVECCOUNT);
     if(rc < 0) {
-        pcre_free(re);
         return false;
     }
-    pcre_free(re);
     return true;
 }
 
@@ -342,13 +334,14 @@ char* base64(char *input) {
     return output;
 }
 
+static
 pcre* get_pcre(const char *src) {
     static regex_map_t *regex_map;
     static len = 0;
     static total = 0;
     int i = 0;
     for(i = 0; i < len; i++) {
-        if(strcmp(src, regex_map[i].src)) {
+        if(strcmp(src, regex_map[i].src) == 0) {
             return regex_map[i].re;
         }
     }
@@ -362,10 +355,10 @@ pcre* get_pcre(const char *src) {
     }
     const char *error;
     int erroffset;
-    pcre *re;
-    re = pcre_compile(src, 0, &error, &erroffset, NULL);
+    pcre *re = pcre_compile(src, 0, &error, &erroffset, NULL);
     if(re == NULL) return NULL;
-    regex_map[i].src = strdup(src); 
-    regex_map[i].re = re;
+    regex_map[len].src = strdup(src); 
+    regex_map[len].re = re;
+    len++;
     return re;
 }
