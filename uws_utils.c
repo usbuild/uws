@@ -2,7 +2,6 @@
 #include <math.h>
 #include <time.h>
 #include <zlib.h>
-#include <pcre.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 
@@ -258,7 +257,8 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
     int erroffset;
     int ovector[OVECCOUNT];
     int rc, i;
-    re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
+    //re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
+    re = get_pcre(pattern);
     if(re == NULL) {
         return NULL;
     }
@@ -309,7 +309,8 @@ bool preg_match(char *src, const char *pattern) {
     int erroffset;
     int ovector[OVECCOUNT];
     int rc, i;
-    re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
+    //re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
+    re = get_pcre(pattern);
     if(re == NULL) {
         return false;
     }
@@ -339,4 +340,32 @@ char* base64(char *input) {
     memcpy(output, bptr->data, bptr->length);
     BIO_free_all(b64);
     return output;
+}
+
+pcre* get_pcre(const char *src) {
+    static regex_map_t *regex_map;
+    static len = 0;
+    static total = 0;
+    int i = 0;
+    for(i = 0; i < len; i++) {
+        if(strcmp(src, regex_map[i].src)) {
+            return regex_map[i].re;
+        }
+    }
+    if(total == 0)   {
+        total = INIT_ARR_LEN;
+        regex_map = (regex_map_t*) malloc(total * sizeof(regex_map_t));
+    }
+    if(len >= total - 1) {
+        total *= 2;
+        regex_map = (regex_map_t*) realloc(regex_map, total);
+    }
+    const char *error;
+    int erroffset;
+    pcre *re;
+    re = pcre_compile(src, 0, &error, &erroffset, NULL);
+    if(re == NULL) return NULL;
+    regex_map[i].src = strdup(src); 
+    regex_map[i].re = re;
+    return re;
 }
