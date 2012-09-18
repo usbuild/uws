@@ -30,6 +30,7 @@ void deal_client_fd(client_sockfd)
     request_header->request_params = (char*)calloc(PATH_LEN, sizeof(char));
 
     sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \r]", type, request_header->url, httpver);
+    strcpy(request_header->path, request_header->url);
 
     while(request_header->url[i] != 0) {
         if(request_header->url[i] == '?' || request_header->url[i] == '#') {

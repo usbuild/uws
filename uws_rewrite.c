@@ -51,8 +51,9 @@ int rewrite_router(int sockfd) {
             if(strcmp(type, "dispatch") == 0) {
                 if(preg_match(url, regexp)) { //then apply dispatch rule
                     char *new_url = preg_replace(url, regexp, patch);
-                    free(request_header->url);
-                    request_header->url = new_url;
+                    free(request_header->path);
+                    request_header->path = new_url;
+                    puts(new_url);
                     apply_rewrite = true;
                 }
             } else if(strcmp(type, "redirect-t") == 0) {
