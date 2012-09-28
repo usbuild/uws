@@ -155,7 +155,6 @@ send_request(const char* host, int port, memory_t *smem)
             content_len = (response_header.contentLengthB1 << 8) + (response_header.contentLengthB0);
             content = (char*) malloc(content_len * sizeof(char));
             count = read(sockfd, content, count);
-            fprintf(stdout, "error:%s\n", content);
             free(content);
 
             if(response_header.paddingLength > 0) {
@@ -253,6 +252,9 @@ fastcgi_router(int sockfd)
 
     if(!send_request(fhost, atoi(fport), &smem)) {
         send_error_response(sockfd, 502, true);
+    }
+    if(mem_file.len == 0) {
+        send_error_response(sockfd, 500, true);
     }
 
     char line[LINE_LEN] = {0};
