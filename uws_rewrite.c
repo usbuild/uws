@@ -53,7 +53,6 @@ int rewrite_router(int sockfd) {
                     char *new_url = preg_replace(url, regexp, patch);
                     free(request_header->path);
                     request_header->path = new_url;
-                    puts(new_url);
                     apply_rewrite = true;
                 }
             } else if(strcmp(type, "redirect-t") == 0) {
