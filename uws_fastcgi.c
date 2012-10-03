@@ -10,15 +10,11 @@
 #include "uws_error.h"
 #include "uws_utils.h"
 #define PARAMS_BUFF_LEN     1024
+#define MAX_BODY_LEN        2048
 
 memory_t smem;
-memory_t mem_file;
-Param_Value*
-read_header(char *mem, unsigned long length)
-{
-    return NULL;
-}
-
+int clientfd;
+/*{{{*/
 static char *
 header_to_fcgi(const char *str) 
 {
@@ -112,13 +108,11 @@ begin_build_request(int request_id) {
     begin_record.header = make_header(FCGI_BEGIN_REQUEST, request_id, sizeof(begin_record.body), 0);
     begin_record.body = make_begin_request_body(FCGI_RESPONDER, 0);
     append_mem_t(&smem, (char *)&begin_record, sizeof(begin_record));
-}
-static bool
-send_request(const char* host, int port, memory_t *smem)
-{
-    int sockfd,
-        result,
-        count;
+}/*}}}*//*}}}*/
+
+static int
+prepare_request(const char* host, int port) {
+    int result, sockfd;
     struct sockaddr_in address;
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     address.sin_family = AF_INET;
@@ -126,24 +120,39 @@ send_request(const char* host, int port, memory_t *smem)
     address.sin_port = htons(port);
     result = connect(sockfd, (struct sockaddr*)&address, sizeof(address));
     if(result == -1) {
-        return false;
+        send_error_response(clientfd, 502, true);
     }
+    return sockfd;
+}
 
-    //send request to server
+static void 
+send_request(int sockfd, memory_t *smem) {
     writen(sockfd, smem->mem, smem->len);
+}
 
+static bool
+read_response(int sockfd, memory_t *mem_file)
+{
+    int count;
     FCGI_Header response_header;
+
+    //We defined max 1024*1024*2 byte per response
+    int already_read = 1024 * 1024 * 2;
+
     char* content;
     int content_len;
     char tmp[8];
     while(read(sockfd, &response_header, FCGI_HEADER_LEN) > 0) {
+
+        if(mem_file->len >= already_read) return true;
+
         if(response_header.type == FCGI_STDOUT) {
             content_len = (response_header.contentLengthB1 << 8) + (response_header.contentLengthB0);
             content = (char*) calloc(sizeof(char), content_len);
 
             count = read(sockfd, content, content_len);
 
-            append_mem_t(&mem_file, content, content_len);
+            append_mem_t(mem_file, content, content_len);
 
             free(content);
             if(response_header.paddingLength > 0) {
@@ -174,7 +183,7 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
         }
     }
     close(sockfd);
-    return true;
+    return false;
 }
 
 int
@@ -209,7 +218,11 @@ fastcgi_router(int sockfd)
     char *fastcgi_pass = running_server->fastcgi_pass;
     char fhost[20];
     char fport[10];
+    clientfd = sockfd;
     sscanf(fastcgi_pass, "%[^:]:%s", fhost, fport);
+
+    int fcgi_fd = prepare_request(fhost, atoi(fport));
+
     //start build request
     begin_build_request(request_id);
 
@@ -235,24 +248,39 @@ fastcgi_router(int sockfd)
     FCGI_Header end_params;
     end_params = make_header(FCGI_PARAMS, request_id, 0, 0);
     append_mem_t(&smem, (char *)&end_params, FCGI_HEADER_LEN);
-    //------ body TODO:content bigger than MAX_STDIN_SIZE
-    FCGI_Header content_body;
-    content_body = make_header(FCGI_STDIN, request_id, request_content->len, 0);
-    append_mem_t(&smem, (char *)&content_body, FCGI_HEADER_LEN);
-    append_mem_t(&smem, request_content->mem, request_content->len);
-    FCGI_Header end_body;
-    end_body = make_header(FCGI_STDIN, request_id, 0, 0);
-    append_mem_t(&smem, (char *)&end_body, FCGI_HEADER_LEN);
-    //------ body
+    send_request(fcgi_fd, &smem);
+    free_mem_t(&smem);
 
+    if(strcmp(request_header->method, "POST") == 0 && get_header_param("Content-Length", request_header) != NULL) {
+        memory_t body_content;
+        char line[MAX_BODY_LEN];
+        FCGI_Header content_header;
+
+        for(; ;) {
+            if(feof(input_file) || ferror(input_file)) break;
+            size_t read_num = fread(line, sizeof(char), MAX_BODY_LEN, input_file);
+            if(read_num == 0) break;
+            content_header = make_header(FCGI_STDIN, request_id, read_num, 0);
+            append_mem_t(&smem, (char *)&content_header, FCGI_HEADER_LEN);
+            append_mem_t(&smem, line, read_num);
+            send_request(fcgi_fd, &smem);
+            free_mem_t(&smem);
+        }
+        FCGI_Header end_body;
+        end_body = make_header(FCGI_STDIN, request_id, 0, 0);
+        append_mem_t(&smem, (char *)&end_body, FCGI_HEADER_LEN);
+    }
     //send finish request symbol
     FCGI_Header end_header;
     end_header = make_header(FCGI_PARAMS, request_id, 0, 0);
     append_mem_t(&smem, (char*)&end_header, FCGI_HEADER_LEN);
 
-    if(!send_request(fhost, atoi(fport), &smem)) {
-        send_error_response(sockfd, 502, true);
-    }
+    send_request(fcgi_fd, &smem);
+
+    memory_t mem_file;
+    // if we have more content from fastcgi
+    bool more_content = read_response(fcgi_fd, &mem_file);
+
     if(mem_file.len == 0) {
         send_error_response(sockfd, 500, true);
     }
@@ -295,6 +323,12 @@ fastcgi_router(int sockfd)
     char *header_str = str_response_header(&fcgi_response_header);
     writen(sockfd, header_str, strlen(header_str));
     writen(sockfd, pos, content_len + strlen("\r\n"));
+    
+    while(more_content) {
+        free_mem_t(&mem_file);
+        more_content = read_response(fcgi_fd, &mem_file);
+        writen(sockfd, mem_file.mem, mem_file.len);
+    }
 
     free_header_params(&fcgi_response_header);
     free_mem_t(&smem);
