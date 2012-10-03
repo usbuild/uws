@@ -213,7 +213,7 @@ void append_mem_t(memory_t *smem, char *start, size_t len) {
 }
 inline void
 free_mem_t(memory_t *smem) {
-    free(smem->mem);
+    uws_free(smem->mem);
     smem->mem = NULL;
     smem->len = 0;
     smem->total = 0;
@@ -275,9 +275,9 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
         new_str[substring_length] = 0;
         flag[1] = i + '0';
         char *tmp = str_replace(str, flag, new_str);
-        free(str);
+        uws_free(str);
         str = tmp;
-        free(new_str);
+        uws_free(new_str);
     }
     return str;
 }

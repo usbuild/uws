@@ -43,7 +43,7 @@ set_header() {
     add_header_param("Content-Length", itoa(header_body.content_len), response_header);
     add_header_param("Content-Type", mime, response_header);
     header_body.header = response_header;
-    free(time_string);
+    uws_free(time_string);
 }
 
 int
@@ -88,7 +88,7 @@ printdir(const char *fpath, int client_fd) {//打印目录项排序
         if(S_ISDIR(stat_buff.st_mode)) {
             strcat(entries[dir_len - 1], "/");
         }
-        free(newpath);
+        uws_free(newpath);
     }
     entries[dir_len] = NULL;
     qsort(entries, dir_len, sizeof(char*), comparestr);
@@ -126,7 +126,7 @@ printfile(const char *path, int client_fd)
     fclose(file);
 
     add_header_param("Last-Modified", file_mod_time, response_header);
-    free(file_mod_time);
+    uws_free(file_mod_time);
 }
 
 int
@@ -162,8 +162,8 @@ http_router(int sockfd)
     set_header();
     write_response(sockfd, &header_body);
     free_header_params(response_header);
-    free(header_body.header);
-    free(header_body.content);
+    uws_free(header_body.header);
+    uws_free(header_body.content);
     return 0;
 }
 int write_response(int sockfd, struct response* header_body) {
@@ -183,9 +183,9 @@ int write_response(int sockfd, struct response* header_body) {
         gzcompress(&dst_buff, &dst_len, header_body->content, src_len);
         char *content_len = itoa(dst_len);
         add_header_param("Content-Length", content_len, header_body->header);
-        free(content_len);
+        uws_free(content_len);
         add_header_param("Content-Encoding", "gzip", header_body->header);
-        free(header_body->content);
+        uws_free(header_body->content);
         header_body->content = dst_buff;
         header_body->content_len = dst_len;
     }
@@ -194,7 +194,7 @@ int write_response(int sockfd, struct response* header_body) {
     size_t header_len = strlen(header_str);
 
     res = write(sockfd, header_str, header_len);
-    free(header_str);
+    uws_free(header_str);
 
     if(res == -1) return -1;
     res = write(sockfd, HEADER_SEP, strlen(HEADER_SEP));

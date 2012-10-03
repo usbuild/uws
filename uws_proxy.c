@@ -59,12 +59,12 @@ int proxy_router(int serverfd)
         split_string(running_server->upstream.array[i], &host, &port, &regexp);
         if(preg_match(request_header->url, regexp)) {
             int res = handle_proxy(serverfd, host, port);
-            free(host);
-            free(regexp);
+            uws_free(host);
+            uws_free(regexp);
             return res;
         }
-        free(host);
-        free(regexp);
+        uws_free(host);
+        uws_free(regexp);
     }
     return 0;
 }

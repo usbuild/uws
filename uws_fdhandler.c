@@ -65,7 +65,7 @@ void deal_client_fd(client_sockfd)
             strcat(host_with_port, ":");
             char *port_no = itoa(uws_config.http.servers[i]->listen);
             strcat(host_with_port, port_no);
-            free(port_no);
+            uws_free(port_no);
 
             if(wildcmp(host_with_port, host) == 1) {
                 //We've got a file regiestered in the config file;
@@ -95,21 +95,21 @@ void deal_client_fd(client_sockfd)
                     strcpy(proxy_ip, ",");
                     strcat(proxy_ip, client_ip);
                     add_header_param("X-Forwarded-For", proxy_ip, request_header);
-                    free(proxy_ip);
+                    uws_free(proxy_ip);
                 }
                 getsockname(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
                 strcpy(server_ip, inet_ntoa(peeraddr.sin_addr));
                 pathrouter(client_sockfd);
-                free(client_ip);
+                uws_free(client_ip);
             }
         }
     }
 
     fclose(input_file);//if we don't close file, will cause memory leak
     close(client_sockfd);
-    free(request_header->url);
-    free(request_header->path);
-    free(request_header->request_params);
+    uws_free(request_header->url);
+    uws_free(request_header->path);
+    uws_free(request_header->request_params);
     free_header_params(request_header);
 }
 void handle_client_fd(int client_sockfd) {

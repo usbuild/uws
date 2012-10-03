@@ -29,11 +29,11 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
         if(error_path != NULL) {
             char *tmp_path = strlcat(running_server->root, error_path);
             if(access(tmp_path, F_OK) == 0) {
-                free(error_file_path);
+                uws_free(error_file_path);
                 error_file_path = tmp_path;
-                free(error_path);
+                uws_free(error_path);
             } else {
-                free(tmp_path);
+                uws_free(tmp_path);
             }
         }
         FILE* file = fopen(error_file_path, "r");
@@ -65,7 +65,7 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
     if(with_page) {
         char *content_len_str = itoa(content_len);
         add_header_param("Content-Length", content_len_str, response_header);
-        free(content_len_str);
+        uws_free(content_len_str);
     }
 
 
@@ -75,12 +75,12 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
     header_body.content = content;
     header_body.content_len = content_len;
 
-    free(time_string);
+    uws_free(time_string);
     //
     write_response(client_fd, &header_body);
     free_header_params(header_body.header);
-    free(header_body.header);
-    free(header_body.content);
+    uws_free(header_body.header);
+    uws_free(header_body.content);
     longjmp(error_jmp_buf, 1);
 }
 char *get_by_code(int code) {

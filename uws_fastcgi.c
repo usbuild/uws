@@ -154,7 +154,7 @@ read_response(int sockfd, memory_t *mem_file)
 
             append_mem_t(mem_file, content, content_len);
 
-            free(content);
+            uws_free(content);
             if(response_header.paddingLength > 0) {
                 count = read(sockfd, tmp, response_header.paddingLength);
                 if(count != response_header.paddingLength) perror("read response error");
@@ -164,7 +164,7 @@ read_response(int sockfd, memory_t *mem_file)
             content_len = (response_header.contentLengthB1 << 8) + (response_header.contentLengthB0);
             content = (char*) uws_malloc(content_len * sizeof(char));
             count = read(sockfd, content, count);
-            free(content);
+            uws_free(content);
 
             if(response_header.paddingLength > 0) {
                 count = read(sockfd, tmp, response_header.paddingLength);
@@ -237,7 +237,7 @@ fastcgi_router(int sockfd)
     while(params->name != NULL) {
         new_header = header_to_fcgi(params->name);
         add_fcgi_param(request_id, new_header, params->value);
-        free(new_header);
+        uws_free(new_header);
         params++;
     }
 
@@ -296,7 +296,7 @@ fastcgi_router(int sockfd)
     char *time_string = get_time_string(NULL);
     add_header_param("Server", UWS_SERVER, &fcgi_response_header);
     add_header_param("Date", time_string, &fcgi_response_header);
-    free(time_string);
+    uws_free(time_string);
 
     while(pos = strstr(oldpos, "\r\n")) {
         if(oldpos == pos) break;
@@ -314,7 +314,7 @@ fastcgi_router(int sockfd)
 
     char *str_len =  itoa(content_len);
     add_header_param("Content-Length", str_len, &fcgi_response_header);
-    free(str_len);
+    uws_free(str_len);
 
     fcgi_response_header.http_ver = "HTTP/1.1";
     if(fcgi_response_header.status_code == 0) fcgi_response_header.status_code = 200;

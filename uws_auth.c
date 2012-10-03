@@ -11,7 +11,7 @@ bool validate(char *raw_str, char *file){
         line[strlen(line) - 1] = 0;
         char *enc = (char*)base64(line);
         if(strcmp(enc, raw_str) == 0) return 1;
-        free(enc);
+        uws_free(enc);
     }
     fclose(f);
     return 0;

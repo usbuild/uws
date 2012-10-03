@@ -18,7 +18,7 @@ dir_router(int sockfd)
     strcpy(path, running_server->root);
     strcat(path, tmp);
     strcpy(request_header->path,  path);
-    free(tmp);
+    uws_free(tmp);
 
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {

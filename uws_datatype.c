@@ -20,7 +20,7 @@ int pop_int_queue(int_queue_t *queue) {
     int_node_t* tmp = queue->head;
     int ret_val = queue->head->element;
     queue->head =  queue->head->next;
-    free(tmp);
+    uws_free(tmp);
     queue->length--;
     return ret_val;
 }

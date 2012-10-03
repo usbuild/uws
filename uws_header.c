@@ -22,7 +22,7 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
     }
     for(i = 0; i < http_header->used_len; i++) {
         if(strcmp(key, http_header->params[i].name) == 0) {
-            free(http_header->params[i].value);
+            uws_free(http_header->params[i].value);
             http_header->params[i].value = strdup(value);
             return;
         }
@@ -33,7 +33,7 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
         Http_Param* tmp = http_header->params;
         http_header->params = (Http_Param*)calloc(http_header->max_len, sizeof(Http_Param));
         memcpy(http_header->params, tmp, http_header->used_len);
-        free(tmp);
+        uws_free(tmp);
     }
     Http_Param* new_param = &http_header->params[http_header->used_len];
     new_param->name = strdup(key);
@@ -54,7 +54,7 @@ void push_header_param(char *key, char *value, struct http_header *http_header){
         Http_Param* tmp = http_header->params;
         http_header->params = (Http_Param*)calloc(http_header->max_len, sizeof(Http_Param));
         memcpy(http_header->params, tmp, http_header->used_len);
-        free(tmp);
+        uws_free(tmp);
     }
     Http_Param* new_param = &http_header->params[http_header->used_len];
     new_param->name = strdup(key);
@@ -65,10 +65,10 @@ void free_header_params(struct http_header *http_header)
 {
     int i = 0;
     for(i = 0; i < http_header->used_len; i++) {
-        free(http_header->params[i].name);
-        free(http_header->params[i].value);
+        uws_free(http_header->params[i].name);
+        uws_free(http_header->params[i].value);
     }
-    free(http_header->params);
+    uws_free(http_header->params);
     http_header->params = NULL;
     http_header->used_len = 0;
 }

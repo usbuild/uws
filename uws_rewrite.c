@@ -31,7 +31,7 @@ int rewrite_router(int sockfd) {
             if(lstat(path, &stat_buff) != -1) {
                 apply_rewrite = true;
             }
-            free(path);
+            uws_free(path);
         }
         if(!apply_access) {
             if(strcmp(type, "allow") == 0) {
@@ -52,7 +52,7 @@ int rewrite_router(int sockfd) {
             if(strcmp(type, "dispatch") == 0) {
                 if(preg_match(url, regexp)) { //then apply dispatch rule
                     char *new_url = preg_replace(url, regexp, patch);
-                    free(request_header->path);
+                    uws_free(request_header->path);
                     request_header->path = new_url;
                     apply_rewrite = true;
                 }
@@ -60,7 +60,7 @@ int rewrite_router(int sockfd) {
                 if(preg_match(url, regexp)) { //then apply redirect-t rule
                     char *new_url = preg_replace(url, regexp, patch);
                     add_header_param("Location", new_url, response_header);
-                    free(new_url);
+                    uws_free(new_url);
                     apply_rewrite = true;
                     apply_access = true;
                     send_error_response(sockfd, 302, false);
@@ -69,7 +69,7 @@ int rewrite_router(int sockfd) {
                 if(preg_match(url, regexp)) { //then apply redirect-p rule
                     char *new_url = preg_replace(url, regexp, patch);
                     add_header_param("Location", new_url, response_header);
-                    free(new_url);
+                    uws_free(new_url);
                     apply_rewrite = true;
                     apply_access = true;
                     send_error_response(sockfd, 301, false);
@@ -77,7 +77,7 @@ int rewrite_router(int sockfd) {
                 }
             } else{}
         }
-        free(type); free(regexp); free(patch);
+        uws_free(type); uws_free(regexp); uws_free(patch);
         rules++;
     }
     return 1;
