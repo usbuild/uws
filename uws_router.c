@@ -59,7 +59,7 @@ void pathrouter(int sockfd) {
     while(map[i].preg != NULL) i++; //最先添加的最后执行
     i--;
     for(; i >= 0; i--) {
-        if(preg_match(request_header->url, map[i].preg)) {
+        if(preg_match(request_header->path, map[i].preg)) {
             if(!map[i].func(sockfd)) return;//返回值为0则停止冒泡
         }
     }

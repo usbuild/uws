@@ -13,10 +13,12 @@ dir_router(int sockfd)
     int i = 0; 
     strcpy(path, running_server->root);
 
-    strcat(path, request_header->url);
-    //free(request_header->path);
-    //request_header->path = (char *)calloc(strlen(path) + PATH_LEN, sizeof(char));
+    char *tmp = request_header->path;
+    request_header->path = (char *)calloc(strlen(path) + PATH_LEN, sizeof(char));
+    strcpy(path, running_server->root);
+    strcat(path, tmp);
     strcpy(request_header->path,  path);
+    free(tmp);
 
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
