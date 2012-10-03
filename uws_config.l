@@ -42,7 +42,7 @@ space   [ \t\n]
 
 events{space}*\{                {BEGIN EVENTS;}
 http{space}*\{                  {BEGIN HTTP; 
-                                    uws_config.http.servers = (server_cfg_t**) calloc(server_num, sizeof(server_cfg_t*));
+                                    uws_config.http.servers = (server_cfg_t**) uws_calloc(server_num, sizeof(server_cfg_t*));
                                 }
 <HTTP>server{space}*\{          {BEGIN SERVER;
                                     server = (server_cfg_t*)uws_malloc(sizeof(server_cfg_t));
@@ -69,7 +69,7 @@ http{space}*\{                  {BEGIN HTTP;
                                     {
                                         server_num *= 2;
                                         server_cfg_t** tmp = uws_config.http.servers;
-                                        uws_config.http.servers = (server_cfg_t**) calloc(server_num, sizeof(server_cfg_t*));
+                                        uws_config.http.servers = (server_cfg_t**) uws_calloc(server_num, sizeof(server_cfg_t*));
                                         int tmp_size = sizeof(tmp);
                                         memcpy(uws_config.http.servers, tmp, tmp_size);//Any Questions?
                                         uws_free(tmp);
@@ -182,9 +182,9 @@ char** getArray(char* s){
     for(i = 0; i < strlen(s); i++){
         if(s[i] == ',') items++;
     }
-    char** array = (char**)calloc(items + 1, sizeof(char*));
+    char** array = (char**)uws_calloc(items + 1, sizeof(char*));
     for(i = 0; i < items; i++){
-        array[i] = (char*)calloc(strlen(s) + 1, sizeof(char*));
+        array[i] = (char*)uws_calloc(strlen(s) + 1, sizeof(char*));
     }
     items = 0;
     int tmp = 0;

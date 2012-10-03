@@ -5,7 +5,7 @@ extern struct response header_body;
 void
 cgi_handler(const char* path, int fd)
 {
-    char* cmd = (char*) calloc(sizeof(char), strlen(path) + 10);
+    char* cmd = (char*) uws_calloc(sizeof(char), strlen(path) + 10);
     FILE* dest = fdopen(fd, "r+");
     FILE* src;
     char buff[LINE_LEN];

@@ -40,7 +40,7 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
         fseek(file, 0, SEEK_END);
         content_len = ftell(file);
         rewind(file);
-        content = (char*) calloc (content_len, sizeof(char));
+        content = (char*) uws_calloc (content_len, sizeof(char));
 
         fread(content, sizeof(char), content_len, file);
         fclose(file);

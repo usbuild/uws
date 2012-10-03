@@ -7,9 +7,9 @@
 static void 
 split_string(char *src, char **type, char **regexp, char **patch) {
     int len = strlen(src);
-    *type = (char*)calloc(len, sizeof(char));
-    *regexp = (char*)calloc(len, sizeof(char));
-    *patch = (char*)calloc(len, sizeof(char));
+    *type = (char*)uws_calloc(len, sizeof(char));
+    *regexp = (char*)uws_calloc(len, sizeof(char));
+    *patch = (char*)uws_calloc(len, sizeof(char));
     sscanf(src, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ ]", *type, *regexp, *patch);
 }
 int rewrite_router(int sockfd) {

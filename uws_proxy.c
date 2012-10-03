@@ -11,9 +11,9 @@
 static void 
 split_string(char *src, char **host, int *port, char **regexp) {
     int len = strlen(src);
-    *host = (char*)calloc(len, sizeof(char));
+    *host = (char*)uws_calloc(len, sizeof(char));
     char aport[10];
-    *regexp = (char*)calloc(len, sizeof(char));
+    *regexp = (char*)uws_calloc(len, sizeof(char));
     sscanf(src, "server%*[ ]%[^:]:%[^ ]%*[ ]%[^;]", *host, aport, *regexp);
     *port = atoi(aport);
 

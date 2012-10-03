@@ -18,15 +18,15 @@ void deal_client_fd(client_sockfd)
 
     input_file = fdopen(client_sockfd, "r+"); 
 
-    request_header = (struct http_header*) calloc(1, sizeof(struct http_header));
-    response_header = (struct http_header*) calloc(1, sizeof(struct http_header));
+    request_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
+    response_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
 
     fgets(line, BUFF_LEN, input_file);
 
-    request_header->url = (char*)calloc(PATH_LEN, sizeof(char));
-    request_header->path = (char*)calloc(PATH_LEN, sizeof(char));
+    request_header->url = (char*)uws_calloc(PATH_LEN, sizeof(char));
+    request_header->path = (char*)uws_calloc(PATH_LEN, sizeof(char));
     request_header->params = NULL;
-    request_header->request_params = (char*)calloc(PATH_LEN, sizeof(char));
+    request_header->request_params = (char*)uws_calloc(PATH_LEN, sizeof(char));
 
     sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \r]", type, request_header->url, httpver);
     strcpy(request_header->path, request_header->url);
@@ -90,7 +90,7 @@ void deal_client_fd(client_sockfd)
                     add_header_param("Client-Port", client_port, request_header);
                 } else {
                     char *old_ip = get_header_param("X-Forwarded-For", request_header);
-                    char *proxy_ip = (char*) calloc(strlen(old_ip) + strlen(client_ip) + 5, sizeof(char));
+                    char *proxy_ip = (char*) uws_calloc(strlen(old_ip) + strlen(client_ip) + 5, sizeof(char));
                     strcpy(proxy_ip, old_ip);
                     strcpy(proxy_ip, ",");
                     strcat(proxy_ip, client_ip);

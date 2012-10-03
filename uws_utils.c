@@ -53,14 +53,14 @@ void setnonblocking(int sock)
     return;
 }
 char *strlcat(const char *s1, const char *s2) {
-    char *new_str = (char*) calloc(strlen(s1) + strlen(s2) + 1, sizeof(char));
+    char *new_str = (char*) uws_calloc(strlen(s1) + strlen(s2) + 1, sizeof(char));
     strcpy(new_str, s1);
     strcat(new_str, s2);
     return new_str;
 }
 char *itoa(const size_t data) {
     size_t length = (size_t) pow(data, 0.1) + 2;
-    char *str = (char*) calloc(length, sizeof(char));
+    char *str = (char*) uws_calloc(length, sizeof(char));
     sprintf(str, "%u", data);
     return str;
 }
@@ -110,7 +110,7 @@ int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)/*{{{*/
             ) 
             return -1;
         *nzdata = deflateBound(&c_stream, ndata);
-        *zdata = (char*) calloc(*nzdata + 1, sizeof(char));
+        *zdata = (char*) uws_calloc(*nzdata + 1, sizeof(char));
 
         c_stream.next_out = *zdata;
         c_stream.avail_out  = *nzdata;
@@ -137,7 +137,7 @@ int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata) {/*{
             ) 
             return -1;
         *nzdata = deflateBound(&c_stream, ndata);
-        *zdata = (char*) calloc(*nzdata + 1, sizeof(char));
+        *zdata = (char*) uws_calloc(*nzdata + 1, sizeof(char));
 
         c_stream.next_out = *zdata;
         c_stream.avail_out  = *nzdata;
@@ -206,7 +206,7 @@ void append_mem_t(memory_t *smem, char *start, size_t len) {
         while(smem->len + len > smem->total) {
             smem->total *= 2;
         }
-        smem->mem = (char*) realloc(smem->mem, smem->total);
+        smem->mem = (char*) uws_realloc(smem->mem, smem->total);
         memcpy(smem->mem + smem->len, start, len);
         smem->len += len;
     }
@@ -237,7 +237,7 @@ char* str_replace(char *haystack, char *search, char *replace) {
     }
     int search_len = strlen(search);
     int replace_len = strlen(replace);
-    char *new_str = (char*) calloc(strlen(haystack) + count * (replace_len - search_len) + 2, sizeof(char));
+    char *new_str = (char*) uws_calloc(strlen(haystack) + count * (replace_len - search_len) + 2, sizeof(char));
     char *found = haystack;
 
     pos = haystack;
@@ -285,11 +285,11 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
 char* append_str_array(str_array_t *array_t, char *string){/*{{{*/
     if(array_t->total == 0) {
         array_t->total = INIT_ARR_LEN;
-        array_t->array = (char **)calloc(array_t->total, sizeof(char*));
+        array_t->array = (char **)uws_calloc(array_t->total, sizeof(char*));
     }
     if(array_t->total == array_t->len + 1) {
         array_t->total *= 2;
-        array_t->array = (char **)realloc(array_t->array, sizeof(char*) * array_t->total);
+        array_t->array = (char **)uws_realloc(array_t->array, sizeof(char*) * array_t->total);
         bzero(array_t->array + array_t->len, array_t->total - array_t->len);
     }
     char **tmp = array_t->array;
@@ -328,7 +328,7 @@ char* base64(char *input) {
     BIO_write(b64, input, length);
     BIO_flush(b64);
     BIO_get_mem_ptr(b64, &bptr);
-    output = (char *) calloc (bptr->length + 1, sizeof(char));
+    output = (char *) uws_calloc (bptr->length + 1, sizeof(char));
     memcpy(output, bptr->data, bptr->length);
     BIO_free_all(b64);
     return output;
@@ -351,7 +351,7 @@ pcre* get_pcre(const char *src) {
     }
     if(len >= total - 1) {
         total *= 2;
-        regex_map = (regex_map_t*) realloc(regex_map, total);
+        regex_map = (regex_map_t*) uws_realloc(regex_map, total);
     }
     const char *error;
     int erroffset;
