@@ -85,3 +85,16 @@ char* str_response_header(struct http_header *header) {
     }
     return response_str;
 }
+char* str_request_header(struct http_header *header) {
+    char *request_str = (char*)  calloc(HEADER_LEN, sizeof(char));   
+    int i;
+    sprintf(request_str, "%s %s %s", header->method, header->url, header->http_ver);
+    strcat(request_str, "\r\n");
+    for(i = 0; i < header->used_len; i++) {
+        strcat(request_str, header->params[i].name);
+        strcat(request_str, ": ");
+        strcat(request_str, header->params[i].value);
+        strcat(request_str, "\r\n");
+    }
+    return request_str;
+}

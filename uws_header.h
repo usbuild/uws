@@ -29,6 +29,7 @@ void add_header_param(char*, char*, struct http_header*);
 void push_header_param(char*, char*, struct http_header*);
 void free_header_params(struct http_header*);
 char* str_response_header(struct http_header *header);
+char* str_request_header(struct http_header *header);
 
 #endif
 

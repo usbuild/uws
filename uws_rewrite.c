@@ -4,7 +4,8 @@
 #include "uws_config.h"
 #include "uws_header.h"
 #include "uws_error.h"
-void split_string(char *src, char **type, char **regexp, char **patch) {
+static void 
+split_string(char *src, char **type, char **regexp, char **patch) {
     int len = strlen(src);
     *type = (char*)calloc(len, sizeof(char));
     *regexp = (char*)calloc(len, sizeof(char));

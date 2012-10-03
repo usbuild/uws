@@ -87,13 +87,15 @@ void deal_client_fd(client_sockfd)
                 //deal with client and server ip thing
                 struct sockaddr_in peeraddr;
                 socklen_t peerlen;
-                getpeername(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
+                do{
+                    getpeername(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
+                }while(ntohs(peeraddr.sin_port) == 0);
                 client_ip = strdup(inet_ntoa(peeraddr.sin_addr));
                 if(running_server->facade) {
                     add_header_param("X-Forwarded-For", client_ip, request_header);
                     add_header_param("Client-IP", client_ip, request_header);
                     char *client_port = itoa(ntohs(peeraddr.sin_port));
-                    add_header_param("Client-PORT", client_port, request_header);
+                    add_header_param("Client-Port", client_port, request_header);
                 } else {
                     char *old_ip = get_header_param("X-Forwarded-For", request_header);
                     char *proxy_ip = (char*) calloc(strlen(old_ip) + strlen(client_ip) + 5, sizeof(char));
