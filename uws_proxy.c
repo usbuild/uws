@@ -1,18 +1,16 @@
 #include "uws.h"
+#include "uws_header.h"
+#include "uws_config.h"
 #include "uws_proxy.h"
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
 
-void error(char *msg)
+int proxy_router(int serverfd)
 {
-    perror(msg);
-    exit(0);
-}
-
-int proxy()
-{
+    printf("%d\n", serverfd);
+    /*
     int sockfd, portno, n;
 
     struct sockaddr_in serv_addr;
@@ -40,18 +38,6 @@ int proxy()
     fcntl(sockfd, F_SETFL, O_NONBLOCK);
     bzero(buffer,256);
     sprintf(buffer, "GET / HTTP/1.1 \r\nHost: localhost\r\n\r\n");
-    /*
-    FILE *file = fdopen(sockfd, "r+");
-    fwrite(buffer, strlen(buffer), 1, file);
-    size_t nread = 0;
-    for( ; ; ) {
-        if(feof(file) || ferror(file)) break;
-        bzero(buffer, 256);
-        nread = fread(buffer, 1, 255, file);
-        printf("%s", buffer);
-        if(nread != 255) break;
-    }
-    */
     n = write(sockfd,buffer,strlen(buffer));
     if (n < 0) error("ERROR writing to socket");
     do{
@@ -59,5 +45,7 @@ int proxy()
         n = read(sockfd,buffer,255);
         printf("%s",buffer);
     }while(n > 0);
+    return 0;
+    */
     return 0;
 }

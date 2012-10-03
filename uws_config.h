@@ -25,6 +25,7 @@ typedef struct{
     char* auth_basic;
     char* auth_basic_user_file;
     rewrite_cfg_t rewrite;
+    str_array_t upstream;
 } server_cfg_t;
 
 struct events_cfg{

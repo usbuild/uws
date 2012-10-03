@@ -18,6 +18,7 @@ extern int http_router(int sockfd);
 extern int fastcgi_router(int sockfd);
 extern int rewrite_router(int sockfd);
 extern int auth_router(int sockfd);
+extern int proxy_router(int sockfd);
 //end extern router handler
 void add_router(Router router) {
     int i = 0;
@@ -52,6 +53,10 @@ void init_routers(){
     rewritert.func = rewrite_router;
     add_router(rewritert);
 
+    Router proxyrt;
+    proxyrt.preg = ".*";
+    proxyrt.func = proxy_router;
+    add_router(proxyrt);
 }
 
 void pathrouter(int sockfd) {

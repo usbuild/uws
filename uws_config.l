@@ -35,6 +35,7 @@ space   [ \t\n]
 %s      EVENTS
 %s      SERVER
 %s      REWRITE
+%s      UPSTREAM
 
 %%
 #.*\n               ;
@@ -53,11 +54,15 @@ http{space}*\{                  {BEGIN HTTP;
                                     server->rewrite.rules.len = 0;
                                     server->auth_basic = NULL;
                                     server->rewrite.rules.total = 0;
+                                    server->upstream.total = 0;
+                                    server->upstream.len = 0;
                                 }
 <SERVER>rewrite{space}*\{       {BEGIN REWRITE;}
+<SERVER>upstream{space}*\{      {BEGIN UPSTREAM;}
 <EVENTS>\}                      {BEGIN 0;}
 <HTTP>\}                        {BEGIN 0;}
 <REWRITE>\}                     {BEGIN SERVER;}
+<UPSTREAM>{space}*\}                    {BEGIN SERVER;}
 <SERVER>\}                      {BEGIN HTTP;
                                     if(current_server >= server_num)
                                     {
@@ -110,6 +115,9 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 <REWRITE>exist       {state = BOOL_VAL; val_bool = &server->rewrite.exist;}
 <REWRITE>(allow|deny|dispatch|redirect-t|redirect-p)[^;]+ {
                         append_str_array(&server->rewrite.rules, yytext);
+                     }
+<UPSTREAM>server[^;]+;   { 
+                        append_str_array(&server->upstream, yytext);
                      }
 
 [^ \t\n\t;]+         {
