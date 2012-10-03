@@ -196,7 +196,7 @@ fastcgi_router(int sockfd)
         {"GATEWAY_INTERFACE", "CGI/1.1"},
         {"SERVER_SOFTWARE", UWS_SERVER},
         {"REMOTE_ADDR", get_header_param("Client-IP", request_header)},
-        {"REMOTE_PORT", get_header_param("Client-PORT", request_header)},
+        {"REMOTE_PORT", get_header_param("Client-Port", request_header)},
         {"SERVER_ADDR", server_ip},
         {"SERVER_PORT", port},
         {"SERVER_NAME", running_server->server_name},
