@@ -70,7 +70,7 @@ printdir(const char *fpath, int client_fd) {//打印目录项排序
     header_body.content = (char*) calloc (header_body.content_len, sizeof(char));
 
     rewinddir(dp);
-    entries = (char**) malloc ((dir_len + 5) * sizeof(char*));
+    entries = (char**) uws_malloc ((dir_len + 5) * sizeof(char*));
     dir_len = 0;
     //
     //判断是否是目录

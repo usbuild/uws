@@ -162,7 +162,7 @@ read_response(int sockfd, memory_t *mem_file)
         }
         else if(response_header.type == FCGI_STDERR) {
             content_len = (response_header.contentLengthB1 << 8) + (response_header.contentLengthB0);
-            content = (char*) malloc(content_len * sizeof(char));
+            content = (char*) uws_malloc(content_len * sizeof(char));
             count = read(sockfd, content, count);
             free(content);
 

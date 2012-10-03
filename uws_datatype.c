@@ -1,6 +1,6 @@
 #include "uws_datatype.h"
 int_queue_t* init_int_queue() {
-    int_queue_t* new_queue = (int_queue_t*) malloc(sizeof(int_queue_t));
+    int_queue_t* new_queue = (int_queue_t*) uws_malloc(sizeof(int_queue_t));
     new_queue->length = 0;
     new_queue->head = NULL;
     return new_queue;
@@ -10,7 +10,7 @@ void push_int_queue(int_queue_t *queue, int data) {
     while(*next != NULL) {
         next = &((*next)->next);
     }
-    int_node_t* new_node = (int_node_t*) malloc(sizeof(int_node_t));
+    int_node_t* new_node = (int_node_t*) uws_malloc(sizeof(int_node_t));
     new_node->element = data;
     new_node->next = NULL;
     *next = new_node;

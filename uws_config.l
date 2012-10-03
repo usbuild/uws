@@ -45,7 +45,7 @@ http{space}*\{                  {BEGIN HTTP;
                                     uws_config.http.servers = (server_cfg_t**) calloc(server_num, sizeof(server_cfg_t*));
                                 }
 <HTTP>server{space}*\{          {BEGIN SERVER;
-                                    server = (server_cfg_t*)malloc(sizeof(server_cfg_t));
+                                    server = (server_cfg_t*)uws_malloc(sizeof(server_cfg_t));
                                     server->autoindex = false;
                                     server->facade = true;
                                     server->listen = 80;

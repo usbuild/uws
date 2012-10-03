@@ -67,7 +67,7 @@ char *itoa(const size_t data) {
 char* get_time_string(time_t *tt) {
     struct tm *cur_time;
     time_t t;
-    char* buff = (char*) malloc(sizeof(char) * 60);
+    char* buff = (char*) uws_malloc(sizeof(char) * 60);
     if(tt == NULL) {
         t = time(NULL);
         tt = &t;
@@ -198,7 +198,7 @@ nullstring(char *str) {
 
 void append_mem_t(memory_t *smem, char *start, size_t len) {
     if(smem->len == 0) {
-        smem->mem = (char *)malloc(len * sizeof(char));
+        smem->mem = (char *)uws_malloc(len * sizeof(char));
         smem->total = len;
         memcpy(smem->mem, start, smem->total);
         smem->len = len;
@@ -270,7 +270,7 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
     for(i = 0; i < rc; i++) {
         char *substring_start = src + ovector[2 * i];  
         int substring_length = ovector[2 * i + 1] - ovector[ 2 * i ];  
-        char *new_str = (char*) malloc(substring_length + 1*sizeof(char));
+        char *new_str = (char*) uws_malloc(substring_length + 1*sizeof(char));
         strncpy(new_str, substring_start, substring_length);
         new_str[substring_length] = 0;
         flag[1] = i + '0';
@@ -347,7 +347,7 @@ pcre* get_pcre(const char *src) {
     }
     if(total == 0)   {
         total = INIT_ARR_LEN;
-        regex_map = (regex_map_t*) malloc(total * sizeof(regex_map_t));
+        regex_map = (regex_map_t*) uws_malloc(total * sizeof(regex_map_t));
     }
     if(len >= total - 1) {
         total *= 2;

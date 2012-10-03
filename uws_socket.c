@@ -34,7 +34,7 @@ int start_server()
     while(uws_config.http.servers[servers_num++] != NULL);
     servers_num--;
 
-    int *servers_port = (int*)malloc(sizeof(int) * server_port_num);
+    int *servers_port = (int*)uws_malloc(sizeof(int) * server_port_num);
     for(i = 0; i < servers_num; i++) {
         int listen_port = uws_config.http.servers[i]->listen;
         if(in_int_array(servers_port, listen_port, ports_num) == -1) {
@@ -42,7 +42,7 @@ int start_server()
         }
     }
     //ports_num now stores the distinct port num
-    int *listen_fds = (int*) malloc(sizeof(int) * ports_num);
+    int *listen_fds = (int*) uws_malloc(sizeof(int) * ports_num);
 
     for(i = 0; i < ports_num; i++) {
         socklen_t server_len;
