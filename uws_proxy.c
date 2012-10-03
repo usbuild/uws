@@ -52,7 +52,7 @@ handle_proxy(int client_fd, const char *host, int port) {
 int proxy_router(int serverfd)
 {
     int i = 0;
-    if(!running_server->proxy) return 1;
+    if(running_server->upstream.total == 0) return 1;
     char *host, *regexp;
     int port;
     for(i = 0; i < running_server->upstream.len; i ++) {

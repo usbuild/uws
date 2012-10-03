@@ -16,7 +16,6 @@ typedef struct{
 typedef struct{
     char* root;
     bool autoindex;
-    bool proxy;
     bool facade;
     char** error_page;
     char** index;
