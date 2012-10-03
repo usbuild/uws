@@ -1,5 +1,6 @@
 #include "uws.h"
 #include "uws_header.h"
+#include "uws_utils.h"
 #include "uws_config.h"
 #include "uws_proxy.h"
 #include <fcntl.h>
@@ -9,7 +10,8 @@
 
 int proxy_router(int serverfd)
 {
-    printf("%d\n", serverfd);
+    int i = 0;
+    if(running_server->upstream.total == 0) return 1;
     /*
     int sockfd, portno, n;
 
