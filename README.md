@@ -19,7 +19,6 @@ Features
 TODO
 ================================================
 * HTTPS Support
-* Wsgi Support
 * Reverse Proxy and Load Distribution
 * ...
 

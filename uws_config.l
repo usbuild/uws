@@ -54,6 +54,7 @@ http{space}*\{                  {BEGIN HTTP;
                                     server->rewrite.rules.len = 0;
                                     server->auth_basic = NULL;
                                     server->rewrite.rules.total = 0;
+                                    server->proxy = false;
                                     server->upstream.total = 0;
                                     server->upstream.len = 0;
                                 }
@@ -101,6 +102,7 @@ worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
 
 <SERVER>root         {state = STRING_VAL; val_string= &server->root;}
 <SERVER>autoindex    {state = BOOL_VAL; val_bool = &server->autoindex;}
+<SERVER>proxy       {state = BOOL_VAL; val_bool = &server->proxy;}
 <SERVER>facade       {state = BOOL_VAL; val_bool = &server->facade;}
 <SERVER>server_name  {state = STRING_VAL; val_string = &server->server_name;}
 <SERVER>index        {state = ARRAY_VAL; val_array = &server->index;}
