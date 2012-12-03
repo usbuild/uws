@@ -1,4 +1,5 @@
 #include "uws_rewrite.h"
+#include "uws_memory.h"
 #include <sys/stat.h>
 #include "uws_utils.h"
 #include "uws_config.h"

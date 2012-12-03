@@ -1,6 +1,7 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include "uws.h"
+#include "uws_memory.h"
 #include "uws_config.h"
 #include "uws_header.h"
 

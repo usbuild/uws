@@ -2,6 +2,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include "uws.h"
+#include "uws_memory.h"
 #include "uws_http.h"
 #include "uws_utils.h"
 #include "uws_config.h"

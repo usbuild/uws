@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "uws_memory.h"
 #include "uws_config.h"
 #include "uws_router.h"
 #include "uws_header.h"

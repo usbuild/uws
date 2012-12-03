@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "uws_memory.h"
 #include "uws_config.h"
 #include "uws_utils.h"
 

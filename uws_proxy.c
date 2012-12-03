@@ -1,4 +1,5 @@
 #include "uws.h"
+#include "uws_memory.h"
 #include "uws_header.h"
 #include "uws_utils.h"
 #include "uws_config.h"

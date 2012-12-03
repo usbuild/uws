@@ -1,4 +1,5 @@
 #include "uws_datatype.h"
+#include "uws_memory.h"
 int_queue_t* init_int_queue() {
     int_queue_t* new_queue = (int_queue_t*) uws_malloc(sizeof(int_queue_t));
     new_queue->length = 0;

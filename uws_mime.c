@@ -1,4 +1,5 @@
 #include "uws.h"
+#include "uws_memory.h"
 #include "uws_config.h"
 #include "uws_mime.h"
 static struct nv_pair** mime_maps;

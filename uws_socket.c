@@ -1,4 +1,5 @@
 #include "uws.h"
+#include "uws_memory.h"
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
@@ -11,7 +12,7 @@
 #include "uws_fdhandler.h"
 #include "uws_header.h"
 #define MAX_EVENTS  10
-#define DEBUG
+//#define DEBUG
 
 
 struct epoll_event events[MAX_EVENTS];

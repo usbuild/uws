@@ -6,6 +6,7 @@
 #include <openssl/buffer.h>
 
 #include "uws_utils.h"
+#include "uws_memory.h"
 #define OVECCOUNT   30
 int wildcmp(const char* wild, const char* string){
     const char* cp = NULL, *mp = NULL;

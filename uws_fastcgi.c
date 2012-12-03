@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "uws_memory.h"
 #include "uws_fastcgi.h"
 #include "uws_header.h"
 #include "uws_config.h"

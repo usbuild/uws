@@ -1,4 +1,5 @@
 #include "uws.h"
+#include "uws_memory.h"
 #include "uws_cgi.h"
 #include "uws_config.h"
 extern struct response header_body;
