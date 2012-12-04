@@ -19,8 +19,8 @@ void deal_client_fd(client_sockfd)
 
     input_file = fdopen(client_sockfd, "r+"); 
 
-    request_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
-    response_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
+    request_header = (struct http_header*) uws_malloc(sizeof(struct http_header));
+    response_header = (struct htcp_header*) uws_malloc( sizeof(struct http_header));
 
     fgets(line, BUFF_LEN, input_file);
 
