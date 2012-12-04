@@ -283,23 +283,6 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
     return str;
 }
 
-char* append_str_array(str_array_t *array_t, char *string){/*{{{*/
-    if(array_t->total == 0) {
-        array_t->total = INIT_ARR_LEN;
-        array_t->array = (char **)uws_calloc(array_t->total, sizeof(char*));
-    }
-    if(array_t->total == array_t->len + 1) {
-        array_t->total *= 2;
-        array_t->array = (char **)uws_realloc(array_t->array, sizeof(char*) * array_t->total);
-        bzero(array_t->array + array_t->len, array_t->total - array_t->len);
-    }
-    char **tmp = array_t->array;
-    while(*tmp != NULL) {
-        *tmp++;
-    }
-    *tmp = strdup(string);
-    array_t->len++;
-}/*}}}*/
 bool preg_match(char *src, const char *pattern) {
     pcre *re;
     int ovector[OVECCOUNT];

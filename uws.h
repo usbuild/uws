@@ -19,6 +19,7 @@
 #define bool        int
 #define true        1
 #define false       0
+#define INIT_ARR_LEN    8
 
 void exit_err(const char* str);
 

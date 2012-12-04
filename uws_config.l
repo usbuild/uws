@@ -3,12 +3,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "uws_memory.h"
 #include "uws_config.h"
-#include "uws_utils.h"
 
 bool getBoolean(char* s);
 char** getArray(char* s);
+char* append_str_array(str_array_t *array_t, char *string);
 
 enum value_type{
     LOOK_VAL,
@@ -43,10 +42,10 @@ space   [ \t\n]
 
 events{space}*\{                {BEGIN EVENTS;}
 http{space}*\{                  {BEGIN HTTP; 
-                                    uws_config.http.servers = (server_cfg_t**) uws_calloc(server_num, sizeof(server_cfg_t*));
+                                    uws_config.http.servers = (server_cfg_t**) calloc(server_num, sizeof(server_cfg_t*));
                                 }
 <HTTP>server{space}*\{          {BEGIN SERVER;
-                                    server = (server_cfg_t*)uws_malloc(sizeof(server_cfg_t));
+                                    server = (server_cfg_t*)malloc(sizeof(server_cfg_t));
                                     server->autoindex = false;
                                     server->facade = true;
                                     server->listen = 80;
@@ -70,7 +69,7 @@ http{space}*\{                  {BEGIN HTTP;
                                     {
                                         server_num *= 2;
                                         server_cfg_t** tmp = uws_config.http.servers;
-                                        uws_config.http.servers = (server_cfg_t**) uws_calloc(server_num, sizeof(server_cfg_t*));
+                                        uws_config.http.servers = (server_cfg_t**) calloc(server_num, sizeof(server_cfg_t*));
                                         int tmp_size = sizeof(tmp);
                                         memcpy(uws_config.http.servers, tmp, tmp_size);//Any Questions?
                                         uws_free(tmp);
@@ -183,9 +182,9 @@ char** getArray(char* s){
     for(i = 0; i < strlen(s); i++){
         if(s[i] == ',') items++;
     }
-    char** array = (char**)uws_calloc(items + 1, sizeof(char*));
+    char** array = (char**)calloc(items + 1, sizeof(char*));
     for(i = 0; i < items; i++){
-        array[i] = (char*)uws_calloc(strlen(s) + 1, sizeof(char*));
+        array[i] = (char*)calloc(strlen(s) + 1, sizeof(char*));
     }
     items = 0;
     int tmp = 0;
@@ -202,4 +201,22 @@ char** getArray(char* s){
        array[items][tmp++] = s[i];
     }
     return array;
+}
+
+char* append_str_array(str_array_t *array_t, char *string){
+    if(array_t->total == 0) {
+        array_t->total = INIT_ARR_LEN;
+        array_t->array = (char **)calloc(array_t->total, sizeof(char*));
+    }
+    if(array_t->total == array_t->len + 1) {
+        array_t->total *= 2;
+        array_t->array = (char **)uws_realloc(array_t->array, sizeof(char*) * array_t->total);
+        bzero(array_t->array + array_t->len, array_t->total - array_t->len);
+    }
+    char **tmp = array_t->array;
+    while(*tmp != NULL) {
+        *tmp++;
+    }
+    *tmp = strdup(string);
+    array_t->len++;
 }
