@@ -2,7 +2,7 @@
 #define __UWS_HEADER_H__
 #include "uws.h"
 #include <setjmp.h>
-#define HEADER_LEN  10240
+#define HEADER_LEN  4096
 #define INIT_PARAMS_NUM  20
 #define HEADER_SEP  "\r\n"
 

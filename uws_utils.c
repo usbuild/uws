@@ -54,14 +54,14 @@ void setnonblocking(int sock)
     return;
 }
 char *strlcat(const char *s1, const char *s2) {
-    char *new_str = (char*) uws_calloc(strlen(s1) + strlen(s2) + 1, sizeof(char));
+    char *new_str = (char*) uws_malloc((strlen(s1) + strlen(s2) + 1) * sizeof(char));
     strcpy(new_str, s1);
     strcat(new_str, s2);
     return new_str;
 }
 char *itoa(const size_t data) {
     size_t length = (size_t) pow(data, 0.1) + 2;
-    char *str = (char*) uws_calloc(length, sizeof(char));
+    char *str = (char*) uws_malloc(length * sizeof(char));
     sprintf(str, "%u", data);
     return str;
 }
@@ -238,7 +238,8 @@ char* str_replace(char *haystack, char *search, char *replace) {
     }
     int search_len = strlen(search);
     int replace_len = strlen(replace);
-    char *new_str = (char*) uws_calloc(strlen(haystack) + count * (replace_len - search_len) + 2, sizeof(char));
+    char *new_str = (char*) uws_malloc( (strlen(haystack) + count * (replace_len - search_len) + 2) * sizeof(char));
+    new_str[0] = 0;
     char *found = haystack;
 
     pos = haystack;

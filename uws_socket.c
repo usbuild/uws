@@ -62,7 +62,7 @@ int start_server()
         if(res < 0) exit_err("Listen Error");
         listen_fds[i] = server_sockfd;
     }
-    uws_free(servers_port);
+    free(servers_port);
 
     //prefork here
 #ifndef DEBUG
