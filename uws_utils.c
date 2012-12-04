@@ -111,7 +111,7 @@ int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)/*{{{*/
             ) 
             return -1;
         *nzdata = deflateBound(&c_stream, ndata);
-        *zdata = (char*) uws_calloc(*nzdata + 1, sizeof(char));
+        *zdata = (char*) uws_malloc((*nzdata + 1) * sizeof(char));
 
         c_stream.next_out = *zdata;
         c_stream.avail_out  = *nzdata;
@@ -138,7 +138,7 @@ int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata) {/*{
             ) 
             return -1;
         *nzdata = deflateBound(&c_stream, ndata);
-        *zdata = (char*) uws_calloc(*nzdata + 1, sizeof(char));
+        *zdata = (char*) uws_malloc((*nzdata + 1) * sizeof(char));
 
         c_stream.next_out = *zdata;
         c_stream.avail_out  = *nzdata;
@@ -313,7 +313,7 @@ char* base64(char *input) {
     BIO_write(b64, input, length);
     BIO_flush(b64);
     BIO_get_mem_ptr(b64, &bptr);
-    output = (char *) uws_calloc (bptr->length + 1, sizeof(char));
+    output = (char *) uws_malloc ((bptr->length + 1) * sizeof(char));
     memcpy(output, bptr->data, bptr->length);
     BIO_free_all(b64);
     return output;
