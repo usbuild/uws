@@ -21,7 +21,7 @@ header_to_fcgi(const char *str)
 {
     int prefix_len = strlen("HTTP_");
     int len = strlen(str) + prefix_len + 2;
-    char *newstr = (char*) uws_calloc(len, sizeof(char));
+    char *newstr = (char*) uws_malloc(len * sizeof(char));
     int i = 0;
     strcpy(newstr, "HTTP_");
     while(str[i]) {
@@ -149,7 +149,7 @@ read_response(int sockfd, memory_t *mem_file)
 
         if(response_header.type == FCGI_STDOUT) {
             content_len = (response_header.contentLengthB1 << 8) + (response_header.contentLengthB0);
-            content = (char*) uws_calloc(sizeof(char), content_len);
+            content = (char*) uws_malloc(sizeof(char) * content_len);
 
             count = read(sockfd, content, content_len);
 

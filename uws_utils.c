@@ -207,7 +207,7 @@ void append_mem_t(memory_t *smem, char *start, size_t len) {
         while(smem->len + len > smem->total) {
             smem->total *= 2;
         }
-        smem->mem = (char*) uws_realloc(smem->mem, smem->total);
+        smem->mem = (char*) uws_realloc(smem->mem, smem->len, smem->total);
         memcpy(smem->mem + smem->len, start, len);
         smem->len += len;
     }
@@ -336,7 +336,7 @@ pcre* get_pcre(const char *src) {
     }
     if(len >= total - 1) {
         total *= 2;
-        regex_map = (regex_map_t*) uws_realloc(regex_map, total);
+        regex_map = (regex_map_t*) uws_realloc(regex_map, len, total);
     }
     const char *error;
     int erroffset;

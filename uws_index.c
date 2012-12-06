@@ -15,7 +15,7 @@ dir_router(int sockfd)
     strcpy(path, running_server->root);
 
     char *tmp = request_header->path;
-    request_header->path = (char *)uws_calloc(strlen(path) + PATH_LEN, sizeof(char));
+    request_header->path = (char *)uws_malloc((strlen(path) + PATH_LEN) * sizeof(char));
     strcpy(path, running_server->root);
     strcat(path, tmp);
     strcpy(request_header->path,  path);
@@ -32,7 +32,7 @@ dir_router(int sockfd)
                     strcpy(request_header->path,  path2);
                     strcpy(path2, request_header->url);
                     strcat(path2, index);
-                    request_header->url = (char*) uws_realloc(request_header->url, strlen(path2));
+                    request_header->url = (char*) uws_realloc(request_header->url,strlen(request_header->url), strlen(path2));
                     strcpy(request_header->url, path2);
                     break;
                 }

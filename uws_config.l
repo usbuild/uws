@@ -210,7 +210,7 @@ char* append_str_array(str_array_t *array_t, char *string){
     }
     if(array_t->total == array_t->len + 1) {
         array_t->total *= 2;
-        array_t->array = (char **)uws_realloc(array_t->array, sizeof(char*) * array_t->total);
+        array_t->array = (char **)realloc(array_t->array, sizeof(char*) * array_t->total);
         bzero(array_t->array + array_t->len, array_t->total - array_t->len);
     }
     char **tmp = array_t->array;
