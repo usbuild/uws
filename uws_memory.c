@@ -1,7 +1,7 @@
 #include "uws.h"
 #include "uws_memory.h"
 #define MAX_CHUNKS 200
-//#define TRACE_MEM
+#define TRACE_MEM
 
 #ifdef TRACE_MEM
 static int m = 0;
@@ -38,7 +38,7 @@ void* uws_free(void *ptr){
     }
     printf("malloc: %d, free: %d\n", m, f);
 
-    if(f == 44) {
+    if(f == 97) {
         puts("request finished");
     }
 #endif

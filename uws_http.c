@@ -167,9 +167,9 @@ http_router(int sockfd)
 
     set_header();
     write_response(sockfd, &header_body);
-    free_header_params(response_header);
-    uws_free(header_body.header);
+    //uws_free(header_body.header);  sorry, reponse_header will be freed at the end of request
     uws_free(header_body.content);
+    free_header_params(response_header);
     return 0;
 }
 int write_response(int sockfd, struct response* header_body) {

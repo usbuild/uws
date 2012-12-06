@@ -114,6 +114,7 @@ void deal_client_fd(client_sockfd)
     uws_free(request_header->request_params);
     free_header_params(request_header);
     uws_free(request_header);
+    uws_free(response_header);
 }
 void handle_client_fd(int client_sockfd) {
     deal_client_fd(client_sockfd);

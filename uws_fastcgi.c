@@ -215,6 +215,8 @@ fastcgi_router(int sockfd)
         {NULL,NULL} 
     };
 
+    uws_free(port);
+
     int i;
     char *fastcgi_pass = running_server->fastcgi_pass;
     char fhost[20];
@@ -323,6 +325,7 @@ fastcgi_router(int sockfd)
 
     char *header_str = str_response_header(&fcgi_response_header);
     writen(sockfd, header_str, strlen(header_str));
+    uws_free(header_str);
     writen(sockfd, pos, content_len + strlen("\r\n"));
     
     while(more_content) {
