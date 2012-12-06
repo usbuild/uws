@@ -17,7 +17,7 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
     int i = 0;
     if(http_header->params == NULL) 
     {
-        http_header->params = (Http_Param*) uws_calloc(INIT_PARAMS_NUM, sizeof(Http_Param));
+        http_header->params = (Http_Param*) uws_malloc(INIT_PARAMS_NUM * sizeof(Http_Param));
         http_header->used_len = 0;
         http_header->max_len = INIT_PARAMS_NUM;
     }
@@ -32,7 +32,7 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
     {
         http_header->max_len *= 2;
         Http_Param* tmp = http_header->params;
-        http_header->params = (Http_Param*)uws_calloc(http_header->max_len, sizeof(Http_Param));
+        http_header->params = (Http_Param*)uws_malloc(http_header->max_len * sizeof(Http_Param));
         memcpy(http_header->params, tmp, http_header->used_len);
         uws_free(tmp);
     }
@@ -45,7 +45,7 @@ void push_header_param(char *key, char *value, struct http_header *http_header){
     int i = 0;
     if(http_header->params == NULL) 
     {
-        http_header->params = (Http_Param*) uws_calloc(INIT_PARAMS_NUM, sizeof(Http_Param));
+        http_header->params = (Http_Param*) uws_malloc(INIT_PARAMS_NUM * sizeof(Http_Param));
         http_header->used_len = 0;
         http_header->max_len = INIT_PARAMS_NUM;
     }
@@ -53,7 +53,7 @@ void push_header_param(char *key, char *value, struct http_header *http_header){
     {
         http_header->max_len *= 2;
         Http_Param* tmp = http_header->params;
-        http_header->params = (Http_Param*)uws_calloc(http_header->max_len, sizeof(Http_Param));
+        http_header->params = (Http_Param*)uws_malloc(http_header->max_len * sizeof(Http_Param));
         memcpy(http_header->params, tmp, http_header->used_len);
         uws_free(tmp);
     }
@@ -74,7 +74,7 @@ void free_header_params(struct http_header *http_header)
     http_header->used_len = 0;
 }
 char* str_response_header(struct http_header *header) {
-    char *response_str = (char*)  uws_calloc(HEADER_LEN, sizeof(char));   
+    char *response_str = (char*)  uws_malloc(HEADER_LEN * sizeof(char));   
     int i;
     sprintf(response_str, "%s %d %s", header->http_ver, header->status_code, header->status);
     strcat(response_str, "\r\n");
@@ -87,7 +87,7 @@ char* str_response_header(struct http_header *header) {
     return response_str;
 }
 char* str_request_header(struct http_header *header) {
-    char *request_str = (char*)  uws_calloc(HEADER_LEN, sizeof(char));   
+    char *request_str = (char*)  uws_malloc(HEADER_LEN * sizeof(char));   
     int i;
     sprintf(request_str, "%s %s %s", header->method, header->url, header->http_ver);
     strcat(request_str, "\r\n");

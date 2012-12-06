@@ -68,7 +68,8 @@ printdir(const char *fpath, int client_fd) {//打印目录项排序
         dir_len++;
 
     header_body.content_len = dir_len * 64;//Max filename Length
-    header_body.content = (char*) uws_calloc (header_body.content_len, sizeof(char));
+    header_body.content = (char*) uws_malloc (header_body.content_len * sizeof(char));
+    header_body.content[0] = 0;
 
     rewinddir(dp);
     entries = (char**) uws_malloc ((dir_len + 5) * sizeof(char*));
@@ -78,7 +79,7 @@ printdir(const char *fpath, int client_fd) {//打印目录项排序
     //
     
     while((dir_entry = readdir(dp)) != NULL) {
-        char *newpath = (char*) uws_calloc(128, sizeof(char));//max filename length
+        char *newpath = (char*) uws_malloc(PATH_LEN * sizeof(char));//max filename length
         strcpy(newpath, fpath);
 
         entries[dir_len++] = dir_entry->d_name;
@@ -122,7 +123,7 @@ printfile(const char *path, int client_fd)
     rewind(file);
 
 
-    header_body.content = (char*) uws_calloc (header_body.content_len, sizeof(char));
+    header_body.content = (char*) uws_malloc (header_body.content_len * sizeof(char));
     int res = fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
 
