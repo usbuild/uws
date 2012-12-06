@@ -1,49 +1,45 @@
 #include "uws.h"
+#include <malloc.h>
 #include "uws_memory.h"
-#define MAX_CHUNKS 200
-#define TRACE_MEM
+#define INIT_OBJS
 
-#ifdef TRACE_MEM
-static int m = 0;
-static int f = 0;
-static void *t[MAX_CHUNKS] = {NULL};
-#endif
+typedef struct uws_chunk_allocator{
+    unsigned char* pData;
+    unsigned char firstAvailableBlock;
+    unsigned char blocksAvailable;
+} Chunk, *pChunk;
+
+typedef struct uws_fixed_allocator{
+    size_t blockSize;
+    unsigned char numBlocks;
+    pChunk chunks;
+    pChunk allocChunk;
+    pChunk deallocChunk;
+    struct uws_fixed_allocator *prev;
+    struct uws_fixed_allocator *next;
+} FixedAllocator, *pFixedAllocator;
+
+typedef struct uws_obj_allocator {
+    pFixedAllocator pool;
+    pFixedAllocator pLastAlloc;
+    pFixedAllocator pLastDealloc;
+    size_t chunkSize;
+    size_t maxObjectSize;
+}ObjAllocator, *pObjAllocator;
+
+static size_t
+round_up(size_t size) {
+    return (size + 8) & ~8;
+}
+
 void* uws_malloc(size_t size){
-
-    void* p =  malloc(size + 1);
-
-#ifdef TRACE_MEM
-    m++;
-    printf("malloc: %d, free: %d\n", m, f);
-    t[m] = p;
-#endif
-
-    return p;
+    void* p =  malloc(size + sizeof(size_t));
+    size_t* sp = (size_t*)p;
+    *sp = size;
+    return sp + 1;
 }
 void* uws_free(void *ptr){
-
-#ifdef TRACE_MEM
-    f++;
-    int i = 0;
-    int found = 0;
-    for(i; i < MAX_CHUNKS; i++) {
-        if(ptr == t[i]) {
-            t[i] = NULL;
-            found = 1;
-            break;
-        }
-    }
-    if(!found) {
-        printf("Not hit->%x", (unsigned int)ptr);
-    }
-    printf("malloc: %d, free: %d\n", m, f);
-
-    if(f == 97) {
-        puts("request finished");
-    }
-#endif
-
-    free(ptr);
+    free((size_t*)ptr - 1);
 }
 void *uws_calloc(size_t nmemb, size_t size) {
     int s = nmemb * size;
