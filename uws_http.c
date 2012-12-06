@@ -41,7 +41,11 @@ set_header() {
     add_header_param("Vary", "Accept-Encoding", response_header);
     add_header_param("Server", UWS_SERVER, response_header);
     add_header_param("Date", time_string, response_header);
-    add_header_param("Content-Length", itoa(header_body.content_len), response_header);
+
+    char *len = itoa(header_body.content_len);
+    add_header_param("Content-Length", len, response_header);
+    uws_free(len);
+
     add_header_param("Content-Type", mime, response_header);
     header_body.header = response_header;
     uws_free(time_string);

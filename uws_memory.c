@@ -1,20 +1,32 @@
 #include "uws.h"
 #include "uws_memory.h"
+#define MAX_CHUNKS 200
+//#define TRACE_MEM
+
+#ifdef TRACE_MEM
 static int m = 0;
 static int f = 0;
-static void *t[100] = {NULL};
+static void *t[MAX_CHUNKS] = {NULL};
+#endif
 void* uws_malloc(size_t size){
+
+    void* p =  malloc(size + 1);
+
+#ifdef TRACE_MEM
     m++;
     printf("malloc: %d, free: %d\n", m, f);
-    void* p =  malloc(size + 1);
     t[m] = p;
+#endif
+
     return p;
 }
 void* uws_free(void *ptr){
+
+#ifdef TRACE_MEM
     f++;
     int i = 0;
     int found = 0;
-    for(i; i < 100; i++) {
+    for(i; i < MAX_CHUNKS; i++) {
         if(ptr == t[i]) {
             t[i] = NULL;
             found = 1;
@@ -22,13 +34,14 @@ void* uws_free(void *ptr){
         }
     }
     if(!found) {
-        printf("Not hit->%x", ptr);
+        printf("Not hit->%x", (unsigned int)ptr);
     }
     printf("malloc: %d, free: %d\n", m, f);
 
-    if(f == 43) {
+    if(f == 44) {
         puts("request finished");
     }
+#endif
 
     free(ptr);
 }

@@ -257,7 +257,6 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
     pcre *re;
     int ovector[OVECCOUNT];
     int rc, i;
-    //re = pcre_compile(pattern, 0, &error, &erroffset, NULL);
     re = get_pcre(pattern);
     if(re == NULL) {
         return NULL;
@@ -319,8 +318,11 @@ char* base64(char *input) {
     return output;
 }
 
-static
-pcre* get_pcre(const char *src) {
+/*
+ * Because of once regexp constructed, it will remain in memory, so we don't put it into the memory pool
+ */
+static pcre* 
+get_pcre(const char *src) {
     static regex_map_t *regex_map;
     static len = 0;
     static total = 0;
@@ -332,17 +334,17 @@ pcre* get_pcre(const char *src) {
     }
     if(total == 0)   {
         total = INIT_ARR_LEN;
-        regex_map = (regex_map_t*) uws_malloc(total * sizeof(regex_map_t));
+        regex_map = (regex_map_t*) malloc(total * sizeof(regex_map_t));
     }
     if(len >= total - 1) {
         total *= 2;
-        regex_map = (regex_map_t*) uws_realloc(regex_map, len, total);
+        regex_map = (regex_map_t*) realloc(regex_map, total);
     }
     const char *error;
     int erroffset;
     pcre *re = pcre_compile(src, 0, &error, &erroffset, NULL);
     if(re == NULL) return NULL;
-    regex_map[len].src = uws_strdup(src); 
+    regex_map[len].src = strdup(src); 
     regex_map[len].re = re;
     len++;
     return re;

@@ -56,7 +56,7 @@ make_begin_request_body(int role, int keep_conn)
     body.roleB1         =           (unsigned char) ((role >> 8) & 0xff);
     body.roleB0         =           (unsigned char) (role & 0xff);
     body.flags          =           (unsigned char) (keep_conn ? FCGI_KEEP_CONN : 0);
-    memset(body.reserved, 0, sizeof(body.reserved));
+    bzero(body.reserved, sizeof(body.reserved));
     return body;
 }
 

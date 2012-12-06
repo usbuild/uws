@@ -1,4 +1,5 @@
 #include "uws_header.h"
+#include "uws_utils.h"
 #include "uws_memory.h"
 char* get_header_param(char* key, struct http_header *http_header){
     int i = 0;
