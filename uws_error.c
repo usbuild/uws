@@ -13,7 +13,7 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
             if((*error_pages)[i] == '=') {
                 (*error_pages)[i] = '\0';
                 if(atoi(*error_pages) == status_code) {
-                    error_path = strdup(*error_pages + i + 1);
+                    error_path = uws_strdup(*error_pages + i + 1);
                     (*error_pages)[i] = '=';
                     break;
                 }
@@ -26,7 +26,7 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
     int content_len;
     char *content;
     if(with_page) {
-        error_file_path  = strdup("/dev/null"); //just for test
+        error_file_path  = uws_strdup("/dev/null"); //just for test
         if(error_path != NULL) {
             char *tmp_path = strlcat(running_server->root, error_path);
             if(access(tmp_path, F_OK) == 0) {
@@ -47,7 +47,7 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
         fclose(file);
     } else {
         content_len = 0;
-        content = strdup("");
+        content = uws_strdup("");
     }
 
     //go here

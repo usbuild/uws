@@ -20,7 +20,7 @@ get_mime(const char* path)
     i--;
     while(*(path + i) != '.') {
         if(i == 0) {
-            return strdup("text/html");
+            return uws_strdup("text/html");
             break;
         }
         i--;
@@ -28,7 +28,7 @@ get_mime(const char* path)
     if(i != 0){
         return mimebyext(path + i + 1);
     }
-    return strdup("text/html");
+    return uws_strdup("text/html");
 }
 static void
 set_header() {
@@ -147,7 +147,7 @@ http_router(int sockfd)
     }
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
-            mime = strdup("text/html");
+            mime = uws_strdup("text/html");
             printdir(path, sockfd);
         }
         else

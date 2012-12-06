@@ -32,4 +32,5 @@ char* preg_replace(char *src, const char *pattern, const char *replace);
 bool preg_match(char *src, const char *pattern);
 char* base64(char *input);
 static pcre* get_pcre(const char *src);
+inline char * uws_strdup(const char *s);
 #endif

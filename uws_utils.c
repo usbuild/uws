@@ -234,7 +234,7 @@ char* str_replace(char *haystack, char *search, char *replace) {
     char *pos = strstr(haystack, search);
     int count = str_count(haystack, search);
     if(pos = NULL) {
-        return strdup(haystack);
+        return uws_strdup(haystack);
     }
     int search_len = strlen(search);
     int replace_len = strlen(replace);
@@ -267,7 +267,7 @@ char* preg_replace( char *src, const char *pattern, const char *replace) {
         return NULL;
     }
 
-    char *str = strdup(replace);
+    char *str = uws_strdup(replace);
     char flag[] = {'$', 0, 0};
     for(i = 0; i < rc; i++) {
         char *substring_start = src + ovector[2 * i];  
@@ -342,8 +342,14 @@ pcre* get_pcre(const char *src) {
     int erroffset;
     pcre *re = pcre_compile(src, 0, &error, &erroffset, NULL);
     if(re == NULL) return NULL;
-    regex_map[len].src = strdup(src); 
+    regex_map[len].src = uws_strdup(src); 
     regex_map[len].re = re;
     len++;
     return re;
+}
+inline char *
+uws_strdup(const char *s) {
+    char *t = uws_malloc(strlen(s) + 1);
+    strcpy(t, s);
+    return t;
 }

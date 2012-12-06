@@ -83,12 +83,13 @@ void deal_client_fd(client_sockfd)
                 do{
                     getpeername(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
                 }while(ntohs(peeraddr.sin_port) == 0);
-                client_ip = strdup(inet_ntoa(peeraddr.sin_addr));
+                client_ip = uws_strdup(inet_ntoa(peeraddr.sin_addr));
                 if(running_server->facade) {
                     add_header_param("X-Forwarded-For", client_ip, request_header);
                     add_header_param("Client-IP", client_ip, request_header);
                     char *client_port = itoa(ntohs(peeraddr.sin_port));
                     add_header_param("Client-Port", client_port, request_header);
+                    uws_free(client_port);
                 } else {
                     char *old_ip = get_header_param("X-Forwarded-For", request_header);
                     char *proxy_ip = (char*) uws_malloc((strlen(old_ip) + strlen(client_ip) + 5) * sizeof(char));
@@ -112,6 +113,7 @@ void deal_client_fd(client_sockfd)
     uws_free(request_header->path);
     uws_free(request_header->request_params);
     free_header_params(request_header);
+    uws_free(request_header);
 }
 void handle_client_fd(int client_sockfd) {
     deal_client_fd(client_sockfd);
