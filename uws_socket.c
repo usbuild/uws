@@ -61,6 +61,7 @@ int start_server()
         res = listen(server_sockfd, 500);
         if(res < 0) exit_err("Listen Error");
         listen_fds[i] = server_sockfd;
+        printf("Server Listening ON: %d\n", servers_port[i]);
     }
     free(servers_port);
 
