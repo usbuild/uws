@@ -11,6 +11,8 @@ typedef struct uws_chunk_allocator{
 
 typedef struct uws_fixed_allocator{
     size_t blockSize;
+    size_t size;
+    size_t chunkCount;
     unsigned char numBlocks;
     pChunk chunks;
     pChunk allocChunk;
@@ -38,7 +40,6 @@ static Allocator allocator = {NULL, 0, 0};
 
 static bool
 add_new_obj(pObjAllocator newObj) {
-
     if(allocator.size == 0) {
         allocator.size = INIT_OBJS;
         allocator.objs = (pObjAllocator) malloc(allocator.size * sizeof(ObjAllocator) );
@@ -73,6 +74,32 @@ add_new_fixed(pFixedAllocator fixObj) {
     }
     memcpy(&cur_obj->pool[cur_obj->fixCount++], fixObj, sizeof(FixedAllocator));
     return true;
+}
+
+static bool 
+add_new_chunk(pFixedAllocator fixObj, pChunk chunk) {
+    if(fixObj->size == 0) {
+        fixObj->size = INIT_OBJS;
+        fixObj->chunks = (pChunk) malloc(sizeof(Chunk) * fixObj->size);
+        if(!fixObj) {
+            return false;
+        }
+    } else if(fixObj->size == fixObj->chunkCount) {
+        fixObj->size += INIT_OBJS;
+        fixObj->chunks= (pChunk) realloc(fixObj->chunks, sizeof(Chunk) * fixObj->size);
+        if(!fixObj) {
+            return false;
+        }
+    }
+    memcpy(&fixObj->chunks[fixObj->chunkCount++], chunk, sizeof(Chunk));
+    return true;
+}
+
+static pChunk
+init_chunk(size_t size){
+    pChunk chunk = (pChunk) malloc(sizeof(Chunk));
+    //TODO add bitmap linkedlist
+    return chunk;
 }
 
 
