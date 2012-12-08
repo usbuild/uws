@@ -1,7 +1,9 @@
 #include "uws.h"
 #include <malloc.h>
 #include "uws_memory.h"
-#define INIT_OBJS 20
+#define INIT_OBJS       20
+#define MAX_CHUNKS      255
+#define CHUNK_TOP       2048
 
 typedef struct uws_chunk_allocator{
     unsigned char* pData;
@@ -9,7 +11,7 @@ typedef struct uws_chunk_allocator{
     unsigned char blocksAvailable;
 } Chunk, *pChunk;
 
-typedef struct uws_fixed_allocator{
+typedef struct uws_fixed_allocator{/*{{{*/
     size_t blockSize;
     size_t size;
     size_t chunkCount;
@@ -30,49 +32,22 @@ typedef struct uws_obj_allocator {
     size_t fixSize;
 } ObjAllocator, *pObjAllocator;
 
-typedef struct uws_allocator {
-    pObjAllocator objs;
-    size_t objCount;
-    size_t size;
-} Allocator, *pAllocator;
-
-static Allocator allocator = {NULL, 0, 0};
-
-static bool
-add_new_obj(pObjAllocator newObj) {
-    if(allocator.size == 0) {
-        allocator.size = INIT_OBJS;
-        allocator.objs = (pObjAllocator) malloc(allocator.size * sizeof(ObjAllocator) );
-        if(!allocator.objs) {
-            return false;
-        }
-    } else if(allocator.size == allocator.objCount) {
-        allocator.size += INIT_OBJS;
-        allocator.objs = (pObjAllocator) realloc(allocator.objs, allocator.size);
-        if(!allocator.objs) {
-            return false;
-        }
-    }
-    memcpy(&allocator.objs[allocator.objCount++], newObj, sizeof(ObjAllocator));
-    return true;
-}
 static bool 
-add_new_fixed(pFixedAllocator fixObj) {
-    pObjAllocator cur_obj = &allocator.objs[allocator.objCount - 1];
-    if(cur_obj->size == 0) {
-        cur_obj->size = INIT_OBJS; 
-        cur_obj->pool = (pFixedAllocator) malloc(sizeof(FixedAllocator) * cur_obj->size);
-        if(!cur_obj->pool) {
+add_new_fixed(pFixedAllocator fixObj, pObjAllocator objAlloc) {
+    if(objAlloc->size == 0) {
+        objAlloc->size = INIT_OBJS; 
+        objAlloc->pool = (pFixedAllocator) malloc(sizeof(FixedAllocator) * objAlloc->size);
+        if(!objAlloc->pool) {
             return false;
         }
-    } else if(cur_obj->size == cur_obj->fixCount) {
-        cur_obj->size += INIT_OBJS;
-        cur_obj->pool = (pFixedAllocator) malloc(sizeof(FixedAllocator) * cur_obj->size);
-        if(!cur_obj->pool) {
+    } else if(objAlloc->size == objAlloc->fixCount) {
+        objAlloc->size += INIT_OBJS;
+        objAlloc->pool = (pFixedAllocator) malloc(sizeof(FixedAllocator) * objAlloc->size);
+        if(!objAlloc->pool) {
             return false;
         }
     }
-    memcpy(&cur_obj->pool[cur_obj->fixCount++], fixObj, sizeof(FixedAllocator));
+    memcpy(&objAlloc->pool[objAlloc->fixCount++], fixObj, sizeof(FixedAllocator));
     return true;
 }
 
@@ -93,16 +68,116 @@ add_new_chunk(pFixedAllocator fixObj, pChunk chunk) {
     }
     memcpy(&fixObj->chunks[fixObj->chunkCount++], chunk, sizeof(Chunk));
     return true;
-}
+}/*}}}*/
 
-static pChunk
+static pChunk/*{{{*/
 init_chunk(size_t size){
     pChunk chunk = (pChunk) malloc(sizeof(Chunk));
-    //TODO add bitmap linkedlist
+    int blocks = MAX_CHUNKS;
+    if(size * blocks > CHUNK_TOP) {
+        blocks = CHUNK_TOP / size;
+    }
+    blocks = (blocks == 0 ? 1 : blocks);
+    chunk->pData = (unsigned char *) malloc(sizeof(unsigned char) * size * blocks);
+    chunk->firstAvailableBlock = 0;
+    chunk->blocksAvailable = blocks;
+    int i;
+    unsigned char* tmp = chunk->pData;
+    for(i = 0; i < blocks; ++i) {
+        *tmp = i + 1;
+        tmp += sizeof(unsigned char) * size;
+    }
     return chunk;
+}/*}}}*/
+
+
+static void*
+chunk_malloc(pChunk chunk, size_t size) {
+    if(chunk->blocksAvailable == 0) return NULL;
+    unsigned char *p = chunk->pData + chunk->firstAvailableBlock * size;
+    chunk->firstAvailableBlock  = *p;
+    --chunk->blocksAvailable;
+    return p;
 }
 
+static void
+chunk_free(pChunk chunk, void *p, size_t size) {//to free p, ensure p is in chunk
+    *(unsigned char*)p = chunk->firstAvailableBlock;
+    chunk->firstAvailableBlock = (unsigned char *)p - chunk->pData;
+    ++chunk->blocksAvailable;
+}/*}}}*/
 
+static void *
+fix_allocate(pFixedAllocator fixObj) {
+    int i;
+    for(i = 0; i < fixObj->chunkCount; ++i) {
+        pChunk cur_chunk = &fixObj->chunks[i];
+        if(cur_chunk->blocksAvailable != 0) {
+            return chunk_malloc(cur_chunk, fixObj->blockSize);
+        }
+    }
+    pChunk chunk = init_chunk(fixObj->blockSize);
+    add_new_chunk(fixObj, chunk);
+    free(chunk);
+    pChunk cur_chunk = &fixObj->chunks[fixObj->chunkCount - 1];
+    return chunk_malloc(cur_chunk, fixObj->blockSize);
+}
+
+static void/*{{{*/
+fix_deallocate(pFixedAllocator fixObj, void *p) {
+    int i;
+    size_t range;
+    int blocks = MAX_CHUNKS;
+    if(fixObj->blockSize * blocks > CHUNK_TOP) {
+        blocks = CHUNK_TOP / fixObj->blockSize;
+    }
+    blocks = (blocks == 0 ? 1 : blocks);
+    for( i = 0; i < fixObj->chunkCount; ++i) {
+        pChunk cur_chunk = &fixObj->chunks[i];
+        if(cur_chunk->pData <= (unsigned char *)p && (unsigned char*)p < cur_chunk->pData + blocks * fixObj->blockSize) {
+            chunk_free(cur_chunk, p, fixObj->blockSize);
+        }
+    }
+
+}/*}}}*/
+
+static void * /*{{{*/
+obj_allocate(pObjAllocator objAlloc, size_t size) {
+    int i = 0;
+    pFixedAllocator found = NULL;
+    for(i = 0; i < objAlloc->fixCount; ++i) {
+        pFixedAllocator fix = &objAlloc->pool[i];
+        if(objAlloc->fixSize == size) {
+            found = fix;
+            break;
+        }
+    }
+    if(!found) {
+        pFixedAllocator fix = (pFixedAllocator) calloc(1, sizeof(FixedAllocator));
+        fix->blockSize = size;
+        add_new_fixed(fix, objAlloc);
+        free(fix);
+        found = &objAlloc->pool[objAlloc->fixCount - 1];
+    }
+    return fix_allocate(found);
+}/*}}}*/
+static void
+obj_deallocate(pObjAllocator objAlloc, void *p, size_t size) {
+    int i = 0;
+    pFixedAllocator found = NULL;
+    for(i = 0; i < objAlloc->fixCount; ++i) {
+        pFixedAllocator fix = &objAlloc->pool[i];
+        if(objAlloc->fixSize == size) {
+            found = fix;
+            break;
+        }
+    }
+    if(found) {
+        fix_deallocate(found, p);
+    }
+}
+
+static pObjAllocator obj = NULL;
 
 static size_t
 round_up(size_t size) {
@@ -110,14 +185,25 @@ round_up(size_t size) {
 }
 
 void* uws_malloc(size_t size){
-    void* p =  malloc(size + sizeof(size_t));
+    if(obj == NULL) {
+        obj = (pObjAllocator) calloc(1, sizeof(ObjAllocator));
+    }
+    size_t real_size = round_up(size + sizeof(size_t));
+    void *p = obj_allocate(obj, real_size);
+
+    //void* p =  malloc(size + sizeof(size_t));
+
     size_t* sp = (size_t*)p;
     *sp = size;
-    printf("\t%d", size);
+
     return sp + 1;
 }
 void* uws_free(void *ptr){
-    free((size_t*)ptr - 1);
+    size_t *p = (size_t*) ptr - 1;
+    size_t real_size = *p;
+    obj_deallocate(obj, ptr, real_size);
+
+    //free((size_t*)ptr - 1);
 }
 void *uws_calloc(size_t nmemb, size_t size) {
     int s = nmemb * size;
