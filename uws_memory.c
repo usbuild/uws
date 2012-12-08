@@ -185,12 +185,26 @@ obj_deallocate(pObjAllocator objAlloc, void *p, size_t size) {
     }
 }
 
-static pObjAllocator obj = NULL;
-
 static size_t
 round_up(size_t size) {
     return (size + 7) & ~7;
 }
+
+void *uws_calloc(size_t nmemb, size_t size) {
+    int s = nmemb * size;
+    void *p = uws_malloc(s);
+    bzero(p, s);
+    return p;
+}
+void *uws_realloc(void *ptr, size_t old,  size_t size) {
+    void *d = uws_malloc(size);
+    memcpy(d, ptr, old);
+    uws_free(ptr);
+    return d;
+}
+
+
+static pObjAllocator obj = NULL;
 
 void* uws_malloc(size_t size){
 #ifdef USE_POOL
@@ -203,9 +217,9 @@ void* uws_malloc(size_t size){
     *sp = real_size;
     return sp + 1;
 #endif
+
 #ifndef USE_POOL
-    size_t real_size = round_up(size);
-    void* p =  Malloc(real_size);
+    void* p =  Malloc(size);
     return p;
 #endif
 }
@@ -213,23 +227,10 @@ void uws_free(void *ptr){
 #ifdef USE_POOL
     if(ptr == NULL) return;
     size_t *p = (size_t*) ptr - 1;
-    size_t real_size = *p;
-    obj_deallocate(obj, ptr, real_size);
+    obj_deallocate(obj, p, *p);
 #endif
 
 #ifndef USE_POOL
     free(ptr);
 #endif
-}
-void *uws_calloc(size_t nmemb, size_t size) {
-    int s = nmemb * size;
-    void *p = uws_malloc(s);
-    bzero(p, s);
-    return p;
-}
-void *uws_realloc(void *ptr, size_t old,  size_t size) {
-    void *d = uws_malloc(size);
-    memcpy(d, ptr, old);
-    uws_free(ptr);
-    return d;
 }
