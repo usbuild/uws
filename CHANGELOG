@@ -4,6 +4,7 @@ CHANGE LOG
 -- 0.0.10--
 * Use UWS Memory Pool to replace default malloc and free to get better performance (100% upper)
 * Support large post data and fastcgi response, without taking a lot of memory
+
 -- 0.0.9 --
 * Use global pcre array to store compiled regexp for better performance
 
