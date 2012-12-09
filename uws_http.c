@@ -126,13 +126,13 @@ printfile(const char *path, int client_fd)
     header_body.content_len = ftell(file);
     rewind(file);
 
+    add_header_param("Last-Modified", file_mod_time, response_header);
+    uws_free(file_mod_time);
 
     header_body.content = (char*) uws_malloc (header_body.content_len * sizeof(char));
     int res = fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
 
-    add_header_param("Last-Modified", file_mod_time, response_header);
-    uws_free(file_mod_time);
 }
 
 int
@@ -172,6 +172,7 @@ http_router(int sockfd)
     free_header_params(response_header);
     return 0;
 }
+
 int write_response(int sockfd, struct response* header_body) {
     int res;
     char *accept_encoding; 
@@ -180,7 +181,7 @@ int write_response(int sockfd, struct response* header_body) {
     if((header_body->content_len > 0) &&
         uws_config.http.gzip && 
         in_str_array(uws_config.http.gzip_types, get_header_param("Content-Type", header_body->header)) >= 0 &&
-        (accept_encoding = get_header_param("Accept-Encoding", header_body->header)) &&
+        (accept_encoding = get_header_param("Accept-Encoding", request_header)) &&
         strstr(accept_encoding, "gzip") != NULL
         ) {
         size_t src_len = header_body->content_len;
