@@ -122,17 +122,27 @@ chunk_free(pChunk chunk, void *p, size_t size) {//to free p, ensure p is in chun
 static void *
 fix_allocate(pFixedAllocator fixObj) {
     int i;
-    for(i = 0; i < fixObj->chunkCount; ++i) {
-        pChunk cur_chunk = &fixObj->chunks[i];
-        if(cur_chunk->blocksAvailable != 0) {
-            return chunk_malloc(cur_chunk, fixObj->blockSize);
+    pChunk target = NULL;
+    if(fixObj->allocChunk != NULL && fixObj->allocChunk->blocksAvailable != 0) {
+        target = fixObj->allocChunk;
+    } else {
+        for(i = 0; i < fixObj->chunkCount; ++i) {
+            pChunk cur_chunk = &fixObj->chunks[i];
+            if(cur_chunk->blocksAvailable != 0) {
+                target = cur_chunk;
+                break;
+            }
+        }
+        if(target == NULL) {
+            pChunk chunk = init_chunk(fixObj->blockSize);
+            add_new_chunk(fixObj, chunk);
+            free(chunk);
+            target = &fixObj->chunks[fixObj->chunkCount - 1];
         }
     }
-    pChunk chunk = init_chunk(fixObj->blockSize);
-    add_new_chunk(fixObj, chunk);
-    free(chunk);
-    pChunk cur_chunk = &fixObj->chunks[fixObj->chunkCount - 1];
-    return chunk_malloc(cur_chunk, fixObj->blockSize);
+    fixObj->allocChunk = target;
+    fixObj->deallocChunk = target;
+    return chunk_malloc(target, fixObj->blockSize);
 }
 
 static void/*{{{*/
@@ -144,9 +154,20 @@ fix_deallocate(pFixedAllocator fixObj, void *p) {
         blocks = CHUNK_TOP / fixObj->blockSize;
     }
     blocks = (blocks == 0 ? 1 : blocks);
-    for( i = 0; i < fixObj->chunkCount; ++i) {
-        pChunk cur_chunk = &fixObj->chunks[i];
+    pChunk cur_chunk;
+
+    if(fixObj->deallocChunk != NULL) {
+        cur_chunk = fixObj->deallocChunk;
         if(cur_chunk->pData <= (unsigned char *)p && (unsigned char*)p < cur_chunk->pData + blocks * fixObj->blockSize) {
+            chunk_free(cur_chunk, p, fixObj->blockSize);
+            return;
+        }
+    }
+
+    for( i = 0; i < fixObj->chunkCount; ++i) {
+        cur_chunk = &fixObj->chunks[i];
+        if(cur_chunk->pData <= (unsigned char *)p && (unsigned char*)p < cur_chunk->pData + blocks * fixObj->blockSize) {
+            fixObj->deallocChunk = cur_chunk;
             chunk_free(cur_chunk, p, fixObj->blockSize);
         }
     }
@@ -188,16 +209,6 @@ static void * /*{{{*/
 obj_allocate(pObjAllocator objAlloc, size_t size) {
     int i = 0;
     pFixedAllocator found = vicinityFound(objAlloc, objAlloc->pLastAlloc, size);
-
-    /*
-    for(i = 0; i < objAlloc->fixCount; ++i) {
-        pFixedAllocator fix = &objAlloc->pool[i];
-        if(fix->blockSize == size) {
-            found = fix;
-            break;
-        }
-    }
-    */
 
     if(found == NULL) {
         pFixedAllocator fix = (pFixedAllocator) calloc(1, sizeof(FixedAllocator));
