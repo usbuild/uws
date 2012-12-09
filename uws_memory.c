@@ -61,7 +61,12 @@ add_new_fixed(pFixedAllocator fixObj, pObjAllocator objAlloc) {
         objAlloc->size += INIT_OBJS;
         objAlloc->pool = (pFixedAllocator) Realloc(objAlloc->pool, sizeof(FixedAllocator) * objAlloc->size);
     }
-    memcpy(&objAlloc->pool[objAlloc->fixCount++], fixObj, sizeof(FixedAllocator));
+    memcpy(&objAlloc->pool[objAlloc->fixCount], fixObj, sizeof(FixedAllocator));
+    if(objAlloc->fixCount > 0) {
+        objAlloc->pool[objAlloc->fixCount].prev = &objAlloc->pool[objAlloc->fixCount - 1];
+        objAlloc->pool[objAlloc->fixCount - 1].next = &objAlloc->pool[objAlloc->fixCount];
+    }
+    objAlloc->fixCount++;
     return true;
 }
 
@@ -148,10 +153,43 @@ fix_deallocate(pFixedAllocator fixObj, void *p) {
 
 }/*}}}*/
 
+
+static pFixedAllocator 
+vicinityFound(pObjAllocator objAlloc, pFixedAllocator anchor, size_t size) {
+    if(anchor == NULL) {
+        return NULL;
+    }
+    if(anchor->blockSize == size) {
+        return anchor;
+    }
+    pFixedAllocator up = anchor->prev;
+    pFixedAllocator down = anchor->next;
+    for(; ; ) {
+        if(up != NULL) {
+            if(up->blockSize == size) {
+                return up;
+            }
+            up = up->prev;
+        }
+        if(down != NULL) {
+            if(down->blockSize == size) {
+                return down;
+            }
+            down = down->next;
+        }
+        if(up == NULL && down == NULL) {
+            return NULL;
+        }
+    }
+}
+
+
 static void * /*{{{*/
 obj_allocate(pObjAllocator objAlloc, size_t size) {
     int i = 0;
-    pFixedAllocator found = NULL;
+    pFixedAllocator found = vicinityFound(objAlloc, objAlloc->pLastAlloc, size);
+
+    /*
     for(i = 0; i < objAlloc->fixCount; ++i) {
         pFixedAllocator fix = &objAlloc->pool[i];
         if(fix->blockSize == size) {
@@ -159,6 +197,8 @@ obj_allocate(pObjAllocator objAlloc, size_t size) {
             break;
         }
     }
+    */
+
     if(found == NULL) {
         pFixedAllocator fix = (pFixedAllocator) calloc(1, sizeof(FixedAllocator));
         fix->blockSize = size;
@@ -166,6 +206,7 @@ obj_allocate(pObjAllocator objAlloc, size_t size) {
         free(fix);
         found = &objAlloc->pool[objAlloc->fixCount - 1];
     }
+    objAlloc->pLastAlloc = found;
     return fix_allocate(found);
 }/*}}}*/
 static void
@@ -180,6 +221,7 @@ obj_deallocate(pObjAllocator objAlloc, void *p, size_t size) {
         }
     }
     if(found) {
+        objAlloc->pLastDealloc = found;
         fix_deallocate(found, p);
         return;
     }
