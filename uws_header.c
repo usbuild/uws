@@ -43,7 +43,6 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
     http_header->used_len++;
 }
 void push_header_param(char *key, char *value, struct http_header *http_header){
-    int i = 0;
     if(http_header->params == NULL) 
     {
         http_header->params = (Http_Param*) uws_malloc(INIT_PARAMS_NUM * sizeof(Http_Param));

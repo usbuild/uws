@@ -79,7 +79,6 @@ char* get_time_string(time_t *tt) {
 }
 time_t parse_time_string(char *time_str) {
     struct tm cur_time;
-    char buff[60];
     strptime(time_str, "%a, %d %b %Y %H:%M:%S GMT", &cur_time);
 
     return mktime(&cur_time);
@@ -97,7 +96,6 @@ int in_int_array(int array[], int needle, int length) {
 int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)/*{{{*/
 {
     z_stream c_stream;
-    int err = 0;
     if(data && ndata > 0)
     {
         c_stream.zalloc = Z_NULL;
@@ -171,7 +169,7 @@ bool is_expire(char *time1, char *time2) {
     time_t t2 = parse_time_string(time2);
     return t1 < t2;
 }
-int writen(int fd, char *buff, size_t len) {
+int writen(int fd, void *buff, size_t len) {
     size_t already = 0;
     long res = 0;
     while(already < len) {
@@ -181,7 +179,7 @@ int writen(int fd, char *buff, size_t len) {
     }
     return already;
 }
-int readn(int fd, char *buff, size_t len) {
+int readn(int fd, void *buff, size_t len) {
     size_t already = 0;
     long res = 0;
     while(already < len) {
@@ -197,9 +195,9 @@ nullstring(char *str) {
     return str;
 }
 
-void append_mem_t(memory_t *smem, char *start, size_t len) {
+void append_mem_t(memory_t *smem, void *start, size_t len) {
     if(smem->len == 0) {
-        smem->mem = (char *)uws_malloc(len * sizeof(char));
+        smem->mem = (unsigned char *)uws_malloc(len * sizeof(unsigned char));
         smem->total = len;
         memcpy(smem->mem, start, smem->total);
         smem->len = len;
@@ -207,7 +205,7 @@ void append_mem_t(memory_t *smem, char *start, size_t len) {
         while(smem->len + len > smem->total) {
             smem->total *= 2;
         }
-        smem->mem = (char*) uws_realloc(smem->mem, smem->len, smem->total);
+        smem->mem = (unsigned char*) uws_realloc(smem->mem, smem->len, smem->total);
         memcpy(smem->mem + smem->len, start, len);
         smem->len += len;
     }
@@ -321,7 +319,7 @@ char* base64(char *input) {
 /*
  * Because of once regexp constructed, it will remain in memory, so we don't put it into the memory pool
  */
-static pcre* 
+pcre* 
 get_pcre(const char *src) {
     static regex_map_t *regex_map;
     static len = 0;

@@ -9,6 +9,7 @@
 #include "uws_mime.h"
 #include "uws_header.h"
 #include "uws_status.h"
+#include "uws_error.h"
 
 struct response header_body;
 static char* mime;
@@ -59,9 +60,8 @@ comparestr(const void *p1, const void *p2)
 }
 static void
 printdir(const char *fpath, pConnInfo conn_info) {//打印目录项排序
-    int client_fd = conn_info->clientfd;
     if(!conn_info->running_server->autoindex) {
-        send_error_response(client_fd, 403, true);
+        send_error_response(conn_info, 403, true);
         return;
     }
 
@@ -116,11 +116,10 @@ static void
 printfile(const char *path, pConnInfo conn_info)
 {
     char *mod_time_str ;
-    int client_fd = conn_info->clientfd;
     char *file_mod_time = get_file_time(path);
     if((mod_time_str = get_header_param("If-Modified-Since", conn_info->request_header))) {
         if(!is_expire(mod_time_str, file_mod_time)) {
-            send_error_response(client_fd, 304, false);
+            send_error_response(conn_info, 304, false);
             return;
         }
     }
@@ -134,7 +133,7 @@ printfile(const char *path, pConnInfo conn_info)
     uws_free(file_mod_time);
 
     header_body.content = (char*) uws_malloc (header_body.content_len * sizeof(char));
-    int res = fread(header_body.content, sizeof(char), header_body.content_len, file);
+    fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
 
 }
@@ -166,7 +165,7 @@ http_router(pConnInfo conn_info)
         }
     }
     else {
-        send_error_response(sockfd, 404, true);
+        send_error_response(conn_info, 404, true);
         return 0;
     }
 
@@ -180,7 +179,7 @@ http_router(pConnInfo conn_info)
 
 int write_response(int sockfd, struct response* header_body) {
     int res;
-    char *accept_encoding; 
+    //char *accept_encoding; 
     //compress--start--
 
     /*

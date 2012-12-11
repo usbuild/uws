@@ -9,11 +9,9 @@
 int
 dir_router(pConnInfo conn_info) 
 {
-    int sockfd = conn_info->clientfd;
     char path[PATH_LEN];
     char path2[PATH_LEN];
     struct stat stat_buff;
-    int i = 0; 
     strcpy(path, conn_info->running_server->root);
 
     char *tmp = conn_info->request_header->path;

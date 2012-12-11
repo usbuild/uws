@@ -115,7 +115,7 @@ void deal_client_fd(pConnInfo conn_info)
     uws_free(conn_info->response_header);
 }
 void handle_client_fd(int client_sockfd) {
-    pConnInfo conn_info = (pConnInfo) calloc(1, sizeof(ConnInfo));
+    pConnInfo conn_info = (pConnInfo) uws_calloc(1, sizeof(ConnInfo));
     conn_info->clientfd = client_sockfd;
     deal_client_fd(conn_info);
     uws_free(conn_info);

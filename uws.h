@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <syslog.h>
+#include <ctype.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
@@ -31,7 +32,7 @@ typedef struct nv_pair {
 typedef struct {
    size_t len;
    size_t total;
-   char *mem;
+   unsigned char *mem;
 } memory_t;
 
 typedef struct {
@@ -46,6 +47,7 @@ struct response {
     char    *content;
     size_t content_len;
 };
+
 char* find_value(char* key);
 
 #endif

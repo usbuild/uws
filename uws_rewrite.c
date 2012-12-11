@@ -5,6 +5,7 @@
 #include "uws_header.h"
 #include "uws_error.h"
 #include "uws_status.h"
+#include "uws_http.h"
 static void 
 split_string(char *src, char **type, char **regexp, char **patch) {
     int len = strlen(src);
@@ -15,7 +16,6 @@ split_string(char *src, char **type, char **regexp, char **patch) {
 }
 int rewrite_router(pConnInfo conn_info) {
     if(!conn_info->running_server->rewrite.engine || conn_info->running_server->rewrite.rules.total == 0) return 1;
-    int sockfd = conn_info->clientfd;
     char **rules = conn_info->running_server->rewrite.rules.array;
 
     bool apply_access = false;

@@ -3,10 +3,10 @@
 #include "uws_utils.h"
 #include "uws_header.h"
 #include "uws_config.h"
+#include "uws_http.h"
 void send_error_response(pConnInfo conn_info, const int status_code, const bool with_page) {
     char** error_pages = conn_info->running_server->error_page;
     int i;
-    int client_fd = conn_info->clientfd;
     char *error_path = NULL;
     char *error_file_path;
     while(*error_pages != NULL) {
@@ -78,9 +78,9 @@ void send_error_response(pConnInfo conn_info, const int status_code, const bool 
     header_body.content_len = content_len;
 
     uws_free(time_string);
-    write_response(client_fd, &header_body);
+    write_response(conn_info->clientfd, &header_body);
     free_header_params(header_body.header);
-    uws_free(header_body.header);
+    //uws_free(header_body.header); don't free this!!
     uws_free(header_body.content);
     longjmp(conn_info->error_jmp_buf, 1);
 }
