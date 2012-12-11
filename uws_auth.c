@@ -20,15 +20,15 @@ bool validate(char *raw_str, char *file){
     return 0;
 }
 int auth_router(int sockfd) {
-    if(running_server->auth_basic == NULL) return 1;
+    if(conn_info->running_server->auth_basic == NULL) return 1;
     char *auth_str = get_header_param("Authorization", conn_info->request_header);
     char value[PATH_LEN] = {0};
-    sprintf(value, "Basic realm=\"%s\"", running_server->auth_basic);
+    sprintf(value, "Basic realm=\"%s\"", conn_info->running_server->auth_basic);
     if(auth_str == NULL) {
         add_header_param("WWW-Authenticate", value, conn_info->response_header);
         send_error_response(sockfd, 401, true);
     } else {
-        if(validate(auth_str, running_server->auth_basic_user_file)) {
+        if(validate(auth_str, conn_info->running_server->auth_basic_user_file)) {
             return 1;
         } else {
             add_header_param("WWW-Authenticate", value, conn_info->response_header);

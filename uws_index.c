@@ -13,11 +13,11 @@ dir_router(int sockfd)
     char path2[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
-    strcpy(path, running_server->root);
+    strcpy(path, conn_info->running_server->root);
 
     char *tmp = conn_info->request_header->path;
     conn_info->request_header->path = (char *)uws_malloc((strlen(path) + PATH_LEN) * sizeof(char));
-    strcpy(path, running_server->root);
+    strcpy(path, conn_info->running_server->root);
     strcat(path, tmp);
     strcpy(conn_info->request_header->path,  path);
     uws_free(tmp);
@@ -26,7 +26,7 @@ dir_router(int sockfd)
         if( S_ISDIR(stat_buff.st_mode) ) {
             char *index;
             int i = 0;
-            while((index = running_server->index[i++]) != NULL) {
+            while((index = conn_info->running_server->index[i++]) != NULL) {
                 strcpy(path2, path);
                 strcat(path2, index);
                 if(lstat(path2, &stat_buff) != -1) {

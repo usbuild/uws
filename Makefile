@@ -7,10 +7,13 @@ OPT_RELEASE= -O2
 OPT_USEPOOL=-L. -lusmem -DUSE_POOL
 OBJ=	uws.o uws_utils.o uws_socket.o uws_mime.o uws_config.o uws_router.o uws_fastcgi.o uws_cgi.o uws_http.o uws_index.o uws_header.o uws_fdhandler.o uws_datatype.o uws_error.o uws_rewrite.o uws_proxy.o uws_auth.o uws_memory.o uws_status.o
 
+$(TARGET):CFLAGS=$(OPT_DEBUG)
+release:CFLAGS=$(OPT_RELEASE)
+
 $(TARGET):	$(OBJ)
-	$(CC) $(CFLAGS) $^ -o $@  $(LIB) $(OPT_DEBUG)
+	$(CC) $(CFLAGS) $^ -o $@  $(LIB)
 release: $(OBJ)
-	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LIB) $(OPT_RELEASE)
+	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LIB)
 test: $(OBJ)
 	$(CC) $(CFLAGS) $^ -o $(TARGET) $(LIB) $(OPT_USEPOOL) $(OPT_DEBUG)
 test-release: $(OBJ)

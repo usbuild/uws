@@ -59,7 +59,7 @@ comparestr(const void *p1, const void *p2)
 }
 static void
 printdir(const char *fpath, int client_fd) {//打印目录项排序
-    if(!running_server->autoindex) {
+    if(!conn_info->running_server->autoindex) {
         send_error_response(client_fd, 403, true);
         return;
     }

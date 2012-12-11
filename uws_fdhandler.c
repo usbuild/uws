@@ -72,39 +72,39 @@ void deal_client_fd(client_sockfd)
 
             if(wildcmp(host_with_port, host) == 1) {
                 //We've got a file regiestered in the config file;
-                running_server = uws_config.http.servers[i];
+                conn_info->running_server = uws_config.http.servers[i];
                 break;
             }
             i++;
         }
-        if(running_server != NULL) {
-            if(setjmp(error_jmp_buf) == 0) {
+        if(conn_info->running_server != NULL) {
+            if(setjmp(conn_info->error_jmp_buf) == 0) {
                 //deal with client and server ip thing
                 struct sockaddr_in peeraddr;
                 socklen_t peerlen;
                 do{
                     getpeername(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
                 }while(ntohs(peeraddr.sin_port) == 0);
-                client_ip = uws_strdup(inet_ntoa(peeraddr.sin_addr));
-                if(running_server->facade) {
-                    add_header_param("X-Forwarded-For", client_ip, conn_info->request_header);
-                    add_header_param("Client-IP", client_ip, conn_info->request_header);
+                conn_info->client_ip = uws_strdup(inet_ntoa(peeraddr.sin_addr));
+                if(conn_info->running_server->facade) {
+                    add_header_param("X-Forwarded-For", conn_info->client_ip, conn_info->request_header);
+                    add_header_param("Client-IP", conn_info->client_ip, conn_info->request_header);
                     char *client_port = itoa(ntohs(peeraddr.sin_port));
                     add_header_param("Client-Port", client_port, conn_info->request_header);
                     uws_free(client_port);
                 } else {
                     char *old_ip = get_header_param("X-Forwarded-For", conn_info->request_header);
-                    char *proxy_ip = (char*) uws_malloc((strlen(old_ip) + strlen(client_ip) + 5) * sizeof(char));
+                    char *proxy_ip = (char*) uws_malloc((strlen(old_ip) + strlen(conn_info->client_ip) + 5) * sizeof(char));
                     strcpy(proxy_ip, old_ip);
                     strcpy(proxy_ip, ",");
-                    strcat(proxy_ip, client_ip);
+                    strcat(proxy_ip, conn_info->client_ip);
                     add_header_param("X-Forwarded-For", proxy_ip, conn_info->request_header);
                     uws_free(proxy_ip);
                 }
                 getsockname(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
-                strcpy(server_ip, inet_ntoa(peeraddr.sin_addr));
+                strcpy(conn_info->server_ip, inet_ntoa(peeraddr.sin_addr));
                 pathrouter(client_sockfd);
-                uws_free(client_ip);
+                uws_free(conn_info->client_ip);
             }
         }
     }

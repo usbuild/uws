@@ -54,11 +54,11 @@ handle_proxy(int client_fd, const char *host, int port) {
 int proxy_router(int serverfd)
 {
     int i = 0;
-    if(!running_server->proxy) return 1;
+    if(!conn_info->running_server->proxy) return 1;
     char *host, *regexp;
     int port;
-    for(i = 0; i < running_server->upstream.len; i ++) {
-        split_string(running_server->upstream.array[i], &host, &port, &regexp);
+    for(i = 0; i < conn_info->running_server->upstream.len; i ++) {
+        split_string(conn_info->running_server->upstream.array[i], &host, &port, &regexp);
         if(preg_match(conn_info->request_header->url, regexp)) {
             int res = handle_proxy(serverfd, host, port);
             uws_free(host);

@@ -191,7 +191,7 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 int
 fastcgi_router(int sockfd) 
 {
-    char *port = itoa(running_server->listen);
+    char *port = itoa(conn_info->running_server->listen);
     int request_id = 1;
     Param_Value pv[] = {
         {"QUERY_STRING",conn_info->request_header->request_params},
@@ -201,16 +201,16 @@ fastcgi_router(int sockfd)
         {"SCRIPT_FILENAME", conn_info->request_header->path},
         {"SCRIPT_NAME", strrchr(conn_info->request_header->path, '/')},
         {"REQUEST_URI", conn_info->request_header->url},
-        {"DOCUMENT_URI", conn_info->request_header->path + strlen(running_server->root)},
-        {"DOCUMENT_ROOT", running_server->root},
+        {"DOCUMENT_URI", conn_info->request_header->path + strlen(conn_info->running_server->root)},
+        {"DOCUMENT_ROOT", conn_info->running_server->root},
         {"SERVER_PROTOCOL", conn_info->request_header->http_ver},
         {"GATEWAY_INTERFACE", "CGI/1.1"},
         {"SERVER_SOFTWARE", UWS_SERVER},
         {"REMOTE_ADDR", get_header_param("Client-IP", conn_info->request_header)},
         {"REMOTE_PORT", get_header_param("Client-Port", conn_info->request_header)},
-        {"SERVER_ADDR", server_ip},
+        {"SERVER_ADDR", conn_info->server_ip},
         {"SERVER_PORT", port},
-        {"SERVER_NAME", running_server->server_name},
+        {"SERVER_NAME", conn_info->running_server->server_name},
         {"HTTPS", ""},
         {"REDIRECT_STATUS", "200"},
         {NULL,NULL} 
@@ -219,7 +219,7 @@ fastcgi_router(int sockfd)
     uws_free(port);
 
     int i;
-    char *fastcgi_pass = running_server->fastcgi_pass;
+    char *fastcgi_pass = conn_info->running_server->fastcgi_pass;
     char fhost[20];
     char fport[10];
     clientfd = sockfd;

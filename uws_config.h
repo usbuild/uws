@@ -63,10 +63,8 @@ typedef struct{
     struct http_cfg http;
 } uws_config_t;
 //config definition end here
+
 uws_config_t uws_config;//Main Configuration
-server_cfg_t* running_server;//Current Server Profile Used
-char server_ip[LINE_LEN];
-char *client_ip;
 void init_config();
 
 #endif

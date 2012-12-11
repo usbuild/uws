@@ -5,7 +5,7 @@
 #include "uws_config.h"
 #include "uws_status.h"
 void send_error_response(int client_fd, const int status_code, const bool with_page) {
-    char** error_pages = running_server->error_page;
+    char** error_pages = conn_info->running_server->error_page;
     int i;
     char *error_path = NULL;
     char *error_file_path;
@@ -29,7 +29,7 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
     if(with_page) {
         error_file_path  = uws_strdup("/dev/null"); //just for test
         if(error_path != NULL) {
-            char *tmp_path = strlcat(running_server->root, error_path);
+            char *tmp_path = strlcat(conn_info->running_server->root, error_path);
             if(access(tmp_path, F_OK) == 0) {
                 uws_free(error_file_path);
                 error_file_path = tmp_path;
@@ -78,12 +78,11 @@ void send_error_response(int client_fd, const int status_code, const bool with_p
     header_body.content_len = content_len;
 
     uws_free(time_string);
-    //
     write_response(client_fd, &header_body);
     free_header_params(header_body.header);
     uws_free(header_body.header);
     uws_free(header_body.content);
-    longjmp(error_jmp_buf, 1);
+    longjmp(conn_info->error_jmp_buf, 1);
 }
 char *get_by_code(int code) {
     int i = 0;
