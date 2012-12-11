@@ -3,16 +3,13 @@
 #define BUFF_LEN    4096
 #include <sys/types.h>
 #include "uws_header.h"
-
+#include "uws_status.h"
 
 typedef struct {
     char* preg;
-    int (*func)(int);
+    int (*func)(pConnInfo);
 } Router;
-void
-pathrouter(int sockfd);
-void
-init_routers();
-
+void pathrouter(pConnInfo);
+void init_routers();
 
 #endif

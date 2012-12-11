@@ -1,6 +1,8 @@
 #ifndef __UWS_ERROR_H__
 #define __UWS_ERROR_H__
 #include "uws.h"
+#include "uws_status.h"
+
 typedef struct{
     int code;
     char *message;
@@ -57,7 +59,7 @@ static const int_str_pair http_status[] = {//Copy from lighttpd
 
 	{ -1, "Error" }
 };
-void send_error_response(int client_fd, int status_code, bool with_page);
+void send_error_response(pConnInfo, int status_code, bool with_page);
 char *get_by_code(int code);
 
 #endif

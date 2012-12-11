@@ -3,10 +3,10 @@
 #include "uws_utils.h"
 #include "uws_header.h"
 #include "uws_config.h"
-#include "uws_status.h"
-void send_error_response(int client_fd, const int status_code, const bool with_page) {
+void send_error_response(pConnInfo conn_info, const int status_code, const bool with_page) {
     char** error_pages = conn_info->running_server->error_page;
     int i;
+    int client_fd = conn_info->clientfd;
     char *error_path = NULL;
     char *error_file_path;
     while(*error_pages != NULL) {

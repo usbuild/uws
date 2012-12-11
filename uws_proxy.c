@@ -3,7 +3,6 @@
 #include "uws_header.h"
 #include "uws_utils.h"
 #include "uws_config.h"
-#include "uws_proxy.h"
 #include "uws_status.h"
 #include <fcntl.h>
 #include <sys/socket.h>
@@ -21,8 +20,9 @@ split_string(char *src, char **host, int *port, char **regexp) {
 
 }
 static int
-handle_proxy(int client_fd, const char *host, int port) {
+handle_proxy(pConnInfo conn_info, const char *host, int port) {
     int sockfd, n;
+    int client_fd = conn_info->clientfd;
     struct sockaddr_in serv_addr;
     struct hostent *server;
 
@@ -51,7 +51,7 @@ handle_proxy(int client_fd, const char *host, int port) {
     } while (n > 0);
     return 0;
 }
-int proxy_router(int serverfd)
+int proxy_router(pConnInfo conn_info)
 {
     int i = 0;
     if(!conn_info->running_server->proxy) return 1;
@@ -60,7 +60,7 @@ int proxy_router(int serverfd)
     for(i = 0; i < conn_info->running_server->upstream.len; i ++) {
         split_string(conn_info->running_server->upstream.array[i], &host, &port, &regexp);
         if(preg_match(conn_info->request_header->url, regexp)) {
-            int res = handle_proxy(serverfd, host, port);
+            int res = handle_proxy(conn_info, host, port);
             uws_free(host);
             uws_free(regexp);
             return res;

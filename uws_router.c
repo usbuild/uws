@@ -14,12 +14,12 @@
 static Router
 map[MAP_LEN] = {{NULL, NULL}};
 //extern router handlers
-extern int dir_router(int sockfd);
-extern int http_router(int sockfd);
-extern int fastcgi_router(int sockfd);
-extern int rewrite_router(int sockfd);
-extern int auth_router(int sockfd);
-extern int proxy_router(int sockfd);
+extern int dir_router(pConnInfo);
+extern int http_router(pConnInfo);
+extern int fastcgi_router(pConnInfo);
+extern int rewrite_router(pConnInfo);
+extern int auth_router(pConnInfo);
+extern int proxy_router(pConnInfo);
 //end extern router handler
 void add_router(Router router) {
     int i = 0;
@@ -58,13 +58,13 @@ void init_routers(){
     add_router(proxyrt);
 }
 
-void pathrouter(int sockfd) {
+void pathrouter(pConnInfo conn_info) {
     int i = 0;
     while(map[i].preg != NULL) i++; //最先添加的最后执行
     i--;
     for(; i >= 0; i--) {
         if(preg_match(conn_info->request_header->path, map[i].preg)) {
-            if(!map[i].func(sockfd)) return;//返回值为0则停止冒泡
+            if(!map[i].func(conn_info)) return;//返回值为0则停止冒泡
         }
     }
 }

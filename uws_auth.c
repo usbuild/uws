@@ -1,5 +1,4 @@
 #include "uws_memory.h"
-#include "uws_auth.h"
 #include "uws_config.h"
 #include "uws_header.h"
 #include "uws_status.h"
@@ -19,7 +18,8 @@ bool validate(char *raw_str, char *file){
     fclose(f);
     return 0;
 }
-int auth_router(int sockfd) {
+int auth_router(pConnInfo conn_info) {
+    int sockfd = conn_info->clientfd;
     if(conn_info->running_server->auth_basic == NULL) return 1;
     char *auth_str = get_header_param("Authorization", conn_info->request_header);
     char value[PATH_LEN] = {0};

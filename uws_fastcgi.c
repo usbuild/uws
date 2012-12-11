@@ -189,8 +189,9 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 }
 
 int
-fastcgi_router(int sockfd) 
+fastcgi_router(pConnInfo conn_info) 
 {
+    int sockfd = conn_info->clientfd;
     char *port = itoa(conn_info->running_server->listen);
     int request_id = 1;
     Param_Value pv[] = {

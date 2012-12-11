@@ -32,7 +32,4 @@ typedef struct {
     char server_ip[LINE_LEN];
     char *client_ip;
 } ConnInfo, *pConnInfo;
-
-pConnInfo conn_info;
-
 #endif

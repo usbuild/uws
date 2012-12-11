@@ -7,8 +7,9 @@
 #include "uws_status.h"
 
 int
-dir_router(int sockfd) 
+dir_router(pConnInfo conn_info) 
 {
+    int sockfd = conn_info->clientfd;
     char path[PATH_LEN];
     char path2[PATH_LEN];
     struct stat stat_buff;

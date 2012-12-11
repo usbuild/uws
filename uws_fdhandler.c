@@ -11,21 +11,17 @@
 #include "uws_error.h"
 #include "uws_status.h"
 
-void deal_client_fd(client_sockfd)
+void deal_client_fd(pConnInfo conn_info)
 {
     char line[BUFF_LEN] = "",
          type[10],
          httpver[10];
+    int client_sockfd = conn_info->clientfd;
     int i = 0;
-    conn_info = (pConnInfo) calloc(1, sizeof(ConnInfo));
-
     conn_info->input_file = fdopen(client_sockfd, "r+"); 
-
     conn_info->request_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
     conn_info->response_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
-
     fgets(line, BUFF_LEN, conn_info->input_file);
-
     conn_info->request_header->url = (char*)uws_calloc(PATH_LEN, sizeof(char));
     conn_info->request_header->path = (char*)uws_malloc(PATH_LEN * sizeof(char));
     conn_info->request_header->params = NULL;
@@ -103,7 +99,7 @@ void deal_client_fd(client_sockfd)
                 }
                 getsockname(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
                 strcpy(conn_info->server_ip, inet_ntoa(peeraddr.sin_addr));
-                pathrouter(client_sockfd);
+                pathrouter(conn_info);
                 uws_free(conn_info->client_ip);
             }
         }
@@ -119,5 +115,8 @@ void deal_client_fd(client_sockfd)
     uws_free(conn_info->response_header);
 }
 void handle_client_fd(int client_sockfd) {
-    deal_client_fd(client_sockfd);
+    pConnInfo conn_info = (pConnInfo) calloc(1, sizeof(ConnInfo));
+    conn_info->clientfd = client_sockfd;
+    deal_client_fd(conn_info);
+    uws_free(conn_info);
 }

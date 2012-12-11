@@ -32,7 +32,7 @@ get_mime(const char* path)
     return uws_strdup("text/html");
 }
 static void
-set_header() {
+set_header(pConnInfo conn_info) {
     char *time_string = get_time_string(NULL);
     conn_info->response_header->http_ver = "HTTP/1.1";
     conn_info->response_header->status_code = 200;
@@ -58,11 +58,13 @@ comparestr(const void *p1, const void *p2)
     return strcmp(* (char * const *)p1, * (char * const *) p2);
 }
 static void
-printdir(const char *fpath, int client_fd) {//打印目录项排序
+printdir(const char *fpath, pConnInfo conn_info) {//打印目录项排序
+    int client_fd = conn_info->clientfd;
     if(!conn_info->running_server->autoindex) {
         send_error_response(client_fd, 403, true);
         return;
     }
+
     DIR *dp = opendir(fpath);
     struct dirent *dir_entry;
     int dir_len = 0;
@@ -111,9 +113,10 @@ printdir(const char *fpath, int client_fd) {//打印目录项排序
     closedir(dp);
 }
 static void
-printfile(const char *path, int client_fd)
+printfile(const char *path, pConnInfo conn_info)
 {
     char *mod_time_str ;
+    int client_fd = conn_info->clientfd;
     char *file_mod_time = get_file_time(path);
     if((mod_time_str = get_header_param("If-Modified-Since", conn_info->request_header))) {
         if(!is_expire(mod_time_str, file_mod_time)) {
@@ -137,8 +140,9 @@ printfile(const char *path, int client_fd)
 }
 
 int
-http_router(int sockfd) 
+http_router(pConnInfo conn_info) 
 {
+    int sockfd = conn_info->clientfd;
     char path[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
@@ -153,12 +157,12 @@ http_router(int sockfd)
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
             mime = uws_strdup("text/html");
-            printdir(path, sockfd);
+            printdir(path, conn_info);
         }
         else
         {
             mime = get_mime(path);
-            printfile(path, sockfd);
+            printfile(path, conn_info);
         }
     }
     else {
@@ -166,7 +170,7 @@ http_router(int sockfd)
         return 0;
     }
 
-    set_header();
+    set_header(conn_info);
     write_response(sockfd, &header_body);
     //uws_free(header_body.header);  sorry, reponse_header will be freed at the end of request
     uws_free(header_body.content);
@@ -179,6 +183,7 @@ int write_response(int sockfd, struct response* header_body) {
     char *accept_encoding; 
     //compress--start--
 
+    /*
     if((header_body->content_len > 0) &&
         uws_config.http.gzip && 
         in_str_array(uws_config.http.gzip_types, get_header_param("Content-Type", header_body->header)) >= 0 &&
@@ -197,6 +202,7 @@ int write_response(int sockfd, struct response* header_body) {
         header_body->content = dst_buff;
         header_body->content_len = dst_len;
     }
+    */
 
     char* header_str = str_response_header(header_body->header);
     size_t header_len = strlen(header_str);
