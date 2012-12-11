@@ -9,6 +9,9 @@ OBJ=	uws.o uws_utils.o uws_socket.o uws_mime.o uws_config.o uws_router.o uws_fas
 
 $(TARGET):CFLAGS=$(OPT_DEBUG)
 release:CFLAGS=$(OPT_RELEASE)
+test: CFLAGS= $(OPT_DEBUG)
+test-release: CFLAGS= $(OPT_RELEASE)
+
 
 $(TARGET):	$(OBJ)
 	$(CC) $(CFLAGS) $^ -o $@  $(LIB)
