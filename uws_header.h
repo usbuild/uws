@@ -20,9 +20,8 @@ struct http_header{
 };
 
 jmp_buf error_jmp_buf;//to quick jump out of error response
-FILE *input_file;
-struct http_header *request_header;
-struct http_header *response_header;
+//struct http_header *request_header;
+//struct http_header *response_header;
 char* get_header_param(char*, struct http_header*);
 void add_header_param(char*, char*, struct http_header*);
 void push_header_param(char*, char*, struct http_header*);

@@ -8,6 +8,7 @@
 #include "uws_config.h"
 #include "uws_mime.h"
 #include "uws_header.h"
+#include "uws_status.h"
 
 struct response header_body;
 static char* mime;
@@ -33,21 +34,21 @@ get_mime(const char* path)
 static void
 set_header() {
     char *time_string = get_time_string(NULL);
-    response_header->http_ver = "HTTP/1.1";
-    response_header->status_code = 200;
-    response_header->status = "OK";
-    add_header_param("Cache-Control", "private", response_header);
-    add_header_param("Connection", "Keep-Alive", response_header);
-    add_header_param("Vary", "Accept-Encoding", response_header);
-    add_header_param("Server", UWS_SERVER, response_header);
-    add_header_param("Date", time_string, response_header);
+    conn_info->response_header->http_ver = "HTTP/1.1";
+    conn_info->response_header->status_code = 200;
+    conn_info->response_header->status = "OK";
+    add_header_param("Cache-Control", "private", conn_info->response_header);
+    add_header_param("Connection", "Keep-Alive", conn_info->response_header);
+    add_header_param("Vary", "Accept-Encoding", conn_info->response_header);
+    add_header_param("Server", UWS_SERVER, conn_info->response_header);
+    add_header_param("Date", time_string, conn_info->response_header);
 
     char *len = itoa(header_body.content_len);
-    add_header_param("Content-Length", len, response_header);
+    add_header_param("Content-Length", len, conn_info->response_header);
     uws_free(len);
 
-    add_header_param("Content-Type", mime, response_header);
-    header_body.header = response_header;
+    add_header_param("Content-Type", mime, conn_info->response_header);
+    header_body.header = conn_info->response_header;
     uws_free(time_string);
 }
 
@@ -114,7 +115,7 @@ printfile(const char *path, int client_fd)
 {
     char *mod_time_str ;
     char *file_mod_time = get_file_time(path);
-    if((mod_time_str = get_header_param("If-Modified-Since", request_header))) {
+    if((mod_time_str = get_header_param("If-Modified-Since", conn_info->request_header))) {
         if(!is_expire(mod_time_str, file_mod_time)) {
             send_error_response(client_fd, 304, false);
             return;
@@ -126,7 +127,7 @@ printfile(const char *path, int client_fd)
     header_body.content_len = ftell(file);
     rewind(file);
 
-    add_header_param("Last-Modified", file_mod_time, response_header);
+    add_header_param("Last-Modified", file_mod_time, conn_info->response_header);
     uws_free(file_mod_time);
 
     header_body.content = (char*) uws_malloc (header_body.content_len * sizeof(char));
@@ -141,7 +142,7 @@ http_router(int sockfd)
     char path[PATH_LEN];
     struct stat stat_buff;
     int i = 0; 
-    strcpy(path, request_header->path);
+    strcpy(path, conn_info->request_header->path);
     while(path[i] != 0) {
         if(path[i] == '?' || path[i] == '#') {
             path[i] = 0;
@@ -169,7 +170,7 @@ http_router(int sockfd)
     write_response(sockfd, &header_body);
     //uws_free(header_body.header);  sorry, reponse_header will be freed at the end of request
     uws_free(header_body.content);
-    free_header_params(response_header);
+    free_header_params(conn_info->response_header);
     return 0;
 }
 
@@ -181,7 +182,7 @@ int write_response(int sockfd, struct response* header_body) {
     if((header_body->content_len > 0) &&
         uws_config.http.gzip && 
         in_str_array(uws_config.http.gzip_types, get_header_param("Content-Type", header_body->header)) >= 0 &&
-        (accept_encoding = get_header_param("Accept-Encoding", request_header)) &&
+        (accept_encoding = get_header_param("Accept-Encoding", conn_info->request_header)) &&
         strstr(accept_encoding, "gzip") != NULL
         ) {
         size_t src_len = header_body->content_len;

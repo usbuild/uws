@@ -5,6 +5,7 @@
 #include "uws_config.h"
 #include "uws_header.h"
 #include "uws_error.h"
+#include "uws_status.h"
 static void 
 split_string(char *src, char **type, char **regexp, char **patch) {
     int len = strlen(src);
@@ -21,12 +22,12 @@ int rewrite_router(int sockfd) {
     bool apply_rewrite = false;
 
     char *type, *regexp, *patch;
-    char *url = request_header->url;
+    char *url = conn_info->request_header->url;
     while(*rules != NULL) {
         //apply a rule, when 
         split_string(*rules, &type, &regexp, &patch);
         if(running_server->rewrite.exist) {
-            char *path = strlcat(running_server->root, request_header->url);
+            char *path = strlcat(running_server->root, conn_info->request_header->url);
 
             struct stat stat_buff;
             if(lstat(path, &stat_buff) != -1) {
@@ -53,14 +54,14 @@ int rewrite_router(int sockfd) {
             if(strcmp(type, "dispatch") == 0) {
                 if(preg_match(url, regexp)) { //then apply dispatch rule
                     char *new_url = preg_replace(url, regexp, patch);
-                    uws_free(request_header->path);
-                    request_header->path = new_url;
+                    uws_free(conn_info->request_header->path);
+                    conn_info->request_header->path = new_url;
                     apply_rewrite = true;
                 }
             } else if(strcmp(type, "redirect-t") == 0) {
                 if(preg_match(url, regexp)) { //then apply redirect-t rule
                     char *new_url = preg_replace(url, regexp, patch);
-                    add_header_param("Location", new_url, response_header);
+                    add_header_param("Location", new_url, conn_info->response_header);
                     uws_free(new_url);
                     apply_rewrite = true;
                     apply_access = true;
@@ -69,7 +70,7 @@ int rewrite_router(int sockfd) {
             } else if(strcmp(type, "redirect-p") == 0){
                 if(preg_match(url, regexp)) { //then apply redirect-p rule
                     char *new_url = preg_replace(url, regexp, patch);
-                    add_header_param("Location", new_url, response_header);
+                    add_header_param("Location", new_url, conn_info->response_header);
                     uws_free(new_url);
                     apply_rewrite = true;
                     apply_access = true;

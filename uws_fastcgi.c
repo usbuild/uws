@@ -10,6 +10,7 @@
 #include "uws_config.h"
 #include "uws_error.h"
 #include "uws_utils.h"
+#include "uws_status.h"
 #define PARAMS_BUFF_LEN     1024
 #define MAX_BODY_LEN        2048
 
@@ -193,20 +194,20 @@ fastcgi_router(int sockfd)
     char *port = itoa(running_server->listen);
     int request_id = 1;
     Param_Value pv[] = {
-        {"QUERY_STRING",request_header->request_params},
-        {"REQUEST_METHOD", request_header->method},
-        {"CONTENT_TYPE", nullstring(get_header_param("Content-Type", request_header))},
-        {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", request_header))},
-        {"SCRIPT_FILENAME", request_header->path},
-        {"SCRIPT_NAME", strrchr(request_header->path, '/')},
-        {"REQUEST_URI", request_header->url},
-        {"DOCUMENT_URI", request_header->path + strlen(running_server->root)},
+        {"QUERY_STRING",conn_info->request_header->request_params},
+        {"REQUEST_METHOD", conn_info->request_header->method},
+        {"CONTENT_TYPE", nullstring(get_header_param("Content-Type", conn_info->request_header))},
+        {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", conn_info->request_header))},
+        {"SCRIPT_FILENAME", conn_info->request_header->path},
+        {"SCRIPT_NAME", strrchr(conn_info->request_header->path, '/')},
+        {"REQUEST_URI", conn_info->request_header->url},
+        {"DOCUMENT_URI", conn_info->request_header->path + strlen(running_server->root)},
         {"DOCUMENT_ROOT", running_server->root},
-        {"SERVER_PROTOCOL", request_header->http_ver},
+        {"SERVER_PROTOCOL", conn_info->request_header->http_ver},
         {"GATEWAY_INTERFACE", "CGI/1.1"},
         {"SERVER_SOFTWARE", UWS_SERVER},
-        {"REMOTE_ADDR", get_header_param("Client-IP", request_header)},
-        {"REMOTE_PORT", get_header_param("Client-Port", request_header)},
+        {"REMOTE_ADDR", get_header_param("Client-IP", conn_info->request_header)},
+        {"REMOTE_PORT", get_header_param("Client-Port", conn_info->request_header)},
         {"SERVER_ADDR", server_ip},
         {"SERVER_PORT", port},
         {"SERVER_NAME", running_server->server_name},
@@ -235,7 +236,7 @@ fastcgi_router(int sockfd)
         tmp++;
     }
 
-    Http_Param *params = request_header->params;
+    Http_Param *params = conn_info->request_header->params;
     char *new_header;
     while(params->name != NULL) {
         new_header = header_to_fcgi(params->name);
@@ -254,14 +255,14 @@ fastcgi_router(int sockfd)
     send_request(fcgi_fd, &smem);
     free_mem_t(&smem);
 
-    if(strcmp(request_header->method, "POST") == 0 && get_header_param("Content-Length", request_header) != NULL) {
+    if(strcmp(conn_info->request_header->method, "POST") == 0 && get_header_param("Content-Length", conn_info->request_header) != NULL) {
         memory_t body_content;
         char line[MAX_BODY_LEN];
         FCGI_Header content_header;
 
         for(; ;) {
-            if(feof(input_file) || ferror(input_file)) break;
-            size_t read_num = fread(line, sizeof(char), MAX_BODY_LEN, input_file);
+            if(feof(conn_info->input_file) || ferror(conn_info->input_file)) break;
+            size_t read_num = fread(line, sizeof(char), MAX_BODY_LEN, conn_info->input_file);
             if(read_num == 0) break;
             content_header = make_header(FCGI_STDIN, request_id, read_num, 0);
             append_mem_t(&smem, (char *)&content_header, FCGI_HEADER_LEN);

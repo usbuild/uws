@@ -9,6 +9,7 @@
 #include "uws_utils.h"
 #include "uws_datatype.h"
 #include "uws_error.h"
+#include "uws_status.h"
 
 void deal_client_fd(client_sockfd)
 {
@@ -16,48 +17,49 @@ void deal_client_fd(client_sockfd)
          type[10],
          httpver[10];
     int i = 0;
+    conn_info = (pConnInfo) calloc(1, sizeof(ConnInfo));
 
-    input_file = fdopen(client_sockfd, "r+"); 
+    conn_info->input_file = fdopen(client_sockfd, "r+"); 
 
-    request_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
-    response_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
+    conn_info->request_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
+    conn_info->response_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
 
-    fgets(line, BUFF_LEN, input_file);
+    fgets(line, BUFF_LEN, conn_info->input_file);
 
-    request_header->url = (char*)uws_calloc(PATH_LEN, sizeof(char));
-    request_header->path = (char*)uws_malloc(PATH_LEN * sizeof(char));
-    request_header->params = NULL;
-    request_header->request_params = (char*)uws_malloc(PATH_LEN * sizeof(char));
+    conn_info->request_header->url = (char*)uws_calloc(PATH_LEN, sizeof(char));
+    conn_info->request_header->path = (char*)uws_malloc(PATH_LEN * sizeof(char));
+    conn_info->request_header->params = NULL;
+    conn_info->request_header->request_params = (char*)uws_malloc(PATH_LEN * sizeof(char));
 
-    sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \r]", type, request_header->url, httpver);
-    strcpy(request_header->path, request_header->url);
+    sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \r]", type, conn_info->request_header->url, httpver);
+    strcpy(conn_info->request_header->path, conn_info->request_header->url);
 
-    while(request_header->url[i] != 0) {
-        if(request_header->url[i] == '?' || request_header->url[i] == '#') {
-            request_header->url[i] = 0;
+    while(conn_info->request_header->url[i] != 0) {
+        if(conn_info->request_header->url[i] == '?' || conn_info->request_header->url[i] == '#') {
+            conn_info->request_header->url[i] = 0;
             i++;
             break;
         }
         i++;
     }
-    strcpy(request_header->request_params, request_header->url + i);
-    request_header->method = type;
-    request_header->http_ver = httpver;
+    strcpy(conn_info->request_header->request_params, conn_info->request_header->url + i);
+    conn_info->request_header->method = type;
+    conn_info->request_header->http_ver = httpver;
     i = 0;
 
     char key[BUFF_LEN];
     char value[BUFF_LEN];
-    while(fgets(line, BUFF_LEN, input_file) != NULL) {
+    while(fgets(line, BUFF_LEN, conn_info->input_file) != NULL) {
         if(strcmp(line, "\r\n") != 0) {
             sscanf(line, "%[^:]: %[^\r\n]", key, value);
-            add_header_param(key, value, request_header);
+            add_header_param(key, value, conn_info->request_header);
         }
         else {
             break;
         }
     }
 
-    char* host = get_header_param("Host", request_header);
+    char* host = get_header_param("Host", conn_info->request_header);
     if(host != NULL) 
     {
         char host_with_port[LINE_LEN] = {0};
@@ -85,18 +87,18 @@ void deal_client_fd(client_sockfd)
                 }while(ntohs(peeraddr.sin_port) == 0);
                 client_ip = uws_strdup(inet_ntoa(peeraddr.sin_addr));
                 if(running_server->facade) {
-                    add_header_param("X-Forwarded-For", client_ip, request_header);
-                    add_header_param("Client-IP", client_ip, request_header);
+                    add_header_param("X-Forwarded-For", client_ip, conn_info->request_header);
+                    add_header_param("Client-IP", client_ip, conn_info->request_header);
                     char *client_port = itoa(ntohs(peeraddr.sin_port));
-                    add_header_param("Client-Port", client_port, request_header);
+                    add_header_param("Client-Port", client_port, conn_info->request_header);
                     uws_free(client_port);
                 } else {
-                    char *old_ip = get_header_param("X-Forwarded-For", request_header);
+                    char *old_ip = get_header_param("X-Forwarded-For", conn_info->request_header);
                     char *proxy_ip = (char*) uws_malloc((strlen(old_ip) + strlen(client_ip) + 5) * sizeof(char));
                     strcpy(proxy_ip, old_ip);
                     strcpy(proxy_ip, ",");
                     strcat(proxy_ip, client_ip);
-                    add_header_param("X-Forwarded-For", proxy_ip, request_header);
+                    add_header_param("X-Forwarded-For", proxy_ip, conn_info->request_header);
                     uws_free(proxy_ip);
                 }
                 getsockname(client_sockfd, (struct sockaddr *)&peeraddr, &peerlen);
@@ -107,14 +109,14 @@ void deal_client_fd(client_sockfd)
         }
     }
 
-    fclose(input_file);//if we don't close file, will cause memory leak
+    fclose(conn_info->input_file);//if we don't close file, will cause memory leak
     close(client_sockfd);
-    uws_free(request_header->url);
-    uws_free(request_header->path);
-    uws_free(request_header->request_params);
-    free_header_params(request_header);
-    uws_free(request_header);
-    uws_free(response_header);
+    uws_free(conn_info->request_header->url);
+    uws_free(conn_info->request_header->path);
+    uws_free(conn_info->request_header->request_params);
+    free_header_params(conn_info->request_header);
+    uws_free(conn_info->request_header);
+    uws_free(conn_info->response_header);
 }
 void handle_client_fd(int client_sockfd) {
     deal_client_fd(client_sockfd);

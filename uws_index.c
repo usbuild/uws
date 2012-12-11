@@ -4,6 +4,7 @@
 #include "uws_memory.h"
 #include "uws_config.h"
 #include "uws_header.h"
+#include "uws_status.h"
 
 int
 dir_router(int sockfd) 
@@ -14,11 +15,11 @@ dir_router(int sockfd)
     int i = 0; 
     strcpy(path, running_server->root);
 
-    char *tmp = request_header->path;
-    request_header->path = (char *)uws_malloc((strlen(path) + PATH_LEN) * sizeof(char));
+    char *tmp = conn_info->request_header->path;
+    conn_info->request_header->path = (char *)uws_malloc((strlen(path) + PATH_LEN) * sizeof(char));
     strcpy(path, running_server->root);
     strcat(path, tmp);
-    strcpy(request_header->path,  path);
+    strcpy(conn_info->request_header->path,  path);
     uws_free(tmp);
 
     if(lstat(path, &stat_buff) != -1) {
@@ -29,19 +30,19 @@ dir_router(int sockfd)
                 strcpy(path2, path);
                 strcat(path2, index);
                 if(lstat(path2, &stat_buff) != -1) {
-                    strcpy(request_header->path,  path2);
-                    strcpy(path2, request_header->url);
+                    strcpy(conn_info->request_header->path,  path2);
+                    strcpy(path2, conn_info->request_header->url);
                     strcat(path2, index);
-                    request_header->url = (char*) uws_realloc(request_header->url,strlen(request_header->url), strlen(path2));
-                    strcpy(request_header->url, path2);
+                    conn_info->request_header->url = (char*) uws_realloc(conn_info->request_header->url,strlen(conn_info->request_header->url), strlen(path2));
+                    strcpy(conn_info->request_header->url, path2);
                     break;
                 }
             } }
     }
     /*
-    puts(request_header->path);
-    puts(request_header->url);
-    puts(request_header->request_params);
+    puts(conn_info->request_header->path);
+    puts(conn_info->request_header->url);
+    puts(conn_info->request_header->request_params);
     */
     return 1;
 }

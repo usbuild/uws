@@ -4,6 +4,7 @@
 #include "uws_utils.h"
 #include "uws_config.h"
 #include "uws_proxy.h"
+#include "uws_status.h"
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -39,7 +40,7 @@ handle_proxy(int client_fd, const char *host, int port) {
     if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0)  return 1;
 
     fcntl(sockfd, F_SETFL, O_NONBLOCK);
-    char *request_str = str_request_header(request_header);
+    char *request_str = str_request_header(conn_info->request_header);
     n = write(sockfd, request_str, strlen(request_str));
     if (n < 0) return 1;
     n = write(sockfd, "\r\n", strlen("\r\n"));
@@ -58,7 +59,7 @@ int proxy_router(int serverfd)
     int port;
     for(i = 0; i < running_server->upstream.len; i ++) {
         split_string(running_server->upstream.array[i], &host, &port, &regexp);
-        if(preg_match(request_header->url, regexp)) {
+        if(preg_match(conn_info->request_header->url, regexp)) {
             int res = handle_proxy(serverfd, host, port);
             uws_free(host);
             uws_free(regexp);
