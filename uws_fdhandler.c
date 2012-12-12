@@ -5,7 +5,6 @@
 #include "uws_config.h"
 #include "uws_router.h"
 #include "uws_header.h"
-#include "uws_fdhandler.h"
 #include "uws_utils.h"
 #include "uws_datatype.h"
 #include "uws_error.h"
@@ -114,9 +113,7 @@ void deal_client_fd(pConnInfo conn_info)
     uws_free(conn_info->request_header);
     uws_free(conn_info->response_header);
 }
-void handle_client_fd(int client_sockfd) {
-    pConnInfo conn_info = (pConnInfo) uws_calloc(1, sizeof(ConnInfo));
-    conn_info->clientfd = client_sockfd;
+void handle_client_fd(pConnInfo conn_info) {
     deal_client_fd(conn_info);
-    uws_free(conn_info);
+    //uws_free(conn_info);
 }

@@ -9,6 +9,7 @@
 
 typedef int (*DataReader)(unsigned char*);
 enum conn_status {//define some useful request handler statuses
+    CS_WAIT,
     CS_ACCEPT,
     CS_REQUEST_READ,
     CS_UPSTREAM_WRITE,
@@ -29,7 +30,7 @@ typedef struct {
     struct http_header *response_header;
     jmp_buf error_jmp_buf;//to quick jump out of error response
     server_cfg_t* running_server;//Current Server Profile Used
-    char server_ip[LINE_LEN];
+    char server_ip[20];
     char *client_ip;
 } ConnInfo, *pConnInfo;
 #endif

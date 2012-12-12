@@ -9,14 +9,37 @@
 #include "uws_mime.h"
 #include "uws_config.h"
 #include "uws_utils.h"
-#include "uws_fdhandler.h"
 #include "uws_header.h"
-#define MAX_EVENTS  10
-//#define DEBUG
+#include "uws_status.h"
+#define MAX_EVENTS  100
 
 
 struct epoll_event events[MAX_EVENTS];
 int epollfd, nfds;
+
+
+extern void handle_client_fd(pConnInfo);
+
+void add_accept(int epollfd, pConnInfo conn_info) {
+    struct sockaddr_in client_address;
+    int client_sockfd;
+    socklen_t client_len = sizeof(client_address);
+    client_sockfd = accept(conn_info->clientfd, (struct sockaddr *)&client_address, &client_len);
+    if(client_sockfd == -1) exit_err("accept_error");
+    setnonblocking(client_sockfd);
+
+    struct epoll_event ev;
+    ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+
+    pConnInfo info = (pConnInfo) malloc(sizeof(ConnInfo));
+    info->clientfd = client_sockfd;
+    info->status = CS_ACCEPT;
+    ev.data.ptr = info;
+
+    if(epoll_ctl(epollfd, EPOLL_CTL_ADD, client_sockfd, &ev) == -1)
+        exit_err("epoll_ctl:conn_sock");
+}
+
 int start_server()
 {
     int res;
@@ -92,7 +115,12 @@ int start_server()
     for(i = 0; i < ports_num; i++) {
         struct epoll_event ev;
         ev.events = EPOLLIN;
-        ev.data.fd = listen_fds[i];
+        
+        pConnInfo conn_info  = (pConnInfo) uws_malloc(sizeof(ConnInfo));
+        conn_info->status = CS_WAIT;
+        conn_info->clientfd = listen_fds[i];
+        ev.data.ptr = conn_info;
+
         if(epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_fds[i], &ev) == -1)
             exit_err("epoll_ctl: listen_sock");
     }
@@ -105,23 +133,14 @@ int start_server()
         if(nfds == -1) exit_err("epoll_wait");
 
         for(n = 0; n < nfds; n++) {
-            if(in_int_array(listen_fds, events[n].data.fd, ports_num) != -1) {
-                int pos = in_int_array(listen_fds, events[n].data.fd, ports_num);
-                struct sockaddr_in client_address;
-                int server_sockfd, client_sockfd; 
-                server_sockfd = events[n].data.fd;
-                socklen_t client_len = sizeof(client_address);
-                client_sockfd = accept(server_sockfd, (struct sockaddr *)&client_address, &client_len);
-                if(client_sockfd == -1) exit_err("accept_error");
-                setnonblocking(client_sockfd);
-                struct epoll_event ev;
-                ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
-                ev.data.fd = client_sockfd;
-                if(epoll_ctl(epollfd, EPOLL_CTL_ADD, client_sockfd, &ev) == -1)
-                    exit_err("epoll_ctl:conn_sock");
-                //fd here
-            } else {
-                handle_client_fd(events[n].data.fd);
+            pConnInfo conn_info = events[n].data.ptr;
+            switch(conn_info->status) {
+                case CS_WAIT:
+                    add_accept(epollfd, conn_info);
+                    break;
+                case CS_ACCEPT:
+                    handle_client_fd(events[n].data.ptr);
+                    break;
             }
         }
     }
