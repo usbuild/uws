@@ -115,5 +115,5 @@ void deal_client_fd(pConnInfo conn_info)
 }
 void handle_client_fd(pConnInfo conn_info) {
     deal_client_fd(conn_info);
-    //uws_free(conn_info);
+    uws_free(conn_info);
 }

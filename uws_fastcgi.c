@@ -14,12 +14,11 @@
 #define PARAMS_BUFF_LEN     1024
 #define MAX_BODY_LEN        2048
 
-memory_t smem;
-int clientfd;
 /*{{{*/
 static char *
 header_to_fcgi(const char *str) 
 {
+    return uws_strdup(str);
     int prefix_len = strlen("HTTP_");
     int len = strlen(str) + prefix_len + 2;
     char *newstr = (char*) uws_malloc(len * sizeof(char));
@@ -33,6 +32,7 @@ header_to_fcgi(const char *str)
         }
         i++;
     }
+    newstr[i+ prefix_len] = 0;
     return newstr;
 }
 
@@ -88,7 +88,7 @@ build_name_value_body(char *name, int name_len, char *value, int value_len, unsi
 }
 
 static void
-add_fcgi_param(int request_id, char* name, char* value) {
+add_fcgi_param(int request_id, char* name, char* value, memory_t *smem) {
     int name_len, value_len, body_len;
     unsigned char body_buff[PARAMS_BUFF_LEN];
     bzero(body_buff, PARAMS_BUFF_LEN);
@@ -99,15 +99,15 @@ add_fcgi_param(int request_id, char* name, char* value) {
     FCGI_Header name_value_header;
     name_value_header = make_header(FCGI_PARAMS, request_id, body_len, 0);
 
-    append_mem_t(&smem, &name_value_header, FCGI_HEADER_LEN);
-    append_mem_t(&smem, body_buff, body_len);
+    append_mem_t(smem, &name_value_header, FCGI_HEADER_LEN);
+    append_mem_t(smem, body_buff, body_len);
 }
 static void
-begin_build_request(int request_id) {
+begin_build_request(int request_id, memory_t *smem) {
     FCGI_BeginRequestRecord begin_record;
     begin_record.header = make_header(FCGI_BEGIN_REQUEST, request_id, sizeof(begin_record.body), 0);
     begin_record.body = make_begin_request_body(FCGI_RESPONDER, 0);
-    append_mem_t(&smem, &begin_record, sizeof(begin_record));
+    append_mem_t(smem, &begin_record, sizeof(begin_record));
 }/*}}}*//*}}}*/
 
 static int
@@ -142,6 +142,7 @@ read_response(int sockfd, memory_t *mem_file)
     unsigned char* content;
     int content_len;
     char tmp[8];
+    bzero(mem_file, sizeof(mem_file));
     while(read(sockfd, &response_header, FCGI_HEADER_LEN) > 0) {
 
         if(mem_file->len >= already_read) return true;
@@ -189,6 +190,7 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
 int
 fastcgi_router(pConnInfo conn_info) 
 {
+    memory_t smem;
     int sockfd = conn_info->clientfd;
     char *port = itoa(conn_info->running_server->listen);
     int request_id = 1;
@@ -215,22 +217,20 @@ fastcgi_router(pConnInfo conn_info)
         {NULL,NULL} 
     };
 
-    uws_free(port);
 
     char *fastcgi_pass = conn_info->running_server->fastcgi_pass;
     char fhost[20];
     char fport[10];
-    clientfd = sockfd;
     sscanf(fastcgi_pass, "%[^:]:%s", fhost, fport);
 
     int fcgi_fd = prepare_request(conn_info, fhost, atoi(fport));
 
     //start build request
-    begin_build_request(request_id);
+    begin_build_request(request_id, &smem);
 
     Param_Value *tmp = pv;
     while(tmp->name != NULL){
-        add_fcgi_param(request_id, tmp->name, tmp->value);
+        add_fcgi_param(request_id, tmp->name, tmp->value, &smem);
         tmp++;
     }
 
@@ -238,10 +238,11 @@ fastcgi_router(pConnInfo conn_info)
     char *new_header;
     while(params->name != NULL) {
         new_header = header_to_fcgi(params->name);
-        add_fcgi_param(request_id, new_header, params->value);
+        add_fcgi_param(request_id, new_header, params->value, &smem);
         uws_free(new_header);
         params++;
     }
+    uws_free(port);
 
 
     //add more http headers

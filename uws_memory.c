@@ -2,7 +2,7 @@
 #include <malloc.h>
 #include "uws_memory.h"
 #include "usmem.h"
-//#define TRACE
+#define TRACE
 
 #ifdef USE_POOL
 static size_t
@@ -26,7 +26,7 @@ void *uws_realloc(void *ptr, size_t old,  size_t size) {
 
 #ifdef TRACE
 static count = 0;
-static void *pool[200] = {NULL};
+static void *pool[2000] = {NULL};
 #endif
 
 #ifdef USE_POOL

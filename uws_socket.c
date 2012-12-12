@@ -11,6 +11,7 @@
 #include "uws_utils.h"
 #include "uws_header.h"
 #include "uws_status.h"
+#include "uws_memory.h"
 #define MAX_EVENTS  100
 
 
@@ -31,7 +32,7 @@ void add_accept(int epollfd, pConnInfo conn_info) {
     struct epoll_event ev;
     ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
-    pConnInfo info = (pConnInfo) malloc(sizeof(ConnInfo));
+    pConnInfo info = (pConnInfo) uws_malloc(sizeof(ConnInfo));
     info->clientfd = client_sockfd;
     info->status = CS_ACCEPT;
     ev.data.ptr = info;
@@ -116,7 +117,7 @@ int start_server()
         struct epoll_event ev;
         ev.events = EPOLLIN;
         
-        pConnInfo conn_info  = (pConnInfo) uws_malloc(sizeof(ConnInfo));
+        pConnInfo conn_info  = (pConnInfo) malloc(sizeof(ConnInfo));
         conn_info->status = CS_WAIT;
         conn_info->clientfd = listen_fds[i];
         ev.data.ptr = conn_info;
