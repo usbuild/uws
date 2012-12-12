@@ -1,6 +1,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/epoll.h>
 #include "uws_memory.h"
 #include "uws_config.h"
 #include "uws_router.h"
@@ -10,7 +11,7 @@
 #include "uws_error.h"
 #include "uws_status.h"
 
-void deal_client_fd(pConnInfo conn_info)
+void handle_client_fd(int epollfd, pConnInfo conn_info)
 {
     char line[BUFF_LEN] = "",
          type[10],
@@ -112,8 +113,4 @@ void deal_client_fd(pConnInfo conn_info)
     free_header_params(conn_info->request_header);
     uws_free(conn_info->request_header);
     uws_free(conn_info->response_header);
-}
-void handle_client_fd(pConnInfo conn_info) {
-    deal_client_fd(conn_info);
-    uws_free(conn_info);
 }

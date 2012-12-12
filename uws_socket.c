@@ -19,7 +19,7 @@ struct epoll_event events[MAX_EVENTS];
 int epollfd, nfds;
 
 
-extern void handle_client_fd(pConnInfo);
+extern void handle_client_fd(int epollfd, pConnInfo conn_info);
 
 void add_accept(int epollfd, pConnInfo conn_info) {
     struct sockaddr_in client_address;
@@ -140,7 +140,7 @@ int start_server()
                     add_accept(epollfd, conn_info);
                     break;
                 case CS_ACCEPT:
-                    handle_client_fd(events[n].data.ptr);
+                    handle_client_fd(epollfd, events[n].data.ptr);
                     break;
             }
         }
