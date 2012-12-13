@@ -18,7 +18,6 @@
 static char *
 header_to_fcgi(const char *str) 
 {
-    return uws_strdup(str);
     int prefix_len = strlen("HTTP_");
     int len = strlen(str) + prefix_len + 2;
     char *newstr = (char*) uws_malloc(len * sizeof(char));
@@ -235,8 +234,9 @@ fastcgi_router(pConnInfo conn_info)
     }
 
     Http_Param *params = conn_info->request_header->params;
+    int count = 0;
     char *new_header;
-    while(params->name != NULL) {
+    for(count = 0; count < conn_info->request_header->used_len; ++count) {
         new_header = header_to_fcgi(params->name);
         add_fcgi_param(request_id, new_header, params->value, &smem);
         uws_free(new_header);

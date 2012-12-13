@@ -33,9 +33,7 @@ void add_header_param(char *key, char *value, struct http_header *http_header){
     {
         http_header->max_len *= 2;
         Http_Param* tmp = http_header->params;
-        http_header->params = (Http_Param*)uws_malloc(http_header->max_len * sizeof(Http_Param));
-        memcpy(http_header->params, tmp, http_header->used_len);
-        uws_free(tmp);
+        http_header->params = (Http_Param*)uws_realloc(http_header->params, http_header->used_len * sizeof(Http_Param), http_header->max_len * sizeof(Http_Param));
     }
     Http_Param* new_param = &http_header->params[http_header->used_len];
     new_param->name = uws_strdup(key);

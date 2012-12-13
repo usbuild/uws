@@ -2,7 +2,7 @@
 #include <malloc.h>
 #include "uws_memory.h"
 #include "usmem.h"
-#define TRACE
+//#define TRACE
 
 #ifdef USE_POOL
 static size_t

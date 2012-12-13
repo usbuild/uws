@@ -37,6 +37,7 @@ void init_routers(){
     fastcgirt.preg = "/([^/]+/)*[^/]+\\.php";
     fastcgirt.func = fastcgi_router;
     add_router(fastcgirt);
+
     Router dirrt;
     dirrt.preg = ".*";
     dirrt.func = dir_router;

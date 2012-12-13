@@ -12,14 +12,13 @@
 #include "uws_header.h"
 #include "uws_status.h"
 #include "uws_memory.h"
-#define MAX_EVENTS  100
+#define MAX_EVENTS  2000
 
 
 struct epoll_event events[MAX_EVENTS];
 int epollfd, nfds;
 
-
-extern void handle_client_fd(int epollfd, pConnInfo conn_info);
+extern void handle_client_fd(const int epollfd, pConnInfo conn_info);
 
 void add_accept(int epollfd, pConnInfo conn_info) {
     struct sockaddr_in client_address;
@@ -131,7 +130,8 @@ int start_server()
         int n;
         nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
 
-        if(nfds == -1) exit_err("epoll_wait");
+        if(nfds == -1) 
+            exit_err("epoll_wait");
 
         for(n = 0; n < nfds; n++) {
             pConnInfo conn_info = events[n].data.ptr;
