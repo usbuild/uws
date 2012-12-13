@@ -14,31 +14,9 @@
 #include "uws_memory.h"
 #define MAX_EVENTS  2000
 
-
-struct epoll_event events[MAX_EVENTS];
-int epollfd, nfds;
-
-extern void handle_client_fd(const int epollfd, pConnInfo conn_info);
-
-void add_accept(int epollfd, pConnInfo conn_info) {
-    struct sockaddr_in client_address;
-    int client_sockfd;
-    socklen_t client_len = sizeof(client_address);
-    client_sockfd = accept(conn_info->clientfd, (struct sockaddr *)&client_address, &client_len);
-    if(client_sockfd == -1) exit_err("accept_error");
-    setnonblocking(client_sockfd);
-
-    struct epoll_event ev;
-    ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
-
-    pConnInfo info = (pConnInfo) uws_malloc(sizeof(ConnInfo));
-    info->clientfd = client_sockfd;
-    info->status = CS_ACCEPT;
-    ev.data.ptr = info;
-
-    if(epoll_ctl(epollfd, EPOLL_CTL_ADD, client_sockfd, &ev) == -1)
-        exit_err("epoll_ctl:conn_sock");
-}
+extern void handle_client_fd(int epollfd, pConnInfo conn_info);
+extern void read_request_header(int epollfd, pConnInfo conn_info);
+extern void add_accept(int epollfd, pConnInfo conn_info);
 
 int start_server()
 {
@@ -108,6 +86,8 @@ int start_server()
     }
 #endif
 
+    struct epoll_event events[MAX_EVENTS];
+    int epollfd, nfds;
     //epoll init here
     epollfd = epoll_create(MAX_EVENTS);//create
     if(epollfd == -1) exit_err("Epoll create");
@@ -125,24 +105,22 @@ int start_server()
             exit_err("epoll_ctl: listen_sock");
     }
 
+    /*
+     * Mapping status with handle functions
+     */
+     void (*p[STATUS_SUM])() = {
+        add_accept, read_request_header, handle_client_fd, NULL, 
+        NULL, NULL, NULL, NULL,
+    };
+
     //epoll here end
     for( ; ; ) { 
         int n;
         nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
-
-        if(nfds == -1) 
-            exit_err("epoll_wait");
-
+        if(nfds == -1) exit_err("epoll_wait");
         for(n = 0; n < nfds; n++) {
             pConnInfo conn_info = events[n].data.ptr;
-            switch(conn_info->status) {
-                case CS_WAIT:
-                    add_accept(epollfd, conn_info);
-                    break;
-                case CS_ACCEPT:
-                    handle_client_fd(epollfd, events[n].data.ptr);
-                    break;
-            }
+            (*p[conn_info->status])(epollfd, events[n].data.ptr);
         }
     }
 }

@@ -11,7 +11,7 @@
 #include "uws_error.h"
 #include "uws_status.h"
 
-void handle_client_fd(const int epollfd, pConnInfo conn_info)
+void handle_client_fd(int epollfd, pConnInfo conn_info)
 {
     char line[BUFF_LEN] = "",
          type[10],

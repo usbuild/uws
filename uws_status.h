@@ -3,9 +3,9 @@
 #include "uws.h"
 #include "uws_header.h"
 #include "uws_config.h"
-
 #include <stdio.h>
 #include <setjmp.h>
+#define STATUS_SUM  8
 
 typedef int (*DataReader)(unsigned char*);
 enum conn_status {//define some useful request handler statuses
