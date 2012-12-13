@@ -109,8 +109,7 @@ int start_server()
      * Mapping status with handle functions
      */
      void (*p[STATUS_SUM])() = {
-        add_accept, read_request_header, handle_client_fd, NULL, 
-        NULL, NULL, NULL, NULL,
+        add_accept, handle_client_fd, NULL, NULL, NULL, NULL, NULL, NULL,
     };
 
     //epoll here end
