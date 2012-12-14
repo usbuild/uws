@@ -6,13 +6,8 @@
 #include <stdio.h>
 #include <setjmp.h>
 #define STATUS_SUM  8
-#define RW_BUFF_LEN 2048
 
 typedef int (*DataReader)(unsigned char*);
-typedef struct {
-    unsigned char ptr[RW_BUFF_LEN];
-    size_t len;  
-} RW_BUFF;
 
 enum conn_status {//define some useful request handler statuses
     CS_WAIT,
@@ -27,17 +22,17 @@ enum conn_status {//define some useful request handler statuses
 
 typedef struct {
     enum                conn_status status;     //the place of this position
+    char                flag;                   //for user defined flag1
     int                 clientfd;               //incoming socket fd
     int                 serverfd;               //for upstream
     FILE                *input_file;            //clientfd fdopen file
     DataReader          readData;               //function to get more response data
-    RW_BUFF             rBuff;                  //save unsyncronized read data
-    RW_BUFF             wBuff;
     struct http_header  *request_header;
     struct http_header  *response_header;
+    int                 status_code;            //indicate response code 
     jmp_buf             error_jmp_buf;          //to quick jump out of error response
     server_cfg_t*       running_server;         //Current Server Profile Used
     char                server_ip[20];
-    char                *client_ip;
+    char                client_ip[20];
 } ConnInfo, *pConnInfo;
 #endif

@@ -21,6 +21,9 @@
 #define true        1
 #define false       0
 #define INIT_ARR_LEN    8
+#define RETURN_AGAIN    -1
+#define RETURN_SUCCESS  0
+#define RETURN_ERROR    1
 
 void exit_err(const char* str);
 

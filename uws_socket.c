@@ -96,7 +96,7 @@ int start_server()
         struct epoll_event ev;
         ev.events = EPOLLIN;
         
-        pConnInfo conn_info  = (pConnInfo) malloc(sizeof(ConnInfo));
+        pConnInfo conn_info  = (pConnInfo) uws_malloc(sizeof(ConnInfo));
         conn_info->status = CS_WAIT;
         conn_info->clientfd = listen_fds[i];
         ev.data.ptr = conn_info;

@@ -4,9 +4,9 @@
 #include "uws_memory.h"
 
 #include <sys/epoll.h>
-#include <sys/socket.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 
 void add_accept(int epollfd, pConnInfo conn_info) {
     struct sockaddr_in client_address;
@@ -19,7 +19,7 @@ void add_accept(int epollfd, pConnInfo conn_info) {
     struct epoll_event ev;
     ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
 
-    pConnInfo info = (pConnInfo) uws_malloc(sizeof(ConnInfo));
+    pConnInfo info = (pConnInfo) uws_calloc(1, sizeof(ConnInfo));
     info->clientfd = client_sockfd;
     info->status = CS_ACCEPT;
     ev.data.ptr = info;
