@@ -140,7 +140,6 @@ void handle_client_fd(pConnInfo conn_info) {
     if(result == RETURN_SUCCESS) {
         pathrouter(conn_info);
 
-        /*
         fclose(conn_info->input_file);//if we don't close file, will cause memory leak
         close(conn_info->clientfd);
         uws_free(conn_info->request_header->url);
@@ -149,7 +148,6 @@ void handle_client_fd(pConnInfo conn_info) {
         free_header_params(conn_info->request_header);
         uws_free(conn_info->request_header);
         uws_free(conn_info->response_header);
-        */
     } else if(result == RETURN_AGAIN) {
         struct epoll_event ev;
         ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
