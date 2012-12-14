@@ -10,6 +10,7 @@
 #include "uws_header.h"
 #include "uws_status.h"
 #include "uws_error.h"
+#include "uws_router.h"
 
 struct response header_body;
 static char* mime;
@@ -166,7 +167,7 @@ http_router(pConnInfo conn_info)
     }
     else {
         send_error_response(conn_info, 404, true);
-        return 0;
+        return;
     }
 
     set_header(conn_info);
@@ -174,10 +175,9 @@ http_router(pConnInfo conn_info)
     //uws_free(header_body.header);  sorry, reponse_header will be freed at the end of request
     uws_free(header_body.content);
     free_header_params(conn_info->response_header);
-    return 0;
 }
 
-int write_response(int sockfd, struct response* header_body) {
+int write_response(int sockfd, struct response* header_body) {/*{{{*/
     int res;
     //char *accept_encoding; 
     //compress--start--
@@ -215,4 +215,4 @@ int write_response(int sockfd, struct response* header_body) {
     res = writen(sockfd, header_body->content, header_body->content_len);
     if(res == -1) {return -1;}
     return 0;
-}
+}/*}}}*/

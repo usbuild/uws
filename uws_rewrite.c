@@ -6,6 +6,7 @@
 #include "uws_error.h"
 #include "uws_status.h"
 #include "uws_http.h"
+#include "uws_router.h"
 static void 
 split_string(char *src, char **type, char **regexp, char **patch) {
     int len = strlen(src);
@@ -14,8 +15,11 @@ split_string(char *src, char **type, char **regexp, char **patch) {
     *patch = (char*)uws_calloc(len, sizeof(char));
     sscanf(src, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ ]", *type, *regexp, *patch);
 }
-int rewrite_router(pConnInfo conn_info) {
-    if(!conn_info->running_server->rewrite.engine || conn_info->running_server->rewrite.rules.total == 0) return 1;
+void rewrite_router(pConnInfo conn_info) {
+    if(!conn_info->running_server->rewrite.engine || conn_info->running_server->rewrite.rules.total == 0)  {
+        apply_next_router(conn_info);
+        return;
+    }
     char **rules = conn_info->running_server->rewrite.rules.array;
 
     bool apply_access = false;
@@ -82,5 +86,4 @@ int rewrite_router(pConnInfo conn_info) {
         uws_free(type); uws_free(regexp); uws_free(patch);
         rules++;
     }
-    return 1;
 }

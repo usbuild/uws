@@ -11,6 +11,7 @@
 #include "uws_error.h"
 #include "uws_utils.h"
 #include "uws_status.h"
+#include "uws_router.h"
 #define PARAMS_BUFF_LEN     1024
 #define MAX_BODY_LEN        2048
 
@@ -186,7 +187,7 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
     return false;
 }
 
-int
+void
 fastcgi_router(pConnInfo conn_info) 
 {
     memory_t smem;
@@ -337,6 +338,6 @@ fastcgi_router(pConnInfo conn_info)
     free_mem_t(&smem);
     free_mem_t(&mem_file);
 
-    return 0;
+    apply_next_router(conn_info);
 }
 

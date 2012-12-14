@@ -4,6 +4,7 @@
 #include "uws_status.h"
 #include "uws_utils.h"
 #include "uws_error.h"
+#include "uws_router.h"
 
 #define AUTH_LEN 128
 bool validate(char *raw_str, char *file){
@@ -19,8 +20,11 @@ bool validate(char *raw_str, char *file){
     fclose(f);
     return 0;
 }
-int auth_router(pConnInfo conn_info) {
-    if(conn_info->running_server->auth_basic == NULL) return 1;
+void auth_router(pConnInfo conn_info) {
+    if(conn_info->running_server->auth_basic == NULL) {
+        apply_next_router(conn_info);
+        return;
+    }
     char *auth_str = get_header_param("Authorization", conn_info->request_header);
     char value[PATH_LEN] = {0};
     sprintf(value, "Basic realm=\"%s\"", conn_info->running_server->auth_basic);
@@ -29,11 +33,10 @@ int auth_router(pConnInfo conn_info) {
         send_error_response(conn_info, 401, true);
     } else {
         if(validate(auth_str, conn_info->running_server->auth_basic_user_file)) {
-            return 1;
+            return;
         } else {
             add_header_param("WWW-Authenticate", value, conn_info->response_header);
             send_error_response(conn_info, 401, true);
         }
     }
-    return 0;
 }

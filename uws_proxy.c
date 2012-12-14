@@ -4,6 +4,7 @@
 #include "uws_utils.h"
 #include "uws_config.h"
 #include "uws_status.h"
+#include "uws_router.h"
 #include <fcntl.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -51,10 +52,13 @@ handle_proxy(pConnInfo conn_info, const char *host, int port) {
     } while (n > 0);
     return 0;
 }
-int proxy_router(pConnInfo conn_info)
+void proxy_router(pConnInfo conn_info)
 {
     int i = 0;
-    if(!conn_info->running_server->proxy) return 1;
+    if(!conn_info->running_server->proxy) {
+        apply_next_router(conn_info);
+        return;
+    }
     char *host, *regexp;
     int port;
     for(i = 0; i < conn_info->running_server->upstream.len; i ++) {
@@ -63,10 +67,14 @@ int proxy_router(pConnInfo conn_info)
             int res = handle_proxy(conn_info, host, port);
             uws_free(host);
             uws_free(regexp);
-            return res;
+            if(!res) {
+                apply_next_router(conn_info);
+                return;
+            }
+            else return;
         }
         uws_free(host);
         uws_free(regexp);
     }
-    return 0;
+    return;
 }

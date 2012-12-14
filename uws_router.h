@@ -7,8 +7,8 @@
 
 typedef struct {
     char* preg;
-    int (*func)(pConnInfo);
+    void (*func)(pConnInfo);
 } Router;
 void init_routers();
-
+void apply_next_router(pConnInfo conn_info);
 #endif

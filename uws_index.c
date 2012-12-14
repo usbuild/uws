@@ -43,5 +43,5 @@ dir_router(pConnInfo conn_info)
     puts(conn_info->request_header->url);
     puts(conn_info->request_header->request_params);
     */
-    return 1;
+    apply_next_router(conn_info);
 }
