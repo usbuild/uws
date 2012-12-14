@@ -14,9 +14,8 @@
 #include "uws_memory.h"
 #define MAX_EVENTS  2000
 
-extern void handle_client_fd(int epollfd, pConnInfo conn_info);
-extern void read_request_header(int epollfd, pConnInfo conn_info);
-extern void add_accept(int epollfd, pConnInfo conn_info);
+extern void handle_client_fd(pConnInfo conn_info);
+extern void add_accept(pConnInfo conn_info);
 
 int start_server()
 {
@@ -99,6 +98,7 @@ int start_server()
         pConnInfo conn_info  = (pConnInfo) uws_malloc(sizeof(ConnInfo));
         conn_info->status = CS_WAIT;
         conn_info->clientfd = listen_fds[i];
+        conn_info->epollfd = epollfd;
         ev.data.ptr = conn_info;
 
         if(epoll_ctl(epollfd, EPOLL_CTL_ADD, listen_fds[i], &ev) == -1)
@@ -119,7 +119,7 @@ int start_server()
         if(nfds == -1) exit_err("epoll_wait");
         for(n = 0; n < nfds; n++) {
             pConnInfo conn_info = events[n].data.ptr;
-            (*p[conn_info->status])(epollfd, events[n].data.ptr);
+            (*p[conn_info->status])(events[n].data.ptr);
         }
     }
 }

@@ -9,7 +9,6 @@ typedef struct {
     char* preg;
     int (*func)(pConnInfo);
 } Router;
-void pathrouter(pConnInfo);
 void init_routers();
 
 #endif
