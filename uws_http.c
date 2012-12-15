@@ -146,6 +146,7 @@ printfile(const char *path, pConnInfo conn_info)
 int
 http_router(pConnInfo conn_info) 
 {
+    if(conn_info->status_code != 0) send_error_response(conn_info);
     int sockfd = conn_info->clientfd;
     char path[PATH_LEN];
     struct stat stat_buff;
