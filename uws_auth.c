@@ -3,7 +3,6 @@
 #include "uws_header.h"
 #include "uws_status.h"
 #include "uws_utils.h"
-#include "uws_error.h"
 #include "uws_router.h"
 
 #define AUTH_LEN 128
@@ -30,13 +29,17 @@ void auth_router(pConnInfo conn_info) {
     sprintf(value, "Basic realm=\"%s\"", conn_info->running_server->auth_basic);
     if(auth_str == NULL) {
         add_header_param("WWW-Authenticate", value, conn_info->response_header);
-        send_error_response(conn_info, 401, true);
+        conn_info->status = 401;
+        apply_next_router(conn_info);
+        return;
     } else {
         if(validate(auth_str, conn_info->running_server->auth_basic_user_file)) {
             return;
         } else {
             add_header_param("WWW-Authenticate", value, conn_info->response_header);
-            send_error_response(conn_info, 401, true);
+            conn_info->status = 401;
+            apply_next_router(conn_info);
+            return;
         }
     }
 }

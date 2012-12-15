@@ -8,10 +8,10 @@
 #include "uws_fastcgi.h"
 #include "uws_header.h"
 #include "uws_config.h"
-#include "uws_error.h"
 #include "uws_utils.h"
 #include "uws_status.h"
 #include "uws_router.h"
+#include "uws_http.h"
 #define PARAMS_BUFF_LEN     1024
 #define MAX_BODY_LEN        2048
 
@@ -120,7 +120,7 @@ prepare_request(pConnInfo conn_info, const char* host, int port) {
     address.sin_port = htons(port);
     result = connect(sockfd, (struct sockaddr*)&address, sizeof(address));
     if(result == -1) {
-        send_error_response(conn_info, 502, true);
+        return 0;
     }
     return sockfd;
 }
@@ -224,6 +224,11 @@ fastcgi_router(pConnInfo conn_info)
     sscanf(fastcgi_pass, "%[^:]:%s", fhost, fport);
 
     int fcgi_fd = prepare_request(conn_info, fhost, atoi(fport));
+    if(fcgi_fd == 0) {
+        conn_info->status_code =  502;
+        apply_next_router(conn_info);
+        return;
+    }
 
     //start build request
     begin_build_request(request_id, &smem);
@@ -285,7 +290,9 @@ fastcgi_router(pConnInfo conn_info)
     bool more_content = read_response(fcgi_fd, &mem_file);
 
     if(mem_file.len == 0) {
-        send_error_response(conn_info, 500, true);
+        conn_info->status_code =  500;
+        apply_next_router(conn_info);
+        return;
     }
 
     char line[LINE_LEN] = {0};

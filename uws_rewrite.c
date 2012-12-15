@@ -3,7 +3,6 @@
 #include "uws_utils.h"
 #include "uws_config.h"
 #include "uws_header.h"
-#include "uws_error.h"
 #include "uws_status.h"
 #include "uws_http.h"
 #include "uws_router.h"
@@ -49,7 +48,9 @@ void rewrite_router(pConnInfo conn_info) {
             } else if(strcmp(type, "deny") == 0) {
                 if(preg_match(url, regexp)) { //then apply deny rule
                     if(wildcmp(patch, conn_info->client_ip)) {
-                        send_error_response(conn_info, 403, true);
+                        conn_info->status_code = 403;
+                        apply_next_router(conn_info);
+                        return;
                     }
                 }
             }
@@ -69,7 +70,9 @@ void rewrite_router(pConnInfo conn_info) {
                     uws_free(new_url);
                     apply_rewrite = true;
                     apply_access = true;
-                    send_error_response(conn_info, 302, false);
+                    conn_info->status_code = 302;
+                    apply_next_router(conn_info);
+                    return;
                 }
             } else if(strcmp(type, "redirect-p") == 0){
                 if(preg_match(url, regexp)) { //then apply redirect-p rule
@@ -78,8 +81,9 @@ void rewrite_router(pConnInfo conn_info) {
                     uws_free(new_url);
                     apply_rewrite = true;
                     apply_access = true;
-                    send_error_response(conn_info, 301, false);
-
+                    conn_info->status_code = 301;
+                    apply_next_router(conn_info);
+                    return;
                 }
             } else{}
         }

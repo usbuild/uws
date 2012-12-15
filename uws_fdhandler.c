@@ -8,7 +8,6 @@
 #include "uws_header.h"
 #include "uws_utils.h"
 #include "uws_datatype.h"
-#include "uws_error.h"
 #include "uws_status.h"
 
 extern int errno;
