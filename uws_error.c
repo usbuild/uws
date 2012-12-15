@@ -9,6 +9,7 @@ void send_error_response(pConnInfo conn_info, const int status_code, const bool 
     int i;
     char *error_path = NULL;
     char *error_file_path;
+    conn_info->status_code = status_code;
     while(*error_pages != NULL) {
         for(i = 0; i < strlen(*error_pages); i++) {
             if((*error_pages)[i] == '=') {
@@ -84,6 +85,7 @@ void send_error_response(pConnInfo conn_info, const int status_code, const bool 
     uws_free(header_body.content);
     longjmp(conn_info->error_jmp_buf, 1);
 }
+
 char *get_by_code(int code) {
     int i = 0;
     while(http_status[i].code != -1) {

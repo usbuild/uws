@@ -140,8 +140,12 @@ void handle_client_fd(pConnInfo conn_info) {
 
 
     if(result == RETURN_SUCCESS) {
-        if(setjmp(conn_info->error_jmp_buf) == 0);//empty for future
+        if(setjmp(conn_info->error_jmp_buf) == 0){//initialise error_jmp_buf
             apply_next_router(conn_info);
+        } else {//jump from inner routers
+            --conn_info->request_id;//apply this router again
+            apply_next_router(conn_info);
+        }
 
         fclose(conn_info->input_file);//if we don't close file, will cause memory leak
         close(conn_info->clientfd);

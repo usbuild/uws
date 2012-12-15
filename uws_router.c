@@ -32,12 +32,10 @@ void init_routers(){
     proxyrt.func = proxy_router;
     add_router(proxyrt);
 
-
     Router rewritert;
     rewritert.preg = ".*";
     rewritert.func = rewrite_router;
     add_router(rewritert);
-
 
     Router authrt;
     authrt.preg = ".*";
@@ -48,7 +46,6 @@ void init_routers(){
     dirrt.preg = ".*";
     dirrt.func = dir_router;
     add_router(dirrt);
-
 
     Router fastcgirt;
     fastcgirt.preg = "/([^/]+/)*[^/]+\\.php";
@@ -63,18 +60,6 @@ void init_routers(){
     //---
 }
 
-/*
-void pathrouter(pConnInfo conn_info) {
-    int i = 0;
-    while(map[i].preg != NULL) i++; //最先添加的最后执行
-    i--;
-    for(; i >= 0; i--) {
-        if(preg_match(conn_info->request_header->path, map[i].preg)) {
-            if(!map[i].func(conn_info)) return;//返回值为0则停止冒泡
-        }
-    }
-}
-*/
 
 void apply_next_router(pConnInfo conn_info) {
     int i = conn_info->request_id;
