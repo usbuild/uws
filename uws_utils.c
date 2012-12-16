@@ -196,7 +196,7 @@ nullstring(char *str) {
 }
 
 void append_mem_t(memory_t *smem, void *start, size_t len) {
-    if(smem->len == 0) {
+    if(smem->total == 0) {
         smem->mem = (unsigned char *)uws_malloc(len * sizeof(unsigned char));
         smem->total = len;
         memcpy(smem->mem, start, smem->total);

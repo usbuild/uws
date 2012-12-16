@@ -134,33 +134,37 @@ int read_data(pConnInfo conn_info)
     }
 }
 
-void handle_client_fd(pConnInfo conn_info) {
+void read_head(pConnInfo conn_info) {
     int result = read_data(conn_info);
-
-
     if(result == RETURN_SUCCESS) {
-        if(setjmp(conn_info->error_jmp_buf) == 0){//initialise error_jmp_buf
-            apply_next_router(conn_info);
-        } else {//jump from inner routers
-            --conn_info->request_id;//apply this router again
-            apply_next_router(conn_info);
-        }
-
-        fclose(conn_info->input_file);//if we don't close file, will cause memory leak
-        close(conn_info->clientfd);
-        uws_free(conn_info->request_header->url);
-        uws_free(conn_info->request_header->path);
-        uws_free(conn_info->request_header->request_params);
-        free_header_params(conn_info->request_header);
-        uws_free(conn_info->request_header);
-        uws_free(conn_info->response_header);
+        apply_next_router(conn_info);
     } else if(result == RETURN_AGAIN) {
         struct epoll_event ev;
         ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
         ev.data.ptr = conn_info;
         if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->clientfd, &ev) == -1)
-        exit_err("epoll_ctl");
+            exit_err("epoll_ctl");
+        longjmp(conn_info->jmp_buff, 1);
     } else if(result == RETURN_ERROR) {
-        //deal with error 
+        //wow, invalid request
     }
+}
+
+void handle_client_fd(pConnInfo conn_info) {
+
+    if(setjmp(conn_info->jmp_buff))  {
+        --conn_info->request_id;
+    } else if(conn_info->status == CS_ACCEPT) {
+        read_head(conn_info);
+    }
+    apply_next_router(conn_info);
+
+    fclose(conn_info->input_file);//if we don't close file, will cause memory leak
+    close(conn_info->clientfd);
+    uws_free(conn_info->request_header->url);
+    uws_free(conn_info->request_header->path);
+    uws_free(conn_info->request_header->request_params);
+    free_header_params(conn_info->request_header);
+    uws_free(conn_info->request_header);
+    uws_free(conn_info->response_header);
 }

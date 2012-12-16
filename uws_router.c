@@ -67,6 +67,7 @@ void apply_next_router(pConnInfo conn_info) {
     ++conn_info->request_id;
     if(preg_match(conn_info->request_header->path, map[i].preg) && 
         (conn_info->status_code == 0 || map[i].func == http_router)) {
+        conn_info->flag = 0x00;
         map[i].func(conn_info);
     } else {
         apply_next_router(conn_info);
