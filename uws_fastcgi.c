@@ -183,27 +183,21 @@ fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.app
     return false;
 }
 
-
-
 typedef struct {
     memory_t *smem;
     int request_id;
-    char *fhost;
-    char *fport;
+    char fhost[20];
+    char fport[10];
 } FCGI_LOCAL_DATA;
-
-
 
 void
 fastcgi_router(pConnInfo conn_info) 
 {
     FCGI_LOCAL_DATA *fdata;
     if(conn_info->ptr == NULL) {
-        conn_info->ptr = fdata = (FCGI_LOCAL_DATA*) uws_malloc(sizeof(fdata));
+        conn_info->ptr = fdata = (FCGI_LOCAL_DATA*) uws_calloc(1, sizeof(FCGI_LOCAL_DATA));
         //init some data
         fdata->smem = (memory_t*) uws_calloc(1, sizeof(memory_t));
-        fdata->fhost = (char*) uws_calloc(1, 20);
-        fdata->fport = (char*) uws_calloc(1, 10);
 
         char *port = itoa(conn_info->running_server->listen);
         fdata->request_id = conn_info->clientfd;
@@ -358,10 +352,10 @@ fastcgi_router(pConnInfo conn_info)
     }
 
     free_header_params(&fcgi_response_header);
-    free_mem_t(fdata->smem);
+    //free_mem_t(fdata->smem);
     free_mem_t(&mem_file);
 
-    uws_free(fdata);    
+    //uws_free(fdata);    
     conn_info->ptr = NULL;
     apply_next_router(conn_info);
 }

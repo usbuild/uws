@@ -54,8 +54,8 @@ int read_data(pConnInfo conn_info)
             i++;
         }
         strcpy(conn_info->request_header->request_params, conn_info->request_header->url + i);
-        conn_info->request_header->method = type;
-        conn_info->request_header->http_ver = httpver;
+        conn_info->request_header->method = uws_strdup(type);
+        conn_info->request_header->http_ver = uws_strdup(httpver);
         conn_info->flag = 0x02;
     }
 
