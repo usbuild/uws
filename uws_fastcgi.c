@@ -380,18 +380,39 @@ fastcgi_router(pConnInfo conn_info)
                 free_mem_t(fdata->smem);
             }
         }
-    }
-    
-    setblocking(conn_info->serverfd);
-    //send finish request symbol
-    FCGI_Header end_body;
-    end_body = make_header(FCGI_STDIN, fdata->request_id, 0, 0);
-    append_mem_t(fdata->smem, &end_body, FCGI_HEADER_LEN);
-    FCGI_Header end_header;
-    end_header = make_header(FCGI_PARAMS, fdata->request_id, 0, 0);
-    append_mem_t(fdata->smem, &end_header, FCGI_HEADER_LEN);
+        //send finish request symbol
+        FCGI_Header end_body;
+        end_body = make_header(FCGI_STDIN, fdata->request_id, 0, 0);
+        append_mem_t(fdata->smem, &end_body, FCGI_HEADER_LEN);
+        FCGI_Header end_header;
+        end_header = make_header(FCGI_PARAMS, fdata->request_id, 0, 0);
+        append_mem_t(fdata->smem, &end_header, FCGI_HEADER_LEN);
 
-    send_request(conn_info->serverfd, fdata->smem);
+        conn_info->flag = 0x03;
+    }
+
+    if(conn_info->flag  == 0x03) {
+        for( ; ; ) {
+            ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
+            if(res == -1 ) {
+                if(errno == EAGAIN) {
+                    add_to_epoll(conn_info, EPOLLOUT);
+                    longjmp(conn_info->jmp_buff, 1);
+                    return;
+                } else {
+                    conn_info->status_code = 502;
+                    apply_next_router(conn_info);
+                    return;
+                }
+            }
+            fdata->mem_offset += res;
+            if(fdata->mem_offset == fdata->smem->len) break;
+        }
+        fdata->mem_offset = 0;
+        free_mem_t(fdata->smem);
+    }
+
+    setblocking(conn_info->serverfd);
 
     //all_data_send!
     memory_t mem_file;
