@@ -53,6 +53,17 @@ void setnonblocking(int sock)
     if (fcntl(sock, F_SETFL, opts) < 0) exit_err("fcntl(F_SETFL)");
     return;
 }
+
+void setblocking(int sock)
+{
+    int opts = fcntl(sock, F_GETFL);
+    if (opts < 0) exit_err("fcntl(F_GETFL)");
+
+    opts = (opts & ~O_NONBLOCK);
+    if (fcntl(sock, F_SETFL, opts) < 0) exit_err("fcntl(F_SETFL)");
+    return;
+}
+
 char *strlcat(const char *s1, const char *s2) {
     char *new_str = (char*) uws_malloc((strlen(s1) + strlen(s2) + 1) * sizeof(char));
     strcpy(new_str, s1);

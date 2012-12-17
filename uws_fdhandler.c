@@ -130,6 +130,7 @@ int read_data(pConnInfo conn_info)
             add_header_param("X-Forwarded-For", proxy_ip, conn_info->request_header);
             uws_free(proxy_ip);
         }
+        conn_info->flag = 0x00; //reset flag for next router
         return RETURN_SUCCESS;
     }
 }
@@ -154,6 +155,7 @@ void handle_client_fd(pConnInfo conn_info) {
 
     if(setjmp(conn_info->jmp_buff))  {
         --conn_info->request_id;
+        return;
     } else if(conn_info->status == CS_ACCEPT) {
         read_head(conn_info);
     }

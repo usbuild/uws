@@ -109,7 +109,7 @@ int start_server()
      * Mapping status with handle functions
      */
      void (*handlers[STATUS_SUM])() = {
-        add_accept, handle_client_fd, NULL, NULL, NULL, NULL, NULL, NULL,
+        add_accept, handle_client_fd, handle_client_fd, handle_client_fd, handle_client_fd, handle_client_fd, handle_client_fd, handle_client_fd,
     };
 
     //epoll here end
@@ -118,7 +118,7 @@ int start_server()
         nfds = epoll_wait(epollfd, events, MAX_EVENTS, -1);
         if(nfds == -1) exit_err("epoll_wait");
         for(n = 0; n < nfds; n++) {
-            pConnInfo conn_info = events[n].data.ptr;
+            pConnInfo conn_info = (pConnInfo)events[n].data.ptr;
             (*handlers[conn_info->status])(events[n].data.ptr);
         }
     }

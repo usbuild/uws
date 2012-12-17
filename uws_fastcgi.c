@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/epoll.h>
 #include "uws_memory.h"
 #include "uws_fastcgi.h"
 #include "uws_header.h"
@@ -106,7 +107,7 @@ add_fcgi_param(int request_id, char* name, char* value, memory_t *smem) {
     name_len        =           strlen(name);
     value_len       =           strlen(value);
     build_name_value_body(name, name_len, value, value_len, &body_buff[0], &body_len);
-    
+
     FCGI_Header name_value_header;
     name_value_header = make_header(FCGI_PARAMS, request_id, body_len, 0);
 
@@ -173,9 +174,9 @@ read_response(int sockfd, memory_t *mem_file)
             count = read(sockfd, &end_request, FCGI_HEADER_LEN);
 
             /*
-            if(count != 8) perror("read");
-fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.appStatusB3<<24)+(end_request.appStatusB2<<16) +(end_request.appStatusB1<<8)+(end_request.appStatusB0),end_request.protocolStatus);
-*/
+               if(count != 8) perror("read");
+               fprintf(stdout,"\nend_request:appStatus:%d,protocolStatus:%d\n",(end_request.appStatusB3<<24)+(end_request.appStatusB2<<16) +(end_request.appStatusB1<<8)+(end_request.appStatusB0),end_request.protocolStatus);
+               */
 
         }
     }
@@ -194,80 +195,104 @@ void
 fastcgi_router(pConnInfo conn_info) 
 {
     FCGI_LOCAL_DATA *fdata;
-    if(conn_info->ptr == NULL) {
-        conn_info->ptr = fdata = (FCGI_LOCAL_DATA*) uws_calloc(1, sizeof(FCGI_LOCAL_DATA));
-        //init some data
-        fdata->smem = (memory_t*) uws_calloc(1, sizeof(memory_t));
 
-        char *port = itoa(conn_info->running_server->listen);
-        fdata->request_id = conn_info->clientfd;
-        sscanf(conn_info->running_server->fastcgi_pass, "%[^:]:%s", fdata->fhost, fdata->fport);
+    if(conn_info->flag == 0x00) {
+        if(conn_info->ptr == NULL) {
+            conn_info->ptr = fdata = (FCGI_LOCAL_DATA*) uws_calloc(1, sizeof(FCGI_LOCAL_DATA));
+            //init some data
+            fdata->smem = (memory_t*) uws_calloc(1, sizeof(memory_t));
 
-        Param_Value pv[] = {/*{{{*/
-            {"QUERY_STRING",conn_info->request_header->request_params},
-            {"REQUEST_METHOD", conn_info->request_header->method},
-            {"CONTENT_TYPE", nullstring(get_header_param("Content-Type", conn_info->request_header))},
-            {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", conn_info->request_header))},
-            {"SCRIPT_FILENAME", conn_info->request_header->path},
-            {"SCRIPT_NAME", strrchr(conn_info->request_header->path, '/')},
-            {"REQUEST_URI", conn_info->request_header->url},
-            {"DOCUMENT_URI", conn_info->request_header->path + strlen(conn_info->running_server->root)},
-            {"DOCUMENT_ROOT", conn_info->running_server->root},
-            {"SERVER_PROTOCOL", conn_info->request_header->http_ver},
-            {"GATEWAY_INTERFACE", "CGI/1.1"},
-            {"SERVER_SOFTWARE", UWS_SERVER},
-            {"REMOTE_ADDR", get_header_param("Client-IP", conn_info->request_header)},
-            {"REMOTE_PORT", get_header_param("Client-Port", conn_info->request_header)},
-            {"SERVER_ADDR", conn_info->server_ip},
-            {"SERVER_PORT", port},
-            {"SERVER_NAME", conn_info->running_server->server_name},
-            {"HTTPS", ""},
-            {"REDIRECT_STATUS", "200"},
-            {NULL,NULL} 
-        };/*}}}*/
-        //start build request
-        begin_build_request(fdata->request_id, fdata->smem);
+            char *port = itoa(conn_info->running_server->listen);
+            fdata->request_id = conn_info->clientfd;
+            sscanf(conn_info->running_server->fastcgi_pass, "%[^:]:%s", fdata->fhost, fdata->fport);
 
-        Param_Value *tmp = pv;
-        while(tmp->name != NULL){
-            add_fcgi_param(fdata->request_id, tmp->name, tmp->value, fdata->smem);
-            tmp++;
+            Param_Value pv[] = {/*{{{*/
+                {"QUERY_STRING",conn_info->request_header->request_params},
+                {"REQUEST_METHOD", conn_info->request_header->method},
+                {"CONTENT_TYPE", nullstring(get_header_param("Content-Type", conn_info->request_header))},
+                {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", conn_info->request_header))},
+                {"SCRIPT_FILENAME", conn_info->request_header->path},
+                {"SCRIPT_NAME", strrchr(conn_info->request_header->path, '/')},
+                {"REQUEST_URI", conn_info->request_header->url},
+                {"DOCUMENT_URI", conn_info->request_header->path + strlen(conn_info->running_server->root)},
+                {"DOCUMENT_ROOT", conn_info->running_server->root},
+                {"SERVER_PROTOCOL", conn_info->request_header->http_ver},
+                {"GATEWAY_INTERFACE", "CGI/1.1"},
+                {"SERVER_SOFTWARE", UWS_SERVER},
+                {"REMOTE_ADDR", get_header_param("Client-IP", conn_info->request_header)},
+                {"REMOTE_PORT", get_header_param("Client-Port", conn_info->request_header)},
+                {"SERVER_ADDR", conn_info->server_ip},
+                {"SERVER_PORT", port},
+                {"SERVER_NAME", conn_info->running_server->server_name},
+                {"HTTPS", ""},
+                {"REDIRECT_STATUS", "200"},
+                {NULL,NULL} 
+            };/*}}}*/
+            //start build request
+            begin_build_request(fdata->request_id, fdata->smem);
+
+            Param_Value *tmp = pv;
+            while(tmp->name != NULL){
+                add_fcgi_param(fdata->request_id, tmp->name, tmp->value, fdata->smem);
+                tmp++;
+            }
+
+            Http_Param *params = conn_info->request_header->params;
+            int count = 0;
+            char *new_header;
+            for(count = 0; count < conn_info->request_header->used_len; ++count) {
+                new_header = header_to_fcgi(params->name);
+                add_fcgi_param(fdata->request_id, new_header, params->value, fdata->smem);
+                uws_free(new_header);
+                params++;
+            }
+            uws_free(port);
+
+            //add more http headers
+            //terminate params
+            FCGI_Header end_params;
+            end_params = make_header(FCGI_PARAMS, fdata->request_id, 0, 0);
+            append_mem_t(fdata->smem, &end_params, FCGI_HEADER_LEN);
         }
 
-        Http_Param *params = conn_info->request_header->params;
-        int count = 0;
-        char *new_header;
-        for(count = 0; count < conn_info->request_header->used_len; ++count) {
-            new_header = header_to_fcgi(params->name);
-            add_fcgi_param(fdata->request_id, new_header, params->value, fdata->smem);
-            uws_free(new_header);
-            params++;
+        struct sockaddr_in address;
+        conn_info->serverfd  = socket(AF_INET, SOCK_STREAM, 0);
+        address.sin_family = AF_INET;
+        address.sin_addr.s_addr = inet_addr(fdata->fhost);
+        address.sin_port = htons(atoi(fdata->fport));
+
+        setnonblocking(conn_info->serverfd);
+
+        int result = connect(conn_info->serverfd, (struct sockaddr*)&address, sizeof(address));
+
+        conn_info->flag = 0x01; //now go to next stage
+
+        if(result < 0 ) {
+            if(errno != EINPROGRESS) {
+                conn_info->status_code =  502;
+                apply_next_router(conn_info);
+                return;
+            } else {
+                struct epoll_event ev;
+                ev.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
+                conn_info->status = CS_UPSTREAM_READ;
+                ev.data.ptr = conn_info;
+                if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
+                    exit_err("epoll_ctl");
+                longjmp(conn_info->jmp_buff, 1);
+                return;
+            }
         }
-        uws_free(port);
-
-        //add more http headers
-        //terminate params
-        FCGI_Header end_params;
-        end_params = make_header(FCGI_PARAMS, fdata->request_id, 0, 0);
-        append_mem_t(fdata->smem, &end_params, FCGI_HEADER_LEN);
-    } else {
-        fdata = (FCGI_LOCAL_DATA*) conn_info->ptr;
+        
     }
 
-    struct sockaddr_in address;
-    conn_info->serverfd  = socket(AF_INET, SOCK_STREAM, 0);
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = inet_addr(fdata->fhost);
-    address.sin_port = htons(atoi(fdata->fport));
-    int result = connect(conn_info->serverfd, (struct sockaddr*)&address, sizeof(address));
-    if(result == -1) {
-        conn_info->status_code =  502;
-        apply_next_router(conn_info);
-        return;
-    }
+    fdata = (FCGI_LOCAL_DATA*) conn_info->ptr;
 
-    send_request(conn_info->serverfd, fdata->smem);
-    free_mem_t(fdata->smem);
+    if(conn_info->flag == 0x01) {
+        setblocking(conn_info->serverfd);
+        send_request(conn_info->serverfd, fdata->smem);
+        free_mem_t(fdata->smem);
+    }
 
     if(strcmp(conn_info->request_header->method, "POST") == 0 && get_header_param("Content-Length", conn_info->request_header) != NULL) {
         char line[MAX_BODY_LEN];
@@ -294,6 +319,7 @@ fastcgi_router(pConnInfo conn_info)
 
     send_request(conn_info->serverfd, fdata->smem);
 
+    //all_data_send!
     memory_t mem_file;
     bzero(&mem_file, sizeof(memory_t));
     // if we have more content from fastcgi
@@ -312,7 +338,7 @@ fastcgi_router(pConnInfo conn_info)
     bzero(&fcgi_response_header, sizeof(fcgi_response_header));
     char key[LINE_LEN];
     char value[LINE_LEN];
-    
+
     char *time_string = get_time_string(NULL);
     add_header_param("Server", UWS_SERVER, &fcgi_response_header);
     add_header_param("Date", time_string, &fcgi_response_header);
@@ -344,7 +370,7 @@ fastcgi_router(pConnInfo conn_info)
     writen(conn_info->clientfd, header_str, strlen(header_str));
     uws_free(header_str);
     writen(conn_info->clientfd, pos, content_len + strlen("\r\n"));
-    
+
     while(more_content) {
         free_mem_t(&mem_file);
         more_content = read_response(conn_info->serverfd, &mem_file);
@@ -352,10 +378,10 @@ fastcgi_router(pConnInfo conn_info)
     }
 
     free_header_params(&fcgi_response_header);
-    //free_mem_t(fdata->smem);
+    free_mem_t(fdata->smem);
     free_mem_t(&mem_file);
 
-    //uws_free(fdata);    
+    uws_free(fdata);    
     conn_info->ptr = NULL;
     apply_next_router(conn_info);
 }
