@@ -23,6 +23,7 @@
  * 0x01 not connect to fcgi server
  * 0x02 write header
  * 0x03 write stdin
+ * 0x04 write header
  * 0x04 read response
  */
 
@@ -187,18 +188,38 @@ read_response(int sockfd, memory_t *mem_file)
 typedef struct {
     memory_t *smem;
     int request_id;
+    size_t mem_offset;
+    size_t read_offset;
+    size_t post;      // to determin if is post
     char fhost[20];
     char fport[10];
 } FCGI_LOCAL_DATA;
+
+
+void 
+add_to_epoll(pConnInfo conn_info, uint32_t flag) {
+        struct epoll_event ev;
+        ev.events = flag | EPOLLET | EPOLLONESHOT;
+        conn_info->status = CS_UPSTREAM_READ;
+        ev.data.ptr = conn_info;
+        if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
+            exit_err("epoll_ctl");
+}
 
 void
 fastcgi_router(pConnInfo conn_info) 
 {
     FCGI_LOCAL_DATA *fdata;
 
-    if(conn_info->flag == 0x00) {
+    if(conn_info->flag == 0x00) {/*{{{*/
         if(conn_info->ptr == NULL) {
             conn_info->ptr = fdata = (FCGI_LOCAL_DATA*) uws_calloc(1, sizeof(FCGI_LOCAL_DATA));
+
+            char *content_len = get_header_param("Content-Length", conn_info->request_header);
+            if(strcmp(conn_info->request_header->method, "POST") == 0 && content_len != NULL) {
+                fdata->post = (size_t)atol(content_len);//this is post method
+            }
+
             //init some data
             fdata->smem = (memory_t*) uws_calloc(1, sizeof(memory_t));
 
@@ -273,46 +294,99 @@ fastcgi_router(pConnInfo conn_info)
                 apply_next_router(conn_info);
                 return;
             } else {
-                struct epoll_event ev;
-                ev.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
-                conn_info->status = CS_UPSTREAM_READ;
-                ev.data.ptr = conn_info;
-                if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
-                    exit_err("epoll_ctl");
+                add_to_epoll(conn_info, EPOLLOUT);
                 longjmp(conn_info->jmp_buff, 1);
                 return;
             }
         }
         
-    }
+    }/*}}}*/
 
     fdata = (FCGI_LOCAL_DATA*) conn_info->ptr;
 
-    if(conn_info->flag == 0x01) {
-        setblocking(conn_info->serverfd);
-        send_request(conn_info->serverfd, fdata->smem);
-        free_mem_t(fdata->smem);
-    }
+    if(conn_info->flag == 0x01) {/*{{{*/
 
-    if(strcmp(conn_info->request_header->method, "POST") == 0 && get_header_param("Content-Length", conn_info->request_header) != NULL) {
-        char line[MAX_BODY_LEN];
-        FCGI_Header content_header;
-
-        for(; ;) {
-            if(feof(conn_info->input_file) || ferror(conn_info->input_file)) break;
-            size_t read_num = fread(line, sizeof(char), MAX_BODY_LEN, conn_info->input_file);
-            if(read_num == 0) break;
-            content_header = make_header(FCGI_STDIN, fdata->request_id, read_num, 0);
-            append_mem_t(fdata->smem, &content_header, FCGI_HEADER_LEN);
-            append_mem_t(fdata->smem, line, read_num);
-            send_request(conn_info->serverfd, fdata->smem);
-            free_mem_t(fdata->smem);
+        for( ; ; ) {
+            ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
+            if(res == -1 ) {
+                if(errno == EAGAIN) {
+                    add_to_epoll(conn_info, EPOLLOUT);
+                    longjmp(conn_info->jmp_buff, 1);
+                    return;
+                } else {
+                    conn_info->status_code = 502;
+                    apply_next_router(conn_info);
+                    return;
+                }
+            }
+            fdata->mem_offset += res;
+            if(fdata->mem_offset == fdata->smem->len) break;
         }
-        FCGI_Header end_body;
-        end_body = make_header(FCGI_STDIN, fdata->request_id, 0, 0);
-        append_mem_t(fdata->smem, &end_body, FCGI_HEADER_LEN);
+        fdata->mem_offset = 0;
+        free_mem_t(fdata->smem);
+        conn_info->flag = 0x02;
+    }/*}}}*/
+
+    //setblocking(conn_info->serverfd);
+    //
+    if(conn_info->flag == 0x02) {
+        if(fdata->post){
+            char line[MAX_BODY_LEN];
+            FCGI_Header content_header;
+
+            for(; ;) {
+                if(fdata->smem->len == 0) {
+                    if(fdata->read_offset == fdata->post) break;
+
+                    bzero(line, MAX_BODY_LEN);
+                    size_t read_num = fread(line, sizeof(char), MAX_BODY_LEN, conn_info->input_file);
+                    fdata->read_offset += read_num;
+                    if(read_num == 0) {
+                        if(errno == EAGAIN) {
+                            struct epoll_event ev;
+                            ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+                            conn_info->status = CS_UPSTREAM_READ;
+                            ev.data.ptr = conn_info;
+
+                            if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->clientfd, &ev) == -1)
+                                exit_err("epoll_ctl");
+
+                            longjmp(conn_info->jmp_buff, 1);
+                            return;
+                        }
+                    }
+                    content_header = make_header(FCGI_STDIN, fdata->request_id, read_num, 0);
+                    append_mem_t(fdata->smem, &content_header, FCGI_HEADER_LEN);
+                    append_mem_t(fdata->smem, line, read_num);
+                }
+
+                for( ; ; ) {
+                    ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
+                    if(res == -1 ) {
+                        if(errno == EAGAIN) {
+                            add_to_epoll(conn_info, EPOLLOUT);
+                            longjmp(conn_info->jmp_buff, 1);
+                            return;
+                        } else {
+                            conn_info->status_code = 502;
+                            apply_next_router(conn_info);
+                            return;
+                        }
+                    }
+                    fdata->mem_offset += res;
+                    if(fdata->mem_offset == fdata->smem->len) break;
+                }
+                fdata->mem_offset = 0;
+                free_mem_t(fdata->smem);
+            }
+        }
     }
+    
+    setblocking(conn_info->serverfd);
     //send finish request symbol
+    FCGI_Header end_body;
+    end_body = make_header(FCGI_STDIN, fdata->request_id, 0, 0);
+    append_mem_t(fdata->smem, &end_body, FCGI_HEADER_LEN);
     FCGI_Header end_header;
     end_header = make_header(FCGI_PARAMS, fdata->request_id, 0, 0);
     append_mem_t(fdata->smem, &end_header, FCGI_HEADER_LEN);
