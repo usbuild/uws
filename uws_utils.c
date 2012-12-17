@@ -47,7 +47,10 @@ int wildcmp(const char* wild, const char* string){
 void setnonblocking(int sock)
 {
     int opts = fcntl(sock, F_GETFL);
-    if (opts < 0) exit_err("fcntl(F_GETFL)");
+    if (opts < 0) {
+        printf("%d\n", sock);
+        exit_err("fcntl(F_GETFL)");
+    }
 
     opts = (opts | O_NONBLOCK);
     if (fcntl(sock, F_SETFL, opts) < 0) exit_err("fcntl(F_SETFL)");

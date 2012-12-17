@@ -278,12 +278,14 @@ fastcgi_router(pConnInfo conn_info)
 
         struct sockaddr_in address;
         conn_info->serverfd  = socket(AF_INET, SOCK_STREAM, 0);
+        if(conn_info->serverfd < 0) {
+            exit_err("connect");
+        }
         address.sin_family = AF_INET;
         address.sin_addr.s_addr = inet_addr(fdata->fhost);
         address.sin_port = htons(atoi(fdata->fport));
 
         setnonblocking(conn_info->serverfd);
-
         int result = connect(conn_info->serverfd, (struct sockaddr*)&address, sizeof(address));
 
         conn_info->flag = 0x01; //now go to next stage
@@ -327,9 +329,8 @@ fastcgi_router(pConnInfo conn_info)
         conn_info->flag = 0x02;
     }/*}}}*/
 
-    //setblocking(conn_info->serverfd);
     //
-    if(conn_info->flag == 0x02) {
+    if(conn_info->flag == 0x02) {/*{{{*/
         if(fdata->post){
             char line[MAX_BODY_LEN];
             FCGI_Header content_header;
@@ -389,7 +390,7 @@ fastcgi_router(pConnInfo conn_info)
         append_mem_t(fdata->smem, &end_header, FCGI_HEADER_LEN);
 
         conn_info->flag = 0x03;
-    }
+    }/*}}}*/
 
     if(conn_info->flag  == 0x03) {
         for( ; ; ) {
@@ -415,19 +416,17 @@ fastcgi_router(pConnInfo conn_info)
     setblocking(conn_info->serverfd);
 
     //all_data_send!
-    memory_t mem_file;
-    bzero(&mem_file, sizeof(memory_t));
     // if we have more content from fastcgi
-    bool more_content = read_response(conn_info->serverfd, &mem_file);
+    bool more_content = read_response(conn_info->serverfd, fdata->smem);
 
-    if(mem_file.len == 0) {
+    if(fdata->smem->len == 0) {
         conn_info->status_code =  500;
         apply_next_router(conn_info);
         return;
     }
 
     char line[LINE_LEN] = {0};
-    unsigned char *oldpos = mem_file.mem;
+    unsigned char *oldpos = fdata->smem->mem;
     unsigned char *pos;
     struct http_header fcgi_response_header;
     bzero(&fcgi_response_header, sizeof(fcgi_response_header));
@@ -451,7 +450,7 @@ fastcgi_router(pConnInfo conn_info)
         }
         oldpos = pos + strlen("\r\n");
     }
-    int content_len = mem_file.len - (pos - mem_file.mem) - strlen("\r\n");
+    int content_len = fdata->smem->len - (pos - fdata->smem->mem) - strlen("\r\n");
 
     char *str_len =  itoa(content_len);
     add_header_param("Content-Length", str_len, &fcgi_response_header);
@@ -467,14 +466,13 @@ fastcgi_router(pConnInfo conn_info)
     writen(conn_info->clientfd, pos, content_len + strlen("\r\n"));
 
     while(more_content) {
-        free_mem_t(&mem_file);
-        more_content = read_response(conn_info->serverfd, &mem_file);
-        writen(conn_info->clientfd, mem_file.mem, mem_file.len);
+        free_mem_t(fdata->smem);
+        more_content = read_response(conn_info->serverfd, fdata->smem);
+        writen(conn_info->clientfd, fdata->smem->mem, fdata->smem->len);
     }
 
     free_header_params(&fcgi_response_header);
     free_mem_t(fdata->smem);
-    free_mem_t(&mem_file);
 
     uws_free(fdata);    
     conn_info->ptr = NULL;
