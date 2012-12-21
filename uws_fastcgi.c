@@ -150,6 +150,7 @@ read_response(int sockfd, memory_t *mem_file)
             content = (unsigned char*) uws_malloc(sizeof(char) * content_len);
 
             count = read(sockfd, content, content_len);
+            // yo yo checkout now
 
             append_mem_t(mem_file, content, content_len);
 
@@ -197,7 +198,7 @@ typedef struct {
 
 
 void 
-add_to_epoll(pConnInfo conn_info, uint32_t flag) {
+mod_epoll(pConnInfo conn_info, uint32_t flag) {
         struct epoll_event ev;
         ev.events = flag | EPOLLET | EPOLLONESHOT;
         conn_info->status = CS_UPSTREAM_READ;
@@ -296,7 +297,13 @@ fastcgi_router(pConnInfo conn_info)
                 apply_next_router(conn_info);
                 return;
             } else {
-                add_to_epoll(conn_info, EPOLLOUT);
+                struct epoll_event ev;
+                ev.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
+                conn_info->status = CS_UPSTREAM_READ;
+                ev.data.ptr = conn_info;
+                if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
+                    exit_err("epoll_ctl");
+
                 longjmp(conn_info->jmp_buff, 1);
                 return;
             }
@@ -312,7 +319,7 @@ fastcgi_router(pConnInfo conn_info)
             ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
             if(res == -1 ) {
                 if(errno == EAGAIN) {
-                    add_to_epoll(conn_info, EPOLLOUT);
+                    mod_epoll(conn_info, EPOLLOUT);
                     longjmp(conn_info->jmp_buff, 1);
                     return;
                 } else {
@@ -349,7 +356,7 @@ fastcgi_router(pConnInfo conn_info)
                             conn_info->status = CS_UPSTREAM_READ;
                             ev.data.ptr = conn_info;
 
-                            if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->clientfd, &ev) == -1)
+                            if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_MOD, conn_info->clientfd, &ev) == -1)
                                 exit_err("epoll_ctl");
 
                             longjmp(conn_info->jmp_buff, 1);
@@ -365,7 +372,7 @@ fastcgi_router(pConnInfo conn_info)
                     ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
                     if(res == -1 ) {
                         if(errno == EAGAIN) {
-                            add_to_epoll(conn_info, EPOLLOUT);
+                            mod_epoll(conn_info, EPOLLOUT);
                             longjmp(conn_info->jmp_buff, 1);
                             return;
                         } else {
@@ -397,7 +404,7 @@ fastcgi_router(pConnInfo conn_info)
             ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
             if(res == -1 ) {
                 if(errno == EAGAIN) {
-                    add_to_epoll(conn_info, EPOLLOUT);
+                    mod_epoll(conn_info, EPOLLOUT);
                     longjmp(conn_info->jmp_buff, 1);
                     return;
                 } else {
@@ -413,17 +420,19 @@ fastcgi_router(pConnInfo conn_info)
         free_mem_t(fdata->smem);
     }
 
-    setblocking(conn_info->serverfd);
 
+    //setblocking(conn_info->serverfd);
     //all_data_send!
     // if we have more content from fastcgi
     bool more_content = read_response(conn_info->serverfd, fdata->smem);
+
 
     if(fdata->smem->len == 0) {
         conn_info->status_code =  500;
         apply_next_router(conn_info);
         return;
     }
+
 
     char line[LINE_LEN] = {0};
     unsigned char *oldpos = fdata->smem->mem;
