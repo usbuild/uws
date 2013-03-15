@@ -138,7 +138,7 @@ printfile(const char *path, pConnInfo conn_info)
     uws_free(file_mod_time);
 
     header_body.content = (char*) uws_malloc (header_body.content_len * sizeof(char));
-    fread(header_body.content, sizeof(char), header_body.content_len, file);
+    size_t read_size = fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
 
 }
@@ -233,7 +233,7 @@ void send_error_response(pConnInfo conn_info) {
         rewind(file);
         content = (char*) uws_malloc (content_len * sizeof(char));
 
-        fread(content, sizeof(char), content_len, file);
+        size_t read_size = fread(content, sizeof(char), content_len, file);
         fclose(file);
     } else {
         content_len = 0;

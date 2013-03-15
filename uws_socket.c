@@ -77,11 +77,13 @@ int start_server()
     {
         int statloc;
         pid_t child_pid;
-        while((child_pid = wait(&statloc)) != -1)
+        pid_t new_pid = self_pid;
+        while(new_pid != 0 && (child_pid = wait(&statloc)) != -1)
         {
             printf("Child process %d exit with %d\n", child_pid, statloc);
+            new_pid = fork();
         }
-        return 0;
+        if(new_pid != 0) return 0;
     }
 #endif
 
