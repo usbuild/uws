@@ -202,7 +202,7 @@ add_to_epoll(pConnInfo conn_info, uint32_t flag) {
     ev.events = flag | EPOLLET;
     conn_info->status = CS_UPSTREAM_READ;
     ev.data.ptr = conn_info;
-    if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
+    if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_MOD, conn_info->serverfd, &ev) == -1)
         exit_err("epoll_ctl");
 }
 
@@ -227,15 +227,16 @@ fastcgi_router(pConnInfo conn_info)
             fdata->request_id = conn_info->clientfd;
             sscanf(conn_info->running_server->fastcgi_pass, "%[^:]:%s", fdata->fhost, fdata->fport);
 
+            char *filename = strlcat(conn_info->running_server->root, conn_info->request_header->url);
             Param_Value pv[] = {/*{{{*/
                 {"QUERY_STRING",conn_info->request_header->request_params},
                 {"REQUEST_METHOD", conn_info->request_header->method},
                 {"CONTENT_TYPE", nullstring(get_header_param("Content-Type", conn_info->request_header))},
                 {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", conn_info->request_header))},
-                {"SCRIPT_FILENAME", conn_info->request_header->path},
-                {"SCRIPT_NAME", strrchr(conn_info->request_header->path, '/')},
-                {"REQUEST_URI", conn_info->request_header->url},
-                {"DOCUMENT_URI", conn_info->request_header->path + strlen(conn_info->running_server->root)},
+                {"SCRIPT_FILENAME", filename},
+                {"SCRIPT_NAME", strrchr(conn_info->request_header->url, '/')},
+                {"REQUEST_URI", conn_info->request_header->path},
+                {"DOCUMENT_URI", conn_info->request_header->url},
                 {"DOCUMENT_ROOT", conn_info->running_server->root},
                 {"SERVER_PROTOCOL", conn_info->request_header->http_ver},
                 {"GATEWAY_INTERFACE", "CGI/1.1"},
@@ -286,6 +287,7 @@ fastcgi_router(pConnInfo conn_info)
         address.sin_port = htons(atoi(fdata->fport));
 
         setnonblocking(conn_info->serverfd);
+
         int result = connect(conn_info->serverfd, (struct sockaddr*)&address, sizeof(address));
 
         conn_info->flag = 0x01; //now go to next stage
@@ -296,7 +298,12 @@ fastcgi_router(pConnInfo conn_info)
                 apply_next_router(conn_info);
                 return;
             } else {
-                add_to_epoll(conn_info, EPOLLOUT);
+                struct epoll_event ev;
+                ev.events = EPOLLOUT | EPOLLET;
+                conn_info->status = CS_UPSTREAM_READ;
+                ev.data.ptr = conn_info;
+                if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
+                    exit_err("epoll_ctl");
                 longjmp(conn_info->jmp_buff, 1);
                 return;
             }
@@ -345,11 +352,11 @@ fastcgi_router(pConnInfo conn_info)
                     if(read_num == 0) {
                         if(errno == EAGAIN) {
                             struct epoll_event ev;
-                            ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+                            ev.events = EPOLLIN | EPOLLET;
                             conn_info->status = CS_UPSTREAM_READ;
                             ev.data.ptr = conn_info;
 
-                            if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->clientfd, &ev) == -1)
+                            if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_MOD, conn_info->clientfd, &ev) == -1)
                                 exit_err("epoll_ctl");
 
                             longjmp(conn_info->jmp_buff, 1);
@@ -391,7 +398,6 @@ fastcgi_router(pConnInfo conn_info)
 
         conn_info->flag = 0x03;
     }/*}}}*/
-
 
     if(conn_info->flag  == 0x03) {
         for( ; ; ) {

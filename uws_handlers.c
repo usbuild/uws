@@ -17,7 +17,7 @@ void add_accept(pConnInfo conn_info) {
     setnonblocking(client_sockfd);
 
     struct epoll_event ev;
-    ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+    ev.events = EPOLLIN | EPOLLET;
 
     pConnInfo info = (pConnInfo) uws_calloc(1, sizeof(ConnInfo));
     info->clientfd = client_sockfd;
