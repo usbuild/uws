@@ -197,12 +197,12 @@ typedef struct {
 
 
 void 
-add_to_epoll(pConnInfo conn_info, uint32_t flag) {
+mod_epoll(pConnInfo conn_info, uint32_t flag) {
     struct epoll_event ev;
     ev.events = flag | EPOLLET;
     conn_info->status = CS_UPSTREAM_READ;
     ev.data.ptr = conn_info;
-    if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_MOD, conn_info->serverfd, &ev) == -1)
+    if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
         exit_err("epoll_ctl");
 }
 
@@ -258,6 +258,7 @@ fastcgi_router(pConnInfo conn_info)
                 add_fcgi_param(fdata->request_id, tmp->name, tmp->value, fdata->smem);
                 tmp++;
             }
+            uws_free(filename);
 
             Http_Param *params = conn_info->request_header->params;
             int count = 0;
@@ -299,7 +300,7 @@ fastcgi_router(pConnInfo conn_info)
                 return;
             } else {
                 struct epoll_event ev;
-                ev.events = EPOLLOUT | EPOLLET;
+                ev.events = EPOLLOUT | EPOLLET | EPOLLONESHOT;
                 conn_info->status = CS_UPSTREAM_READ;
                 ev.data.ptr = conn_info;
                 if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
@@ -319,7 +320,7 @@ fastcgi_router(pConnInfo conn_info)
             ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
             if(res == -1 ) {
                 if(errno == EAGAIN) {
-                    add_to_epoll(conn_info, EPOLLOUT);
+                    mod_epoll(conn_info, EPOLLOUT);
                     longjmp(conn_info->jmp_buff, 1);
                     return;
                 } else {
@@ -372,7 +373,7 @@ fastcgi_router(pConnInfo conn_info)
                     ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
                     if(res == -1 ) {
                         if(errno == EAGAIN) {
-                            add_to_epoll(conn_info, EPOLLOUT);
+                            mod_epoll(conn_info, EPOLLOUT);
                             longjmp(conn_info->jmp_buff, 1);
                             return;
                         } else {
@@ -404,7 +405,7 @@ fastcgi_router(pConnInfo conn_info)
             ssize_t res= write(conn_info->serverfd, fdata->smem->mem + fdata->mem_offset, fdata->smem->len - fdata->mem_offset);
             if(res == -1 ) {
                 if(errno == EAGAIN) {
-                    add_to_epoll(conn_info, EPOLLOUT);
+                    mod_epoll(conn_info, EPOLLOUT);
                     longjmp(conn_info->jmp_buff, 1);
                     return;
                 } else {
