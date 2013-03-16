@@ -184,7 +184,7 @@ http_router(pConnInfo conn_info)
 }
 
 
-void send_error_response(pConnInfo conn_info) {
+void send_error_response(pConnInfo conn_info) {/*{{{*/
     int status_code = conn_info->status_code;
     bool with_page;
     int return_page_status[4] = {404, 502, 500, 403};
@@ -272,7 +272,7 @@ void send_error_response(pConnInfo conn_info) {
     //uws_free(header_body.header); don't free this!!
     uws_free(header_body.content);
     //longjmp(conn_info->error_jmp_buf, 1);
-}
+}/*}}}*/
 
 char *get_by_code(int code) {
     int i = 0;
@@ -285,6 +285,7 @@ char *get_by_code(int code) {
 int write_response(pConnInfo conn_info, struct response* header_body) {/*{{{*/
     int res;
     setblocking(conn_info->clientfd);
+
     char *accept_encoding; 
     //compress--start--
 

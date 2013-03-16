@@ -26,7 +26,7 @@ void *uws_realloc(void *ptr, size_t old,  size_t size) {
 
 #ifdef TRACE
 static count = 0;
-static void *pool[2000] = {NULL};
+static void *pool[3000] = {NULL};
 #endif
 
 #ifdef USE_POOL
@@ -72,6 +72,7 @@ void uws_free(void *ptr){
         }
     }
     if(find == 0) {
+        printf("%x\n", ptr);
         puts("Error");
     }
     pool[j] = NULL;

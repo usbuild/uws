@@ -31,6 +31,7 @@ int read_data(pConnInfo conn_info)
         conn_info->request_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
         conn_info->response_header = (struct http_header*) uws_calloc(1, sizeof(struct http_header));
         conn_info->request_header->url = (char*)uws_calloc(PATH_LEN, sizeof(char));
+        conn_info->request_header->request_url = (char*)uws_calloc(PATH_LEN, sizeof(char));
         conn_info->request_header->path = (char*)uws_malloc(PATH_LEN * sizeof(char));
         conn_info->request_header->params = NULL;
         conn_info->request_header->request_params = (char*)uws_malloc(PATH_LEN * sizeof(char));
@@ -45,6 +46,7 @@ int read_data(pConnInfo conn_info)
 
         sscanf(line, "%[^ ]%*[ ]%[^ ]%*[ ]%[^ \r]", type, conn_info->request_header->url, httpver);
         strcpy(conn_info->request_header->path, conn_info->request_header->url);
+        strcpy(conn_info->request_header->request_url, conn_info->request_header->url);
         while(conn_info->request_header->url[i] != 0) {
             if(conn_info->request_header->url[i] == '?' || conn_info->request_header->url[i] == '#') {
                 conn_info->request_header->url[i] = 0;

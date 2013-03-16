@@ -8,6 +8,7 @@
 struct http_header{
     char* method;
     char* url;
+    char* request_url;
     char* path;
     char* http_ver;
     int status_code;

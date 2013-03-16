@@ -235,7 +235,7 @@ fastcgi_router(pConnInfo conn_info)
                 {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", conn_info->request_header))},
                 {"SCRIPT_FILENAME", filename},
                 {"SCRIPT_NAME", strrchr(conn_info->request_header->url, '/')},
-                {"REQUEST_URI", conn_info->request_header->path},
+                {"REQUEST_URI", conn_info->request_header->request_url},
                 {"DOCUMENT_URI", conn_info->request_header->url},
                 {"DOCUMENT_ROOT", conn_info->running_server->root},
                 {"SERVER_PROTOCOL", conn_info->request_header->http_ver},
