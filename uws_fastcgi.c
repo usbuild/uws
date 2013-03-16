@@ -494,7 +494,7 @@ fastcgi_router(pConnInfo conn_info)
 
         uws_free(fdata);    
         conn_info->ptr = NULL;
-        apply_next_router(conn_info);
+        //apply_next_router(conn_info);
     }
 }
 
