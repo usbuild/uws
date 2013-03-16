@@ -435,6 +435,7 @@ fastcgi_router(pConnInfo conn_info)
     // if we have more content from fastcgi
     if(conn_info->flag == 0x04) {
         setblocking(conn_info->serverfd);
+        setblocking(conn_info->clientfd);
         bool more_content = read_response(conn_info->serverfd, fdata->smem);
 
         if(fdata->smem->len == 0) {
