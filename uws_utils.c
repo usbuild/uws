@@ -118,7 +118,7 @@ int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)/*{{{*/
         c_stream.next_in  = data;
         c_stream.avail_in  = ndata;
         if(
-           deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 16 + MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY) != Z_OK
+           deflateInit2(&c_stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 16 | MAX_WBITS, MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY) != Z_OK
 
             ) 
             return -1;
@@ -130,6 +130,7 @@ int gzcompress(char **zdata, size_t *nzdata, char *data, size_t ndata)/*{{{*/
         if(Z_STREAM_END != deflate(&c_stream, Z_FINISH)) 
             return -1;
         if(deflateEnd(&c_stream) != Z_OK) return -1;
+        *nzdata -= c_stream.avail_out;
         return 0;
     }
     return -1;
@@ -157,6 +158,7 @@ int deflatecompress(char **zdata, size_t *nzdata, char *data, size_t ndata) {/*{
         if(Z_STREAM_END != deflate(&c_stream, Z_FINISH)) 
             return -1;
         if(deflateEnd(&c_stream) != Z_OK) return -1;
+        *nzdata -= c_stream.avail_out;
         return 0;
     }
     return -1;

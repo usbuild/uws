@@ -284,8 +284,8 @@ char *get_by_code(int code) {
 
 int write_response(pConnInfo conn_info, struct response* header_body) {/*{{{*/
     int res;
-    char *accept_encoding; 
     setblocking(conn_info->clientfd);
+    char *accept_encoding; 
     //compress--start--
 
     if((header_body->content_len > 0) &&
@@ -294,10 +294,12 @@ int write_response(pConnInfo conn_info, struct response* header_body) {/*{{{*/
         (accept_encoding = get_header_param("Accept-Encoding", conn_info->request_header)) &&
         strstr(accept_encoding, "gzip") != NULL
         ) {
+
         size_t src_len = header_body->content_len;
         size_t dst_len;
         char *dst_buff;
         gzcompress(&dst_buff, &dst_len, header_body->content, src_len);
+
         char *content_len = itoa(dst_len);
         add_header_param("Content-Length", content_len, header_body->header);
         uws_free(content_len);
