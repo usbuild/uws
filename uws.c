@@ -8,8 +8,9 @@
 #include "uws_router.h"
 #include "uws_mime.h"
 #include "uws_utils.h"
-extern int
-errno;
+#include <pwd.h>
+extern int errno;
+
 void
 exit_err(const char* str) 
 {
@@ -20,7 +21,12 @@ exit_err(const char* str)
 int
 main(int argc, const char *argv[])
 {
-    #ifndef DEBUG
+
+    setenv("MALLOC_TRACE", "output", 1);
+    //mtrace();
+    init_config();
+
+#ifndef DEBUG
     signal(SIGTTOU, SIG_IGN);
     signal(SIGTTIN, SIG_IGN);
     signal(SIGTSTP, SIG_IGN);
@@ -32,11 +38,15 @@ main(int argc, const char *argv[])
     for (fd = 0, fdtablesize = getdtablesize(); fd < fdtablesize; fd++)
         close(fd);
     umask(0);
+    //set uid
+    struct passwd* pd = getpwnam(uws_config.user);
+    if(pd == NULL) exit_err("No such user");
+    int res = setgid(pd->pw_gid);
+    if(res != 0) exit_err("Set gid");
+    res = setuid(pd->pw_uid);
+    if(res != 0) exit_err("Set uid");
 #endif
 
-    setenv("MALLOC_TRACE", "output", 1);
-    //mtrace();
-    init_config();
     read_mime();
     init_routers();
     start_server();
