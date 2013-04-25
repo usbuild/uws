@@ -32,4 +32,5 @@ bool preg_match(char *src, const char *pattern);
 char* base64(char *input);
 pcre* get_pcre(const char *src);
 inline char * uws_strdup(const char *s);
+int lockfile(int fd);
 #endif

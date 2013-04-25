@@ -38,6 +38,19 @@ main(int argc, const char *argv[])
     for (fd = 0, fdtablesize = getdtablesize(); fd < fdtablesize; fd++)
         close(fd);
     umask(0);
+
+
+    //lockfile
+    fd = open(uws_config.pid, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if(fd < 0) exit_err("open lockfile");
+    if(lockfile(fd) < 0)  {
+        if (errno == EACCES || errno == EAGAIN) {
+            close(fd); 
+        }
+        exit_err("Lockfile");
+    }
+
+
     //set uid
     struct passwd* pd = getpwnam(uws_config.user);
     if(pd == NULL) exit_err("No such user");
