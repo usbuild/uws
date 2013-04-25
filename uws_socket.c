@@ -3,6 +3,7 @@
 #include <sys/socket.h>
 #include <sys/wait.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <signal.h>
 #include <sys/epoll.h>
 #include "uws_socket.h"
@@ -20,7 +21,7 @@ extern void add_accept(pConnInfo conn_info);
 int start_server()
 {
     int res;
-    int reuse = 1;
+    int opt_flag = 1;
     int worker_processes = uws_config.worker_processes;
     int worker_count = 0;
     int server_port_num = 0;
@@ -49,12 +50,22 @@ int start_server()
         socklen_t server_len;
         struct sockaddr_in server_address;
         int server_sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
         server_address.sin_family = AF_INET;
         server_address.sin_addr.s_addr = INADDR_ANY;
         server_address.sin_port = htons(servers_port[i]);
 
-        res = setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int));
+        res = setsockopt(server_sockfd, SOL_SOCKET, SO_REUSEADDR, &opt_flag, sizeof(int));
         if(res < 0) exit_err("Set Socket Option Fail");
+        //set other options
+        if(uws_config.http.tcp_nodelay) {
+            res = setsockopt(server_sockfd, IPPROTO_TCP, TCP_NODELAY, &opt_flag, sizeof(int));
+        }
+        if(uws_config.http.tcp_nopush) {
+            res = setsockopt(server_sockfd, IPPROTO_TCP, TCP_CORK, &opt_flag, sizeof(int));
+        }
+
+
         server_len = sizeof(server_address);
         res = bind(server_sockfd, (struct sockaddr *)&server_address, server_len);
         if(res < 0) exit_err("Bind Error");

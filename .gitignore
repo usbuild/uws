@@ -2,4 +2,4 @@
 *.swp
 uws
 core
-uws_config.h
+uws_config.c
