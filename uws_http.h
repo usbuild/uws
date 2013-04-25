@@ -63,5 +63,5 @@ static const int_str_pair http_status[] = {//Copy from lighttpd
 void send_error_response(pConnInfo);
 char *get_by_code(int code);
 
-int write_response(int , struct response*);
+int write_response(pConnInfo , struct response*);
 #endif

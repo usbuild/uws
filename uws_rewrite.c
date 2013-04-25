@@ -61,6 +61,7 @@ void rewrite_router(pConnInfo conn_info) {
                     char *new_url = preg_replace(url, regexp, patch);
                     uws_free(conn_info->request_header->path);
                     conn_info->request_header->path = new_url;
+                    strcpy(conn_info->request_header->url, new_url);
                     apply_rewrite = true;
                 }
             } else if(strcmp(type, "redirect-t") == 0) {

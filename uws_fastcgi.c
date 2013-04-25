@@ -150,7 +150,6 @@ read_response(int sockfd, memory_t *mem_file)
             content = (unsigned char*) uws_malloc(sizeof(char) * content_len);
 
             count = read(sockfd, content, content_len);
-            // yo yo checkout now
 
             append_mem_t(mem_file, content, content_len);
 
@@ -199,12 +198,12 @@ typedef struct {
 
 void 
 mod_epoll(pConnInfo conn_info, uint32_t flag) {
-        struct epoll_event ev;
-        ev.events = flag | EPOLLET | EPOLLONESHOT;
-        conn_info->status = CS_UPSTREAM_READ;
-        ev.data.ptr = conn_info;
-        if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
-            exit_err("epoll_ctl");
+    struct epoll_event ev;
+    ev.events = flag | EPOLLET;
+    conn_info->status = CS_UPSTREAM_READ;
+    ev.data.ptr = conn_info;
+    if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
+        exit_err("epoll_ctl");
 }
 
 void
@@ -228,15 +227,16 @@ fastcgi_router(pConnInfo conn_info)
             fdata->request_id = conn_info->clientfd;
             sscanf(conn_info->running_server->fastcgi_pass, "%[^:]:%s", fdata->fhost, fdata->fport);
 
+            char *filename = strlcat(conn_info->running_server->root, conn_info->request_header->url);
             Param_Value pv[] = {/*{{{*/
                 {"QUERY_STRING",conn_info->request_header->request_params},
                 {"REQUEST_METHOD", conn_info->request_header->method},
                 {"CONTENT_TYPE", nullstring(get_header_param("Content-Type", conn_info->request_header))},
                 {"CONTENT_LENGTH", nullstring(get_header_param("Content-Length", conn_info->request_header))},
-                {"SCRIPT_FILENAME", conn_info->request_header->path},
-                {"SCRIPT_NAME", strrchr(conn_info->request_header->path, '/')},
-                {"REQUEST_URI", conn_info->request_header->url},
-                {"DOCUMENT_URI", conn_info->request_header->path + strlen(conn_info->running_server->root)},
+                {"SCRIPT_FILENAME", filename},
+                {"SCRIPT_NAME", strrchr(conn_info->request_header->url, '/')},
+                {"REQUEST_URI", conn_info->request_header->request_url},
+                {"DOCUMENT_URI", conn_info->request_header->url},
                 {"DOCUMENT_ROOT", conn_info->running_server->root},
                 {"SERVER_PROTOCOL", conn_info->request_header->http_ver},
                 {"GATEWAY_INTERFACE", "CGI/1.1"},
@@ -258,6 +258,7 @@ fastcgi_router(pConnInfo conn_info)
                 add_fcgi_param(fdata->request_id, tmp->name, tmp->value, fdata->smem);
                 tmp++;
             }
+            uws_free(filename);
 
             Http_Param *params = conn_info->request_header->params;
             int count = 0;
@@ -287,6 +288,7 @@ fastcgi_router(pConnInfo conn_info)
         address.sin_port = htons(atoi(fdata->fport));
 
         setnonblocking(conn_info->serverfd);
+
         int result = connect(conn_info->serverfd, (struct sockaddr*)&address, sizeof(address));
 
         conn_info->flag = 0x01; //now go to next stage
@@ -303,12 +305,11 @@ fastcgi_router(pConnInfo conn_info)
                 ev.data.ptr = conn_info;
                 if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_ADD, conn_info->serverfd, &ev) == -1)
                     exit_err("epoll_ctl");
-
                 longjmp(conn_info->jmp_buff, 1);
                 return;
             }
         }
-        
+
     }/*}}}*/
 
     fdata = (FCGI_LOCAL_DATA*) conn_info->ptr;
@@ -352,7 +353,7 @@ fastcgi_router(pConnInfo conn_info)
                     if(read_num == 0) {
                         if(errno == EAGAIN) {
                             struct epoll_event ev;
-                            ev.events = EPOLLIN | EPOLLET | EPOLLONESHOT;
+                            ev.events = EPOLLIN | EPOLLET;
                             conn_info->status = CS_UPSTREAM_READ;
                             ev.data.ptr = conn_info;
 
@@ -418,73 +419,83 @@ fastcgi_router(pConnInfo conn_info)
         }
         fdata->mem_offset = 0;
         free_mem_t(fdata->smem);
+        conn_info->flag = 0x04;
+        
+        
+        struct epoll_event ev;
+        ev.events = EPOLLIN | EPOLLET;
+        conn_info->status = CS_UPSTREAM_READ;
+        ev.data.ptr = conn_info;
+        if(epoll_ctl(conn_info->epollfd, EPOLL_CTL_MOD, conn_info->serverfd, &ev) == -1)
+            exit_err("epoll_ctl");
     }
 
 
-    //setblocking(conn_info->serverfd);
     //all_data_send!
     // if we have more content from fastcgi
-    bool more_content = read_response(conn_info->serverfd, fdata->smem);
+    if(conn_info->flag == 0x04) {
+        setblocking(conn_info->serverfd);
+        setblocking(conn_info->clientfd);
+        bool more_content = read_response(conn_info->serverfd, fdata->smem);
 
-
-    if(fdata->smem->len == 0) {
-        conn_info->status_code =  500;
-        apply_next_router(conn_info);
-        return;
-    }
-
-
-    char line[LINE_LEN] = {0};
-    unsigned char *oldpos = fdata->smem->mem;
-    unsigned char *pos;
-    struct http_header fcgi_response_header;
-    bzero(&fcgi_response_header, sizeof(fcgi_response_header));
-    char key[LINE_LEN];
-    char value[LINE_LEN];
-
-    char *time_string = get_time_string(NULL);
-    add_header_param("Server", UWS_SERVER, &fcgi_response_header);
-    add_header_param("Date", time_string, &fcgi_response_header);
-    uws_free(time_string);
-
-    while((pos = strstr(oldpos, "\r\n"))) {
-        if(oldpos == pos) break;
-        bzero(line, LINE_LEN);
-        strncpy(line, oldpos, pos - oldpos);
-        sscanf(line, "%[^:]: %s", key, value);
-        if(strcmp(key, "Status") == 0) {
-            fcgi_response_header.status_code = atoi(value);
-        } else {
-            push_header_param(key, value, &fcgi_response_header);
+        if(fdata->smem->len == 0) {
+            conn_info->status_code =  500;
+            apply_next_router(conn_info);
+            return;
         }
-        oldpos = pos + strlen("\r\n");
-    }
-    int content_len = fdata->smem->len - (pos - fdata->smem->mem) - strlen("\r\n");
 
-    char *str_len =  itoa(content_len);
-    add_header_param("Content-Length", str_len, &fcgi_response_header);
-    uws_free(str_len);
+        char line[LINE_LEN] = {0};
+        unsigned char *oldpos = fdata->smem->mem;
+        unsigned char *pos;
+        struct http_header fcgi_response_header;
+        bzero(&fcgi_response_header, sizeof(fcgi_response_header));
+        char key[LINE_LEN];
+        char value[LINE_LEN];
 
-    fcgi_response_header.http_ver = "HTTP/1.1";
-    if(fcgi_response_header.status_code == 0) fcgi_response_header.status_code = 200;
-    fcgi_response_header.status = get_by_code(fcgi_response_header.status_code);
+        char *time_string = get_time_string(NULL);
+        add_header_param("Server", UWS_SERVER, &fcgi_response_header);
+        add_header_param("Date", time_string, &fcgi_response_header);
+        uws_free(time_string);
 
-    char *header_str = str_response_header(&fcgi_response_header);
-    writen(conn_info->clientfd, header_str, strlen(header_str));
-    uws_free(header_str);
-    writen(conn_info->clientfd, pos, content_len + strlen("\r\n"));
+        while((pos = strstr(oldpos, "\r\n"))) {
+            if(oldpos == pos) break;
+            bzero(line, LINE_LEN);
+            strncpy(line, oldpos, pos - oldpos);
+            sscanf(line, "%[^:]: %s", key, value);
+            if(strcmp(key, "Status") == 0) {
+                fcgi_response_header.status_code = atoi(value);
+            } else {
+                push_header_param(key, value, &fcgi_response_header);
+            }
+            oldpos = pos + strlen("\r\n");
+        }
+        int content_len = fdata->smem->len - (pos - fdata->smem->mem) - strlen("\r\n");
 
-    while(more_content) {
+        char *str_len =  itoa(content_len);
+        add_header_param("Content-Length", str_len, &fcgi_response_header);
+        uws_free(str_len);
+
+        fcgi_response_header.http_ver = "HTTP/1.1";
+        if(fcgi_response_header.status_code == 0) fcgi_response_header.status_code = 200;
+        fcgi_response_header.status = get_by_code(fcgi_response_header.status_code);
+
+        char *header_str = str_response_header(&fcgi_response_header);
+        writen(conn_info->clientfd, header_str, strlen(header_str));
+        uws_free(header_str);
+        writen(conn_info->clientfd, pos, content_len + strlen("\r\n"));
+
+        while(more_content) {
+            free_mem_t(fdata->smem);
+            more_content = read_response(conn_info->serverfd, fdata->smem);
+            writen(conn_info->clientfd, fdata->smem->mem, fdata->smem->len);
+        }
+
+        free_header_params(&fcgi_response_header);
         free_mem_t(fdata->smem);
-        more_content = read_response(conn_info->serverfd, fdata->smem);
-        writen(conn_info->clientfd, fdata->smem->mem, fdata->smem->len);
+
+        uws_free(fdata);    
+        conn_info->ptr = NULL;
+        //apply_next_router(conn_info);
     }
-
-    free_header_params(&fcgi_response_header);
-    free_mem_t(fdata->smem);
-
-    uws_free(fdata);    
-    conn_info->ptr = NULL;
-    apply_next_router(conn_info);
 }
 

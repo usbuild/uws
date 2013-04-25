@@ -48,7 +48,7 @@ handle_proxy(pConnInfo conn_info, const char *host, int port) {
     do{
         bzero(buffer,256);
         n = read(sockfd,buffer,255);
-        write(client_fd, buffer, n);
+        int write_size = write(client_fd, buffer, n);
     } while (n > 0);
     return 0;
 }

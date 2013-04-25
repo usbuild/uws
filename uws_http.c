@@ -138,7 +138,7 @@ printfile(const char *path, pConnInfo conn_info)
     uws_free(file_mod_time);
 
     header_body.content = (char*) uws_malloc (header_body.content_len * sizeof(char));
-    fread(header_body.content, sizeof(char), header_body.content_len, file);
+    size_t read_size = fread(header_body.content, sizeof(char), header_body.content_len, file);
     fclose(file);
 
 }
@@ -177,14 +177,14 @@ http_router(pConnInfo conn_info)
     }
 
     set_header(conn_info);
-    write_response(sockfd, &header_body);
+    write_response(conn_info, &header_body);
     //uws_free(header_body.header);  sorry, reponse_header will be freed at the end of request
     uws_free(header_body.content);
     free_header_params(conn_info->response_header);
 }
 
 
-void send_error_response(pConnInfo conn_info) {
+void send_error_response(pConnInfo conn_info) {/*{{{*/
     int status_code = conn_info->status_code;
     bool with_page;
     int return_page_status[4] = {404, 502, 500, 403};
@@ -233,7 +233,7 @@ void send_error_response(pConnInfo conn_info) {
         rewind(file);
         content = (char*) uws_malloc (content_len * sizeof(char));
 
-        fread(content, sizeof(char), content_len, file);
+        size_t read_size = fread(content, sizeof(char), content_len, file);
         fclose(file);
     } else {
         content_len = 0;
@@ -267,12 +267,12 @@ void send_error_response(pConnInfo conn_info) {
     header_body.content_len = content_len;
 
     uws_free(time_string);
-    write_response(conn_info->clientfd, &header_body);
+    write_response(conn_info, &header_body);
     free_header_params(header_body.header);
     //uws_free(header_body.header); don't free this!!
     uws_free(header_body.content);
     //longjmp(conn_info->error_jmp_buf, 1);
-}
+}/*}}}*/
 
 char *get_by_code(int code) {
     int i = 0;
@@ -282,22 +282,25 @@ char *get_by_code(int code) {
     return http_status[i].message;
 }
 
-int write_response(int sockfd, struct response* header_body) {/*{{{*/
+int write_response(pConnInfo conn_info, struct response* header_body) {/*{{{*/
     int res;
-    //char *accept_encoding; 
+    setblocking(conn_info->clientfd);
+
+    char *accept_encoding; 
     //compress--start--
 
-    /*
     if((header_body->content_len > 0) &&
         uws_config.http.gzip && 
         in_str_array(uws_config.http.gzip_types, get_header_param("Content-Type", header_body->header)) >= 0 &&
         (accept_encoding = get_header_param("Accept-Encoding", conn_info->request_header)) &&
         strstr(accept_encoding, "gzip") != NULL
         ) {
+
         size_t src_len = header_body->content_len;
         size_t dst_len;
         char *dst_buff;
         gzcompress(&dst_buff, &dst_len, header_body->content, src_len);
+
         char *content_len = itoa(dst_len);
         add_header_param("Content-Length", content_len, header_body->header);
         uws_free(content_len);
@@ -306,18 +309,17 @@ int write_response(int sockfd, struct response* header_body) {/*{{{*/
         header_body->content = dst_buff;
         header_body->content_len = dst_len;
     }
-    */
 
     char* header_str = str_response_header(header_body->header);
     size_t header_len = strlen(header_str);
 
-    res = write(sockfd, header_str, header_len);
+    res = write(conn_info->clientfd, header_str, header_len);
     uws_free(header_str);
 
     if(res == -1) return -1;
-    res = write(sockfd, HEADER_SEP, strlen(HEADER_SEP));
+    res = write(conn_info->clientfd, HEADER_SEP, strlen(HEADER_SEP));
     if(res == -1) return -1;
-    res = writen(sockfd, header_body->content, header_body->content_len);
+    res = writen(conn_info->clientfd, header_body->content, header_body->content_len);
     if(res == -1) {return -1;}
     return 0;
 }/*}}}*/
