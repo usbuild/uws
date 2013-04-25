@@ -81,6 +81,7 @@ http{space}*\{                  {BEGIN HTTP;
 user                {state = STRING_VAL; val_string = &uws_config.user;}
 pid                 {state = STRING_VAL; val_string = &uws_config.pid;}
 worker_processes    {state = INT_VAL; val_int = &uws_config.worker_processes;}
+mimefile            {state = STRING_VAL; val_string = &uws_config.mimefile;}
 
 <HTTP>sendfile      {state = BOOL_VAL;val_bool = &uws_config.http.sendfile; }
 <HTTP>tcp_nopush    {state = BOOL_VAL;val_bool = &uws_config.http.tcp_nopush; }
@@ -153,8 +154,8 @@ void set_default_config() {
     uws_config.user = "www-data";
     uws_config.worker_processes = 4;
     uws_config.pid = "/var/run/uws.pid";
+    uws_config.mimefile = "mime.types";
     uws_config.events.worker_connections = 768;
-    uws_config.http.mimefile = "mime.types";
     uws_config.http.sendfile = true;
     uws_config.http.tcp_nopush = true;
     uws_config.http.tcp_nodelay = true;

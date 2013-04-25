@@ -34,7 +34,6 @@ struct events_cfg{
 };
 
 struct http_cfg{
-    char* mimefile;
     bool sendfile;
     bool tcp_nopush;
     bool tcp_nodelay;
@@ -59,6 +58,7 @@ typedef struct{
     char* user;
     int worker_processes;
     char* pid;
+    char* mimefile;
     struct events_cfg events;
     struct http_cfg http;
 } uws_config_t;
