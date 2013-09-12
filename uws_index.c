@@ -24,7 +24,16 @@ dir_router(pConnInfo conn_info)
     if(lstat(path, &stat_buff) != -1) {
         if( S_ISDIR(stat_buff.st_mode) ) {
             char *index;
-            int i = 0;
+            int i = 0, path_len = strlen(path);
+
+            if(path[path_len - 1] != '/') {
+                path[path_len] = '/';
+                path[path_len + 1] = 0;
+                path_len++;
+                strcat(conn_info->request_header->url, "/");
+            }
+            
+
             while((index = conn_info->running_server->index[i++]) != NULL) {
                 strcpy(path2, path);
                 strcat(path2, index);
