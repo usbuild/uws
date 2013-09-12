@@ -20,7 +20,7 @@ int read_data(pConnInfo conn_info)
      * 0x02 read first line of head
      * 0x03 finish read head
      */
-    char line[BUFF_LEN] = "",
+    char line[HEADER_LEN] = "",
          type[10],
          httpver[10];
     int client_sockfd = conn_info->clientfd;
@@ -63,9 +63,9 @@ int read_data(pConnInfo conn_info)
 
     if(conn_info->flag == 0x02) {
         char key[BUFF_LEN];
-        char value[BUFF_LEN];
+        char value[HEADER_LEN];
         for(; ;) {
-            if(fgets(line, BUFF_LEN, conn_info->input_file) == NULL) {
+            if(fgets(line, HEADER_LEN, conn_info->input_file) == NULL) {
                 if(ferror(conn_info->input_file) && errno == EAGAIN) {
                     return RETURN_AGAIN;
                 } else {

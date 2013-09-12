@@ -482,9 +482,21 @@ fastcgi_router(pConnInfo conn_info)
         if(fcgi_response_header.status_code == 0) {
             fcgi_response_header.status_code = 200;
         }
+        if(fcgi_response_header.status_code != 200) {
+            conn_info->status_code =  fcgi_response_header.status_code;
+            free_header_params(&fcgi_response_header);
+            free_mem_t(fdata->smem);
+            uws_free(fdata);    
+            close(conn_info->serverfd);
+            conn_info->ptr = NULL;
+            apply_next_router(conn_info);
+            return;
+        }
+
         fcgi_response_header.status = get_by_code(fcgi_response_header.status_code);
 
         char *header_str = str_response_header(&fcgi_response_header);
+        //handle error pages
         writen(conn_info->clientfd, header_str, strlen(header_str));
         uws_free(header_str);
         writen(conn_info->clientfd, pos, content_len + strlen("\r\n"));
@@ -497,7 +509,6 @@ fastcgi_router(pConnInfo conn_info)
 
         free_header_params(&fcgi_response_header);
         free_mem_t(fdata->smem);
-
         uws_free(fdata);    
         conn_info->ptr = NULL;
         //apply_next_router(conn_info);
