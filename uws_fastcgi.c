@@ -162,7 +162,10 @@ read_response(int sockfd, memory_t *mem_file)
         else if(response_header.type == FCGI_STDERR) {
             content_len = (response_header.contentLengthB1 << 8) + (response_header.contentLengthB0);
             content = (unsigned char*) uws_malloc(content_len * sizeof(char));
-            count = read(sockfd, content, count);
+            count = read(sockfd, content, content_len);
+
+            //append_mem_t(mem_file, content, content_len);
+
             uws_free(content);
 
             if(response_header.paddingLength > 0) {
@@ -476,7 +479,9 @@ fastcgi_router(pConnInfo conn_info)
         uws_free(str_len);
 
         fcgi_response_header.http_ver = "HTTP/1.1";
-        if(fcgi_response_header.status_code == 0) fcgi_response_header.status_code = 200;
+        if(fcgi_response_header.status_code == 0) {
+            fcgi_response_header.status_code = 200;
+        }
         fcgi_response_header.status = get_by_code(fcgi_response_header.status_code);
 
         char *header_str = str_response_header(&fcgi_response_header);
