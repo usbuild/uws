@@ -1,6 +1,7 @@
 #ifndef __UWS_HEADER_H__
 #define __UWS_HEADER_H__
 #include "uws.h"
+#define HEADER_KEY_LEN 256
 #define HEADER_LEN  8192
 #define INIT_PARAMS_NUM  20
 #define HEADER_SEP  "\r\n"

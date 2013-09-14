@@ -13,7 +13,7 @@
 #include "uws_status.h"
 #include "uws_router.h"
 #include "uws_http.h"
-#define PARAMS_BUFF_LEN     1024
+#define PARAMS_BUFF_LEN     8192
 #define MAX_BODY_LEN        2048
 
 

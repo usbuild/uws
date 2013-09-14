@@ -39,7 +39,7 @@ int read_data(pConnInfo conn_info)
     }
 
     if(conn_info->flag == 0x01) {
-        char * res = fgets(line, BUFF_LEN, conn_info->input_file);
+        char * res = fgets(line, HEADER_LEN, conn_info->input_file);
         if(res == NULL && errno == EAGAIN) {
             return RETURN_AGAIN;
         }
@@ -62,7 +62,7 @@ int read_data(pConnInfo conn_info)
     }
 
     if(conn_info->flag == 0x02) {
-        char key[BUFF_LEN];
+        char key[HEADER_KEY_LEN];
         char value[HEADER_LEN];
         for(; ;) {
             if(fgets(line, HEADER_LEN, conn_info->input_file) == NULL) {
